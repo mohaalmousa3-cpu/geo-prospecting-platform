@@ -1,0 +1,16 @@
+LICENCE PLACEHOLDER — NO LICENCE HAS BEEN CHOSEN YET.
+
+Until a licence is selected, all rights are reserved by the repository owner
+and no permission to use, copy, modify or distribute is granted.
+
+Why this is deferred (TASKS.md, Open Question #1):
+  Candidate scientific dependencies carry copyleft licences (e.g. EUPL-1.2,
+  GPL-3.0; verify each upstream). The licence of this repository interacts with
+  how those tools are integrated (separate processes vs linked libraries).
+
+Options to evaluate via ADR-0001 (not legal advice; consult qualified counsel):
+  - Proprietary / all rights reserved (private project)
+  - Apache-2.0 or MIT (permissive; requires copyleft tools to stay process-isolated)
+  - GPL-3.0 / AGPL-3.0 / EUPL-1.2 (copyleft; simplest compatibility with GPL/EUPL tools)
+
+Do not copy third-party source into this repository before this is decided.

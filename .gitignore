@@ -1,0 +1,61 @@
+# Secrets / env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*.json
+service-account*.json
+
+# Data (keep samples/ for tiny fixtures only)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.tif
+*.tiff
+*.nc
+*.hdf
+*.h5
+*.zarr/
+*.sqlite
+*.gpkg
+!data/samples/**
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Node
+node_modules/
+.next/
+out/
+.turbo/
+npm-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# Docker / infra
+docker-compose.override.yml
+*.tfstate*
+.terraform/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs / tmp
+*.log
+tmp/
