@@ -1,0 +1,158 @@
+{
+ "fixture_format": 1,
+ "synthetic": true,
+ "dataset": "synthetic-catalog-fixture",
+ "dataset_version": "1",
+ "generated_at": "2026-10-05T00:00:00Z",
+ "description": "Invented catalogue metadata for offline tests. Not a real catalogue; ids, dates and footprints are arbitrary.",
+ "items": [
+  {
+   "id": "SYNTH-A-0001",
+   "collection": "synthetic-optical",
+   "datetime": "2026-02-11T10:00:00Z",
+   "bbox": [
+    10.01,
+    40.0,
+    10.209999999999999,
+    40.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A",
+    "cloud_cover_percent": 5
+   }
+  },
+  {
+   "id": "SYNTH-A-0002",
+   "collection": "synthetic-optical",
+   "datetime": "2026-03-12T10:00:00Z",
+   "bbox": [
+    10.02,
+    40.0,
+    10.219999999999999,
+    40.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A",
+    "cloud_cover_percent": 10
+   }
+  },
+  {
+   "id": "SYNTH-A-0003",
+   "collection": "synthetic-optical",
+   "datetime": "2026-04-13T10:00:00Z",
+   "bbox": [
+    10.03,
+    40.0,
+    10.229999999999999,
+    40.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A",
+    "cloud_cover_percent": 15
+   }
+  },
+  {
+   "id": "SYNTH-A-0004",
+   "collection": "synthetic-optical",
+   "datetime": "2026-01-14T10:00:00Z",
+   "bbox": [
+    10.04,
+    40.0,
+    10.239999999999998,
+    40.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A",
+    "cloud_cover_percent": 20
+   }
+  },
+  {
+   "id": "SYNTH-A-0005",
+   "collection": "synthetic-optical",
+   "datetime": "2026-02-15T10:00:00Z",
+   "bbox": [
+    10.05,
+    40.0,
+    10.25,
+    40.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A",
+    "cloud_cover_percent": 25
+   }
+  },
+  {
+   "id": "SYNTH-A-0006",
+   "collection": "synthetic-optical",
+   "datetime": "2026-03-16T10:00:00Z",
+   "bbox": [
+    10.06,
+    40.0,
+    10.26,
+    40.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A",
+    "cloud_cover_percent": 30
+   }
+  },
+  {
+   "id": "SYNTH-A-0007",
+   "collection": "synthetic-optical",
+   "datetime": "2026-04-17T10:00:00Z",
+   "bbox": [
+    10.07,
+    40.0,
+    10.27,
+    40.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A",
+    "cloud_cover_percent": 35
+   }
+  },
+  {
+   "id": "SYNTH-A-0008",
+   "collection": "synthetic-optical",
+   "datetime": "2026-01-18T10:00:00Z",
+   "bbox": [
+    10.08,
+    40.0,
+    10.28,
+    40.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A",
+    "cloud_cover_percent": 40
+   }
+  },
+  {
+   "id": "SYNTH-B-0001",
+   "collection": "synthetic-radar",
+   "datetime": "2026-02-15T05:00:00Z",
+   "bbox": [
+    10.0,
+    40.0,
+    10.3,
+    40.3
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-B"
+   }
+  },
+  {
+   "id": "SYNTH-A-FAR",
+   "collection": "synthetic-optical",
+   "datetime": "2026-02-20T10:00:00Z",
+   "bbox": [
+    30.0,
+    10.0,
+    30.2,
+    10.2
+   ],
+   "properties": {
+    "platform": "SYNTHETIC-A"
+   }
+  }
+ ]
+}

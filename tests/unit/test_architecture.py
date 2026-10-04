@@ -57,3 +57,50 @@ def test_backend_has_no_analysis_modules_or_imports() -> None:
     for f in py_files("apps/backend/src"):
         assert not any(w in f.stem.lower() for w in banned_names), f
         assert not {"ee", "earthengine", "geemap", "sklearn", "rasterio", "scipy"} & imported_roots(f), f
+
+
+# --- Phase 3a: geo_connectors boundaries (ADR-0014, plan T8) ---
+# No network-capable or raster modules may be imported by the connectors package. Importing `geo_connectors`
+# (or `rasterio`, an HTTP client, `socket`, `ssl`, `urllib*`, `http*`) from the wrong place is a boundary violation.
+CONNECTOR_BANNED = {
+    "socket", "ssl", "http", "urllib", "urllib3", "httpx", "requests", "aiohttp", "httplib2", "ftplib",
+    "smtplib", "telnetlib", "xmlrpc", "websockets", "pystac_client", "boto3", "rasterio", "ee", "earthengine",
+}  # fmt: skip
+CONNECTOR_ALLOWED_THIRD_PARTY = {"geo_common"}  # the only non-stdlib import root geo_connectors may use
+
+
+def test_backend_runner_and_common_do_not_import_connectors() -> None:
+    for rel in ("apps/backend/src", "workers/runner/src", "packages/pycommon/src"):
+        for f in py_files(rel):
+            assert "geo_connectors" not in imported_roots(f), f
+
+
+def test_connectors_import_neither_backend_nor_runner() -> None:
+    for f in py_files("workers/connectors/src"):
+        assert not {"app", "runner"} & imported_roots(f), f
+
+
+def test_connectors_import_no_network_http_or_raster_modules() -> None:
+    for f in py_files("workers/connectors/src"):
+        assert not CONNECTOR_BANNED & imported_roots(f), (f, CONNECTOR_BANNED & imported_roots(f))
+
+
+def test_connectors_use_only_stdlib_and_geo_common() -> None:
+    import sys
+
+    stdlib = set(sys.stdlib_module_names)
+    for f in py_files("workers/connectors/src"):
+        extra = {r for r in imported_roots(f) if r not in stdlib and r != "geo_connectors"}
+        assert extra <= CONNECTOR_ALLOWED_THIRD_PARTY, (f, extra)
+
+
+def test_connectors_declare_no_third_party_dependency() -> None:
+    import tomllib
+
+    doc = tomllib.loads((ROOT / "workers/connectors/pyproject.toml").read_text())
+    assert doc["project"]["dependencies"] == ["geo-common"]
+
+
+def test_connectors_have_no_analysis_modules() -> None:
+    for f in py_files("workers/connectors/src"):
+        assert not any(w in f.stem.lower() for w in ANALYSIS_WORDS), f

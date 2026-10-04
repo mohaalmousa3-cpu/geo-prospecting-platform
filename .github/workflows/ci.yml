@@ -40,7 +40,7 @@ jobs:
       - run: uv sync --all-packages --frozen
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: uv run mypy packages/pycommon/src apps/backend/src workers/runner/src
+      - run: uv run mypy packages/pycommon/src apps/backend/src workers/runner/src workers/connectors/src
       - name: Unit tests (no database)
         run: uv run pytest -m "not integration"
       - name: Integration tests (queue concurrency, lease, retry, recovery; API; worker)

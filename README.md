@@ -2,6 +2,8 @@
 
 A scientific web platform for **prospectivity and anomaly screening** from remote-sensing, geological, terrain and thermal data — for gold-related targets, cavity/void-related targets and thermal anomalies — with explicit confidence and uncertainty.
 
+> **Update 2026-10-05:** the owner authorised the first checkpoint of Phase 3a (fixtures-only) on branch `claude/phase-3a-fixtures`; it is in progress, not complete and not accepted. The status below is otherwise as recorded before that instruction.
+>
 > **Status (2026-10-05; authoritative source: [`MASTER_SPEC.md`](MASTER_SPEC.md) → Current Project Status).** Phases 0–2.5 are implemented, with the owner decisions of 2026-10-05 recorded: Phase 0 accepted within its historical scope; Phase 1 open checks accepted; Phase 2 upload/archive boundary-test gap closed and its CI box ticked with clarified wording; Phase 0's documentation-consistency item stays open as follow-up F-1; Phase 2.5 follow-ups (browser smoke test in CI, `none` basemap default) and the derived-CORS addition accepted. **Phase 3: Planned — not started; ADR-0014 Accepted 2026-10-05 (not implemented); the fixtures-only Phase 3a scope accepted 2026-10-05 (scope acceptance only, not a start instruction); blocked pending a separate, explicit, bounded start instruction; D8 strategy resolved (option D), live-verification readiness pending; Phase 0 follow-up F-1 open and non-blocking only for fixtures-only 3a; no live host or network control approved.** The platform can define, validate, store and display Areas of Interest inside projects. **No analysis, scoring, remote-sensing, Earth Engine or scientific output exists yet.**
 
 > *Historical banner (superseded; as written during Phase 2.5 implementation):* "Phases 1–2 accepted (with follow-ups); Phase 2.5 (projects, basemap abstraction) implemented, awaiting acceptance; Phase 3 not started." CI run #7 on `02b6b05` is historical evidence for the follow-ups; run #10 on `da90ce2` succeeded (CI-level evidence only, not owner acceptance).
@@ -104,7 +106,7 @@ The map basemap is chosen with `NEXT_PUBLIC_BASEMAP_PROVIDER` = `none` (default;
 | [docs/phase-reports/phase-1-closeout.md](docs/phase-reports/phase-1-closeout.md) | Phase 1 closeout: accepted, open risks, deferred |
 | [docs/phase-2-plan.md](docs/phase-2-plan.md) / [phase-2.md](docs/phase-reports/phase-2.md) | Phase 2 plan and evidence |
 | [docs/job-lifecycle.md](docs/job-lifecycle.md) | Job states, guarantees, provisional capacity |
-| [docs/phase-3-plan.md](docs/phase-3-plan.md) | Final Phase 3 plan (approved with constraints; **not started**; ADR-0014 Accepted 2026-10-05, not implemented) |
+| [docs/phase-3-plan.md](docs/phase-3-plan.md) | Final Phase 3 plan (approved with constraints; **Phase 3a first checkpoint in progress** on `claude/phase-3a-fixtures`; other slices not started; ADR-0014 Accepted 2026-10-05) |
 | [docs/third-party-licences.md](docs/third-party-licences.md) | Dependency licence register |
 
 ## Licence

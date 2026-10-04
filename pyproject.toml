@@ -9,12 +9,13 @@ dependencies = []
 package = false
 
 [tool.uv.workspace]
-members = ["packages/pycommon", "apps/backend", "workers/runner"]
+members = ["packages/pycommon", "apps/backend", "workers/runner", "workers/connectors"]
 
 [tool.uv.sources]
 geo-common = { workspace = true }
 geo-backend = { workspace = true }
 geo-runner = { workspace = true }
+geo-connectors = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -25,7 +26,7 @@ dev = [
   "mypy>=1.11",
   "datamodel-code-generator>=0.25",
   "jsonschema>=4.22",
-  "geo-common", "geo-backend", "geo-runner",
+  "geo-common", "geo-backend", "geo-runner", "geo-connectors",
 ]
 
 [tool.ruff]
@@ -49,9 +50,9 @@ ignore_missing_imports = true
 exclude = ["_generated\\.py$"]
 
 [tool.pytest.ini_options]
-testpaths = ["packages/pycommon/tests", "apps/backend/tests", "workers/runner/tests", "tests"]
+testpaths = ["packages/pycommon/tests", "apps/backend/tests", "workers/runner/tests", "workers/connectors/tests", "tests"]
 timeout = 120
 markers = ["integration: needs a PostGIS database (GEO_TEST_DATABASE_URL)"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["geo_common", "app", "runner", "forbidden_terms", "handlers_for_tests"]
+known-first-party = ["geo_common", "geo_connectors", "app", "runner", "forbidden_terms", "handlers_for_tests"]

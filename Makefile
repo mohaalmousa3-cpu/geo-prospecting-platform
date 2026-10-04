@@ -7,7 +7,7 @@ lint:
 	uv run ruff check . && uv run ruff format --check .
 
 typecheck:
-	uv run mypy packages/pycommon/src apps/backend/src workers/runner/src
+	uv run mypy packages/pycommon/src apps/backend/src workers/runner/src workers/connectors/src
 
 test:
 	uv run pytest -m "not integration"

@@ -9,6 +9,7 @@ COPY pyproject.toml uv.lock .python-version ./
 COPY packages/pycommon packages/pycommon
 COPY apps/backend apps/backend
 COPY workers/runner workers/runner
+COPY workers/connectors workers/connectors
 RUN --mount=type=secret,id=proxy_ca \
     if [ -s /run/secrets/proxy_ca ]; then export PIP_CERT=/run/secrets/proxy_ca SSL_CERT_FILE=/run/secrets/proxy_ca; fi \
     && pip install --no-cache-dir uv \

@@ -67,6 +67,10 @@ class Settings(BaseSettings):
     NEXT_PUBLIC_BASEMAP_TILE_URL: str = ""
     NEXT_PUBLIC_BASEMAP_ATTRIBUTION: str = ""
 
+    # Data connectors (ADR-0014): `disabled` opens no connector and no network; `fixture` serves committed
+    # synthetic fixtures offline; `live` is accepted but explicitly NOT AVAILABLE in Phase 3a.
+    CONNECTOR_MODE: Literal["disabled", "fixture", "live"] = "disabled"
+
     # Optional connectors / workers: disabled by default (ADR-0004)
     ENABLE_EARTH_ENGINE: bool = False
     ENABLE_INSAR_WORKER: bool = False

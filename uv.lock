@@ -11,6 +11,7 @@ resolution-markers = [
 members = [
     "geo-backend",
     "geo-common",
+    "geo-connectors",
     "geo-prospecting-platform",
     "geo-runner",
 ]
@@ -316,6 +317,17 @@ requires-dist = [
 ]
 
 [[package]]
+name = "geo-connectors"
+version = "0.1.0"
+source = { editable = "workers/connectors" }
+dependencies = [
+    { name = "geo-common" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "geo-common", editable = "packages/pycommon" }]
+
+[[package]]
 name = "geo-prospecting-platform"
 version = "0.0.0"
 source = { virtual = "." }
@@ -325,6 +337,7 @@ dev = [
     { name = "datamodel-code-generator" },
     { name = "geo-backend" },
     { name = "geo-common" },
+    { name = "geo-connectors" },
     { name = "geo-runner" },
     { name = "httpx" },
     { name = "jsonschema" },
@@ -341,6 +354,7 @@ dev = [
     { name = "datamodel-code-generator", specifier = ">=0.25" },
     { name = "geo-backend", editable = "apps/backend" },
     { name = "geo-common", editable = "packages/pycommon" },
+    { name = "geo-connectors", editable = "workers/connectors" },
     { name = "geo-runner", editable = "workers/runner" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "jsonschema", specifier = ">=4.22" },
