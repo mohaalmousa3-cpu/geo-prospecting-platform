@@ -57,6 +57,7 @@ Implemented 2026-10-04 (ADR-0013, `docs/data-model.md`, report + acceptance chec
 - [ ] GitHub Actions green on the final commit, including the new `e2e` job
 
 ## Phase 3 — Remote Sensing Connectors
+**PLAN PROPOSED, NOT STARTED: `docs/phase-3-plan.md` (slices 3a–3f, tasks P3-01…P3-20, owner decisions D1–D12). No implementation before the owner approves the plan and ADR-0014.** Phase 3 stages data inputs only — no analysis, scoring, Earth Engine (blocked) or 3D. Phase 5 region gate unchanged.
 - [ ] Connector interface (inputs, outputs, quotas, caching, provenance)
 - [ ] STAC connector (open catalogues) — Landsat, Sentinel-2, Sentinel-1 metadata/assets
 - [ ] DEM connector (open DEM, e.g. Copernicus/SRTM — final choice via ADR)

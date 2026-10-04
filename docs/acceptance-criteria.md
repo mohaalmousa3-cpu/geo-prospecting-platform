@@ -61,6 +61,7 @@ Evidence and the owner checklist: `docs/phase-reports/phase-2.5.md`. Owner accep
 - [ ] GitHub Actions green on the final Phase 2.5 commit, including the `e2e` job *(pending check at hand-over)*.
 
 ## Phase 3 — Remote sensing connectors
+Detailed, extended criteria (11 items) and slice gates: `docs/phase-3-plan.md` §7 *(proposal; supersedes this list once the plan is approved)*. Summary of the original list:
 - [ ] Connector interface implemented with at least STAC (imagery metadata/assets) and one open DEM source.
 - [ ] Each fetch records provenance (dataset, version, date, licence, URL, checksum).
 - [ ] Caching works (second identical request makes no external call; tested).

@@ -102,6 +102,7 @@ The map basemap is chosen with `NEXT_PUBLIC_BASEMAP_PROVIDER` = `none` (default;
 | [docs/phase-reports/phase-1-closeout.md](docs/phase-reports/phase-1-closeout.md) | Phase 1 closeout: accepted, open risks, deferred |
 | [docs/phase-2-plan.md](docs/phase-2-plan.md) / [phase-2.md](docs/phase-reports/phase-2.md) | Phase 2 plan and evidence |
 | [docs/job-lifecycle.md](docs/job-lifecycle.md) | Job states, guarantees, provisional capacity |
+| [docs/phase-3-plan.md](docs/phase-3-plan.md) | **Proposed** Phase 3 plan (not started) |
 | [docs/third-party-licences.md](docs/third-party-licences.md) | Dependency licence register |
 
 ## Licence

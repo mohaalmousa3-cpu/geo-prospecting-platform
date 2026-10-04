@@ -17,6 +17,7 @@ One file per decision: `NNNN-title.md` with Status, Context, Decision, Consequen
 | [0011](0011-shared-python-package-pycommon.md) | Shared package `packages/pycommon` (contracts/abstractions/utilities only) | Accepted |
 | [0012](0012-aoi-input-and-validation.md) | AOI input, validation and basemap handling (Phase 2) | Accepted within approved Phase 2 scope |
 | [0013](0013-project-entity-and-basemap-provider.md) | Minimal `project` entity; basemap provider abstraction (Phase 2.5) | Accepted within approved scope |
+| [0014](0014-connectors-package-and-data-assets.md) | Connectors package, `data_asset`, job↔project/AOI linkage (Phase 3) | **Proposed** (awaiting owner) |
 
 ## Still undecided (no ADR yet)
 Deployment target, target region(s)/pilot area (required before Phase 5 design — ADR-0003 amendment), reference hardware.
