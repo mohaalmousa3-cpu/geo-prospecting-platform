@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main, "claude/**", "docs/**"]
   pull_request:
 
 concurrency:
@@ -140,13 +140,15 @@ jobs:
       - run: docker compose -f infrastructure/docker/docker-compose.yml --env-file .env build
 
   audit:
-    name: dependency audit (report only)
+    name: dependency audit (locked deps; production findings fail)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv sync --all-packages --frozen && uvx pip-audit --local || true
-      - run: npm audit --omit=dev || true
-        working-directory: apps/frontend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Audits uv.lock (production and all groups) and apps/frontend/package-lock.json (production and full).
+      # Exit 0 = clean (dev-only findings are printed as warnings), 1 = production findings, 2 = scanner/network/input failure.
+      - run: python3 scripts/audit_deps.py

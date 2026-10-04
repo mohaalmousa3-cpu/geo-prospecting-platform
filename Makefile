@@ -49,3 +49,7 @@ ci: lint typecheck test test-integration guard licences frontend-check schemas-c
 
 # everything CI runs, including the browser smoke test
 ci-full: ci e2e
+
+.PHONY: audit
+audit:
+	python3 scripts/audit_deps.py
