@@ -4,9 +4,10 @@ Status: **accepted by the owner with follow-up checks** (2026-10-04). This file 
 **No analysis, scoring, AOI science, remote-sensing or Earth Engine logic exists.** Phase 1 delivered infrastructure only; Phase 2 adds AOI geometry input (still no analysis).
 
 ## 1. Owner decisions at acceptance
+> **Historical summary (corrected 2026-10-05).** This section is Claude's summary of the owner's message of 2026-10-04, not a verbatim transcription. Item 3 below originally dropped the owner's words "for now" and added "unmodified"; it is corrected to the owner's exact decision and its narrower scope. The verbatim text of decision 3 is: *"The listed weak-copyleft/transitive packages are acknowledged for now and do not block Phase 2. Strong copyleft remains blocked."* Scope (see `docs/licence-acknowledgements.toml`, OA-0001): a provisional acknowledgement, by name, of the packages named in the question that preceded it (`certifi`, `pathspec`, `axe-core`, `lightningcss`, `@img/sharp-*` — 18 register entries); effect limited to "did not block Phase 2"; versions are observed evidence, not approved scope; redistribution, licence compliance and licence conditions were not addressed; the 11 `lightningcss-<platform>` packages remain pending; it is not extended to Phase 3 automatically.
 1. **pg8000 stays** as the PostgreSQL driver; switch back to psycopg only for a strong technical reason.
 2. The optional **`proxy_ca` build secret** is acceptable while it stays empty by default and documented (`infrastructure/README.md`, root README). Its empty default file is `infrastructure/docker/no-ca.crt`.
-3. **Weak-copyleft/transitive packages** listed in `docs/third-party-licences.md` (LGPL/MPL, unmodified) are acknowledged and do not block Phase 2. Strong copyleft stays blocked by `scripts/licences.py`.
+3. **Weak-copyleft/transitive packages** named in the owner's question (see the note above) are acknowledged **for now** and do not block Phase 2. Strong copyleft remains blocked (enforced by `scripts/licences.py`).
 
 ## 2. Follow-up checks requested, and their status
 | Follow-up | Status |
