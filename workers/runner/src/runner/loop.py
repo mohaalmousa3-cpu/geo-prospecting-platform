@@ -131,14 +131,17 @@ class Runner:
                     self._q.complete(job_id, self._worker, JobStatus.CANCELLED, "cancelled by request")
                     return
 
-    def _finish_from_child(
-        self, job_id: UUID, proc: Any, conn: Connection, extra: dict[str, str]
-    ) -> None:
+    def _finish_from_child(self, job_id: UUID, proc: Any, conn: Connection, extra: dict[str, str]) -> None:
         try:
             kind, a, b = conn.recv()
         except EOFError:
             proc.join(5)
-            self._q.fail(job_id, self._worker, f"handler process died (exit code {proc.exitcode})", retryable=True)
+            self._q.fail(
+                job_id,
+                self._worker,
+                f"handler process died (exit code {proc.exitcode})",
+                retryable=True,
+            )
             return
         if kind == "ok":
             self._q.complete(job_id, self._worker, JobStatus(a), b)

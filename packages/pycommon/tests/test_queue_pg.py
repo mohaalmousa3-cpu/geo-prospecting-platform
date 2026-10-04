@@ -200,9 +200,7 @@ def test_cancel_running_sets_flag_and_heartbeat_reports_it(queue: PostgresJobQue
     assert queue.cancel(j.id).status is JobStatus.FAILED
 
 
-def test_cancel_requested_job_not_resurrected_after_crash(
-    queue: PostgresJobQueue, engine: Engine
-) -> None:
+def test_cancel_requested_job_not_resurrected_after_crash(queue: PostgresJobQueue, engine: Engine) -> None:
     queue.enqueue("noop")
     j = queue.claim("w", 60)
     assert j is not None

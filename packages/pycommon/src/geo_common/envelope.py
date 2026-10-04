@@ -42,4 +42,5 @@ def serialise_result(candidate: Mapping[str, Any]) -> dict[str, Any]:
     problems = validate_result(candidate)
     if problems:
         raise IncompleteResultError(problems)
-    return json.loads(json.dumps(dict(candidate), default=str))
+    safe: dict[str, Any] = json.loads(json.dumps(dict(candidate), default=str))
+    return safe

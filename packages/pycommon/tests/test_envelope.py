@@ -43,8 +43,17 @@ def test_valid_result_serialises_and_matches_pydantic() -> None:
 @pytest.mark.parametrize(
     "field",
     [
-        "kind", "value", "confidence", "uncertainty", "explanation", "sources", "provenance",
-        "disclaimer_id", "validation_status", "calibration_status", "engine_status",
+        "kind",
+        "value",
+        "confidence",
+        "uncertainty",
+        "explanation",
+        "sources",
+        "provenance",
+        "disclaimer_id",
+        "validation_status",
+        "calibration_status",
+        "engine_status",
     ],
 )
 def test_each_mandatory_field_is_required(field: str) -> None:
@@ -67,8 +76,8 @@ def test_nothing_is_defaulted() -> None:
     [
         (("validation_status",), "validated"),
         (("validation_status",), "confirmed"),
-        (("kind",), "confirmed_gold"),
-        (("kind",), "cave_detected"),
+        (("kind",), "confirmed_gold"),  # forbidden-term-ok
+        (("kind",), "cave_detected"),  # forbidden-term-ok
         (("confidence", "level"), "certain"),
         (("confidence", "basis"), ""),
         (("explanation", "limitations"), []),
@@ -90,7 +99,7 @@ def test_invalid_values_rejected(path: tuple[str, ...], value: Any) -> None:
 
 def test_unknown_fields_rejected() -> None:
     bad = good()
-    bad["gold_found"] = True
+    bad["gold_found"] = True  # forbidden-term-ok
     assert validate_result(bad)
 
 
@@ -102,7 +111,12 @@ def test_depth_gating() -> None:
     assert validate_result(surface)  # basis not allowed
     ok = good()
     ok["disclaimer_id"] = "D-2"
-    ok["depth"] = {"basis": "field_geophysics", "method": "ERT inversion", "value_m": 12, "uncertainty_m": 2}
+    ok["depth"] = {
+        "basis": "field_geophysics",
+        "method": "ERT inversion",
+        "value_m": 12,
+        "uncertainty_m": 2,
+    }
     assert validate_result(ok) == []
     ok["disclaimer_id"] = "D-1"
     assert validate_result(ok)  # depth requires D-2

@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # Database
     POSTGRES_USER: str = "geo"
-    POSTGRES_PASSWORD: str = "change-me"
+    POSTGRES_PASSWORD: str = "change-me"  # noqa: S105 - dev placeholder
     POSTGRES_DB: str = "geo_prospecting"
     POSTGRES_HOST: str = "postgis"
     POSTGRES_PORT: PositiveInt = 5432
@@ -89,7 +89,8 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         return (
-            f"postgresql+psycopg://{quote(self.POSTGRES_USER, safe="")}:{quote(self.POSTGRES_PASSWORD, safe="")}"
+            f"postgresql+psycopg://{quote(self.POSTGRES_USER, safe='')}"
+            f":{quote(self.POSTGRES_PASSWORD, safe='')}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 

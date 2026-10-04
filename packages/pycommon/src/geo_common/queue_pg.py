@@ -1,5 +1,7 @@
 """PostgreSQL-backed JobQueue using FOR UPDATE SKIP LOCKED (ADR-0007)."""
 
+# ruff: noqa: S608  (f-strings interpolate only the module constant _COLS; all values are bound)
+
 from __future__ import annotations
 
 import json
@@ -17,6 +19,7 @@ from geo_common.queue import (
     QueueFullError,
 )
 
+# _COLS is a module constant (never user input), so f-string interpolation below is safe.
 _COLS = (
     "id, type, status, priority, payload, attempts, max_attempts, locked_by, "
     "lease_expires_at, cancel_requested, error, created_at, started_at, finished_at"
@@ -84,7 +87,10 @@ class PostgresJobQueue(JobQueue):
 
     def get(self, job_id: UUID) -> JobRecord:
         with self._engine.connect() as conn:
-            row = conn.execute(text(f"SELECT {_COLS} FROM job WHERE id=:i"), {"i": job_id}).first()
+            row = conn.execute(
+                text(f"SELECT {_COLS} FROM job WHERE id=:i"),
+                {"i": job_id},
+            ).first()
         if row is None:
             raise JobNotFoundError(str(job_id))
         return _record(row)

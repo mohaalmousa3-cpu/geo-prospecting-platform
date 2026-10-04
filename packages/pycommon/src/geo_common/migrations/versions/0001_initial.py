@@ -47,9 +47,7 @@ def upgrade() -> None:
         )
         """
     )
-    op.execute(
-        "CREATE INDEX job_claim_idx ON job (priority DESC, created_at) WHERE status = 'queued'"
-    )
+    op.execute("CREATE INDEX job_claim_idx ON job (priority DESC, created_at) WHERE status = 'queued'")
     op.execute("CREATE INDEX job_lease_idx ON job (lease_expires_at) WHERE status = 'running'")
     op.execute(
         """

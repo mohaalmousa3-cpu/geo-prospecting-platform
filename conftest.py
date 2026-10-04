@@ -5,14 +5,14 @@ import uuid
 from collections.abc import Iterator
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
+from geo_common.config import Settings
 from geo_common.db import make_engine, upgrade_head
 from geo_common.queue_pg import PostgresJobQueue
 
-TEST_URL = os.environ.get(
-    "GEO_TEST_DATABASE_URL", "postgresql+psycopg://geo:geo@localhost:5432/geo_test"
-)
+TEST_URL = os.environ.get("GEO_TEST_DATABASE_URL", "postgresql+psycopg://geo:geo@localhost:5432/geo_test")
 
 
 @pytest.fixture(scope="session")
@@ -45,3 +45,16 @@ def queue(engine: Engine) -> PostgresJobQueue:
 @pytest.fixture
 def worker_id() -> str:
     return f"w-{uuid.uuid4().hex[:6]}"
+
+
+@pytest.fixture
+def settings() -> Settings:
+    return Settings(_env_file=None, MAX_QUEUED_JOBS=3, CORS_ALLOWED_ORIGINS="http://localhost:3000")
+
+
+@pytest.fixture
+def client(engine: Engine, settings: Settings) -> Iterator[TestClient]:
+    from app.main import create_app
+
+    with TestClient(create_app(settings, engine=engine)) as c:
+        yield c

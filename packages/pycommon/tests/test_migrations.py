@@ -1,15 +1,14 @@
 from __future__ import annotations
 
+import os
+
 import pytest
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
 
 from geo_common.db import downgrade_base, upgrade_head
-import os
 
-TEST_URL = os.environ.get(
-    "GEO_TEST_DATABASE_URL", "postgresql+psycopg://geo:geo@localhost:5432/geo_test"
-)
+TEST_URL = os.environ.get("GEO_TEST_DATABASE_URL", "postgresql+psycopg://geo:geo@localhost:5432/geo_test")
 
 pytestmark = pytest.mark.integration
 
@@ -40,4 +39,6 @@ def test_status_constraint(engine: Engine) -> None:
 
 def test_aoi_rejects_wrong_geometry_type(engine: Engine) -> None:
     with pytest.raises(DBAPIError), engine.begin() as c:
-        c.execute(text("INSERT INTO aoi (name, geom, source) VALUES ('p', ST_GeomFromText('POINT(0 0)',4326), 't')"))
+        c.execute(
+            text("INSERT INTO aoi (name, geom, source) VALUES ('p', ST_GeomFromText('POINT(0 0)',4326), 't')")
+        )
