@@ -1,0 +1,95 @@
+# V1: local/private use only, NO authentication (ADR-0005). Ports bind to loopback by default.
+# No Redis (ADR-0007), no MinIO (ADR-0006). Run via `make up` from the repo root (needs ./.env).
+name: geo-prospecting
+
+x-python-env: &python-env
+  env_file: ../../.env
+  environment:
+    POSTGRES_HOST: postgis
+    STORAGE_LOCAL_PATH: /data/processed
+
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-geo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-geo_prospecting}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/python.Dockerfile
+      args: { PACKAGE: geo-backend }
+      secrets: [proxy_ca]
+    <<: *python-env
+    command: ["python", "-m", "geo_common.migrate"]
+    depends_on:
+      postgis: { condition: service_healthy }
+    restart: "no"
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/python.Dockerfile
+      args: { PACKAGE: geo-backend }
+      secrets: [proxy_ca]
+    <<: *python-env
+    command: ["uvicorn", "app.main:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:8000:8000"
+    volumes:
+      - storage:/data/processed
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3).status == 200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/python.Dockerfile
+      args: { PACKAGE: geo-runner }
+      secrets: [proxy_ca]
+    <<: *python-env
+    command: ["python", "-m", "runner"]
+    volumes:
+      - storage:/data/processed
+    stop_grace_period: 30s
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/frontend.Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api/v1}
+      secrets: [proxy_ca]
+    ports:
+      - "${BIND_HOST:-127.0.0.1}:3000:3000"
+    depends_on:
+      backend: { condition: service_healthy }
+    restart: unless-stopped
+
+secrets:
+  # Build-time only. Defaults to an empty file; set PROXY_CA_BUNDLE for TLS-intercepting proxies.
+  proxy_ca:
+    file: ${PROXY_CA_BUNDLE:-./no-ca.pem}
+
+volumes:
+  pgdata:
+  storage:

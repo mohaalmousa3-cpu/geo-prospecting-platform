@@ -12,7 +12,7 @@ from geo_common.config import Settings
 from geo_common.db import make_engine, upgrade_head
 from geo_common.queue_pg import PostgresJobQueue
 
-TEST_URL = os.environ.get("GEO_TEST_DATABASE_URL", "postgresql+psycopg://geo:geo@localhost:5432/geo_test")
+TEST_URL = os.environ.get("GEO_TEST_DATABASE_URL", "postgresql+pg8000://geo:geo@localhost:5432/geo_test")
 
 
 @pytest.fixture(scope="session")

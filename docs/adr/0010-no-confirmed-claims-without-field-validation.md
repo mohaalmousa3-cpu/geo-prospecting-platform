@@ -22,4 +22,3 @@
 - Matches the Phase 0 rule and removes any ambiguity about geophysics.
 - User-supplied "ground truth" (e.g. known occurrences) is used only as evidence/validation input to engines and is labelled user-supplied; it does not flip a target to validated.
 - Safety: no entry/excavation guidance is ever provided.
-

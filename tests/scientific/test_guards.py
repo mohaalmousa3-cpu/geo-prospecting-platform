@@ -151,7 +151,7 @@ def test_compose_has_no_forbidden_services_and_binds_loopback() -> None:
     assert not re.search(r"^\s{2}(redis|valkey|minio):", text, re.M)
     for m in re.finditer(r'^\s*-\s*"([^"]+:\d+:\d+)"', text, re.M):
         assert m.group(1).startswith("${BIND_HOST:-127.0.0.1}:"), m.group(1)
-    assert "0.0.0.0" not in text  # noqa: S104
+    assert not re.search(r"0\.0\.0\.0:\d+:\d+", text)  # never publish on all interfaces
 
 
 def test_no_authentication_code_in_backend() -> None:

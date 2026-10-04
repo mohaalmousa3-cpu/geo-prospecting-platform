@@ -8,7 +8,7 @@ from sqlalchemy.exc import DBAPIError
 
 from geo_common.db import downgrade_base, upgrade_head
 
-TEST_URL = os.environ.get("GEO_TEST_DATABASE_URL", "postgresql+psycopg://geo:geo@localhost:5432/geo_test")
+TEST_URL = os.environ.get("GEO_TEST_DATABASE_URL", "postgresql+pg8000://geo:geo@localhost:5432/geo_test")
 
 pytestmark = pytest.mark.integration
 

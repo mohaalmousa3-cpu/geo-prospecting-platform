@@ -1,0 +1,103 @@
+name: ci
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  POSTGRES_PASSWORD: ci-only-password
+  GEO_TEST_DATABASE_URL: postgresql+pg8000://geo:geo@localhost:5432/geo_test
+
+jobs:
+  python:
+    name: python (lint, types, unit, integration, guards)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: geo
+          POSTGRES_PASSWORD: geo
+          POSTGRES_DB: geo_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U geo -d geo_test" --health-interval 5s
+          --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-packages --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy packages/pycommon/src apps/backend/src workers/runner/src
+      - name: Unit tests (no database)
+        run: uv run pytest -m "not integration"
+      - name: Integration tests (queue concurrency, lease, retry, recovery; API; worker)
+        run: uv run pytest -m integration
+      - name: Scientific guards
+        run: uv run pytest tests/scientific
+      - name: Third-party licence register
+        run: uv run python scripts/licences.py
+
+  frontend:
+    name: frontend (lint, types, test, build, schema drift)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+      - run: npm ci
+        working-directory: apps/frontend
+      - run: npm run lint && npm run typecheck && npm run format:check && npm test && npm run build
+        working-directory: apps/frontend
+      - name: Generated schema types must match packages/schemas
+        run: uv sync --all-packages --frozen && make schemas-check
+
+  secrets:
+    name: secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source /repo --no-banner --redact
+
+  docker-build:
+    name: docker build smoke (no push)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - run: docker compose -f infrastructure/docker/docker-compose.yml --env-file .env build
+
+  audit:
+    name: dependency audit (report only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --all-packages --frozen && uvx pip-audit --local || true
+      - run: npm audit --omit=dev || true
+        working-directory: apps/frontend

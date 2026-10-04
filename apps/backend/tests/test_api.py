@@ -28,7 +28,7 @@ def test_ready_ok(client: TestClient) -> None:
 
 
 def test_ready_fails_when_db_down(settings: Settings) -> None:
-    dead = create_engine("postgresql+psycopg://x:y@127.0.0.1:1/none", connect_args={"connect_timeout": 1})
+    dead = create_engine("postgresql+pg8000://x:y@127.0.0.1:1/none", connect_args={"timeout": 1})
     with TestClient(create_app(settings, engine=dead)) as c:
         r = c.get("/api/v1/health/ready")
     assert r.status_code == 503 and r.json()["status"] == "unavailable"

@@ -32,3 +32,12 @@ down:
 
 migrate:
 	uv run python -m geo_common.migrate
+
+.PHONY: licences frontend-check ci
+licences:
+	uv run python scripts/licences.py
+
+frontend-check:
+	cd apps/frontend && npm run lint && npm run typecheck && npm run format:check && npm test && npm run build
+
+ci: lint typecheck test test-integration guard licences frontend-check schemas-check

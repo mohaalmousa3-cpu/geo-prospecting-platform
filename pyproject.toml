@@ -40,6 +40,7 @@ ignore = ["S101"]
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S", "B"]
 "tests/**" = ["S", "B"]
+"scripts/licences.py" = ["E501"]  # long lines are generated markdown
 
 [tool.mypy]
 python_version = "3.12"

@@ -2,7 +2,7 @@
 
 A scientific web platform for **prospectivity and anomaly screening** from remote-sensing, geological, terrain and thermal data — for gold-related targets, cavity/void-related targets and thermal anomalies — with explicit confidence and uncertainty.
 
-> **Status: Phase 0 — foundation only.** No application code or scientific engines exist yet. This repository currently contains governance, specification and scaffolding.
+> **Status: Phase 1 (foundation) — implemented, awaiting owner acceptance.** Infrastructure, API skeleton, queue/worker, shared contracts and CI exist. **No scientific engine or scientific output exists yet.**
 
 ## ⚠️ Scientific disclaimer
 
@@ -28,9 +28,11 @@ apps/
   frontend/        Next.js app (Phase 1+)
   backend/         FastAPI app (Phase 1+)
 workers/           Background engines, one isolated module/image each
-  thermal/ gold_prospectivity/ void_evidence/ geophysics/ insar/
+  runner/          Generic worker loop + noop handler
+  thermal/ gold_prospectivity/ void_evidence/ geophysics/ insar/   (placeholders; not implemented)
 packages/
-  schemas/         Shared JSON Schema / OpenAPI contracts (source of truth)
+  schemas/         Shared JSON Schema contracts (source of truth)
+  pycommon/        geo_common: shared config, JobQueue/StorageBackend, envelope guard, migrations (ADR-0011; no analysis logic)
 docs/              Architecture, science constraints, risks, ADRs
 infrastructure/    Docker, CI, deployment config
 data/              Local data only (git-ignored contents); samples/ for tiny fixtures
@@ -47,6 +49,36 @@ tests/             unit/ integration/ scientific/
 5. **Tested.** Including scientific guard tests that forbid unsupported claims.
 6. **No secrets in the repo.** Use `.env` (ignored); see `.env.example`.
 
+## Development quick start (Phase 1)
+
+> **V1 has no authentication.** Run locally only. Compose publishes ports on `127.0.0.1`; never expose them publicly ([ADR-0005](docs/adr/0005-no-authentication-v1.md)).
+
+Prerequisites: Docker with Compose, [`uv`](https://docs.astral.sh/uv/), Node 22 + npm.
+
+```bash
+cp .env.example .env              # then set POSTGRES_PASSWORD (placeholder values only; .env is git-ignored)
+make up                           # postgis + migrate + backend + worker + frontend
+curl http://127.0.0.1:8000/api/v1/health/ready
+# frontend: http://127.0.0.1:3000   API docs: http://127.0.0.1:8000/docs
+make down
+```
+
+Behind a TLS-intercepting proxy, set `PROXY_CA_BUNDLE=/path/to/ca.pem` before `make up` (build-time only).
+
+Local checks (all of CI): `make sync && make ci`. Integration tests need PostGIS reachable at `GEO_TEST_DATABASE_URL`
+(default `postgresql+pg8000://geo:geo@localhost:5432/geo_test`; the database and the `postgis` extension must be creatable by that user).
+
+| Command | What |
+|---|---|
+| `make lint` / `make typecheck` | ruff, mypy |
+| `make test` / `make test-integration` | unit tests / PostGIS-backed tests (queue concurrency, lease, retry, recovery, API, worker) |
+| `make guard` | scientific guard tests (forbidden claims, envelope, repo policy) |
+| `make schemas` / `make schemas-check` | regenerate / verify generated types from `packages/schemas` |
+| `make licences` | verify the third-party licence register |
+| `make frontend-check` | lint, typecheck, format, tests, build |
+
+Phase 1 contains **no scientific engine and no scientific output**: only health checks, a `noop` job, the queue/worker, shared contracts and guard tests. Status and evidence: [`docs/phase-reports/phase-1.md`](docs/phase-reports/phase-1.md).
+
 ## Key documents
 
 | Document | Purpose |
@@ -60,8 +92,10 @@ tests/             unit/ integration/ scientific/
 | [docs/data-sources.md](docs/data-sources.md) | Candidate data sources |
 | [docs/acceptance-criteria.md](docs/acceptance-criteria.md) | Per-phase acceptance |
 | [docs/risk-register.md](docs/risk-register.md) | Risks and mitigations |
-| [docs/adr/](docs/adr/README.md) | Accepted decisions (ADR-0001…0010) |
-| [docs/phase-1-plan.md](docs/phase-1-plan.md) | Actionable Phase 1 plan |
+| [docs/adr/](docs/adr/README.md) | Accepted decisions (ADR-0001…0011) |
+| [docs/phase-1-plan.md](docs/phase-1-plan.md) | Phase 1 plan |
+| [docs/phase-reports/phase-1.md](docs/phase-reports/phase-1.md) | Phase 1 evidence and deviations |
+| [docs/third-party-licences.md](docs/third-party-licences.md) | Dependency licence register |
 
 ## Licence
 
@@ -75,8 +109,8 @@ tests/             unit/ integration/ scientific/
 | Earth Engine | Optional, off by default, experimental/non-commercial only | [0004](docs/adr/0004-earth-engine-experimental-noncommercial.md) |
 | Authentication | None — **local/private use only; never expose publicly** | [0005](docs/adr/0005-no-authentication-v1.md) |
 | Storage | Local filesystem | [0006](docs/adr/0006-local-storage-no-minio.md) |
-| Queue | PostgreSQL-backed | [0007](docs/adr/0007-postgres-backed-job-queue.md) |
+| Queue | PostgreSQL-backed (`JobQueue` interface) | [0007](docs/adr/0007-postgres-backed-job-queue.md) |
 | Limits | AOI ≤ 25 km², ≤ 20 scenes, 30 min jobs (unmeasured starting values) | [0008](docs/adr/0008-conservative-mvp-aoi-limits.md) |
 | Science language | Strict naming; confidence + uncertainty mandatory; nothing "confirmed" without field validation | [0009](docs/adr/0009-scientific-naming-confidence-uncertainty.md), [0010](docs/adr/0010-no-confirmed-claims-without-field-validation.md) |
 
-Next step: [`docs/phase-1-plan.md`](docs/phase-1-plan.md) (awaiting approval; no application code exists yet).
+Phase 1 plan: [`docs/phase-1-plan.md`](docs/phase-1-plan.md); evidence: [`docs/phase-reports/phase-1.md`](docs/phase-reports/phase-1.md).
