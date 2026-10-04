@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Engine
 
 from app.api import aois, health, jobs, projects
+from app.cors import ALLOWED_HEADERS, EXPOSED_HEADERS, PREFLIGHT_MAX_AGE_SECONDS, declared_methods
 from app.errors import install_error_handlers
 from app.middleware import BodySizeLimitMiddleware, RequestIdMiddleware
 from geo_common.config import Settings, get_settings
@@ -64,19 +65,22 @@ def create_app(
     app.state.settings = s
 
     install_error_handlers(app)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=s.cors_origins,
-        allow_methods=["GET", "POST", "DELETE"],
-        allow_headers=["Content-Type", "X-Request-ID"],
-        expose_headers=["X-Request-ID"],
-    )
-    app.add_middleware(BodySizeLimitMiddleware, max_bytes=s.max_request_bytes)
-    app.add_middleware(RequestIdMiddleware)
+    # Routers first: the CORS method list is derived from the routes that actually exist.
     app.include_router(health.router, prefix=API_PREFIX)
     app.include_router(jobs.router, prefix=API_PREFIX)
     app.include_router(projects.router, prefix=API_PREFIX)
     app.include_router(aois.router, prefix=API_PREFIX)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=s.cors_origins,
+        allow_methods=declared_methods(app),
+        allow_headers=ALLOWED_HEADERS,
+        expose_headers=EXPOSED_HEADERS,
+        allow_credentials=False,
+        max_age=PREFLIGHT_MAX_AGE_SECONDS,
+    )
+    app.add_middleware(BodySizeLimitMiddleware, max_bytes=s.max_request_bytes)
+    app.add_middleware(RequestIdMiddleware)
     return app
 
 

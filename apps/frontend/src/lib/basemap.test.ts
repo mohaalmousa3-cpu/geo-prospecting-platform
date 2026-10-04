@@ -3,16 +3,46 @@ import { describe, expect, it } from "vitest";
 import { resolveBasemap } from "./basemap";
 
 describe("resolveBasemap", () => {
-  it("defaults to OpenStreetMap, flagged development-only, with attribution", () => {
-    for (const env of [{}, { provider: "" }, { provider: " OSM " }]) {
+  it("defaults to no basemap, silently, when nothing is configured", () => {
+    for (const env of [
+      {},
+      { provider: "" },
+      { provider: "  " },
+      { nodeEnv: "development" },
+      { nodeEnv: "production" },
+    ]) {
       const b = resolveBasemap(env);
+      expect(b).toMatchObject({ provider: "none", tiles: null, devOnly: false });
+      expect(b.warning).toBeUndefined();
+    }
+  });
+
+  it("osm is opt-in and works outside production builds, flagged development-only", () => {
+    for (const nodeEnv of ["development", "test", undefined]) {
+      const b = resolveBasemap({ provider: " OSM ", nodeEnv });
       expect(b).toMatchObject({
         provider: "osm",
         devOnly: true,
         attribution: "© OpenStreetMap contributors",
       });
       expect(b.tiles).toBe("https://tile.openstreetmap.org/{z}/{x}/{y}.png");
+      expect(b.warning).toBeUndefined();
     }
+  });
+
+  it("osm is refused in production builds with a visible warning", () => {
+    const b = resolveBasemap({ provider: "osm", nodeEnv: "production" });
+    expect(b).toMatchObject({ provider: "none", tiles: null });
+    expect(b.warning).toMatch(/local development only/);
+    expect(b.warning).toMatch(/xyz/);
+  });
+
+  it("a tile URL without an explicit provider is ignored (no implicit xyz)", () => {
+    const b = resolveBasemap({
+      tileUrl: "https://tiles.example/{z}/{x}/{y}.png",
+      attribution: "© Example",
+    });
+    expect(b).toMatchObject({ provider: "none", tiles: null });
   });
 
   it("none makes no tile requests", () => {

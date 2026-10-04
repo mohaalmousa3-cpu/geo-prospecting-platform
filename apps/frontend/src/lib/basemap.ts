@@ -1,9 +1,13 @@
 /**
- * Basemap provider abstraction (ADR-0013). The map never hard-codes a tile server: it asks
- * `resolveBasemap` which provider is configured. Adding a provider = one new case here.
+ * Basemap provider abstraction (ADR-0013; default changed to "none" in the Phase 2.5 follow-ups).
+ * The map never hard-codes a tile server: it asks `resolveBasemap` which provider is configured.
+ *
+ * - Default (unset/empty) is "none": no third-party requests.
+ * - "osm" is opt-in and honoured only outside production builds (local `next dev` / tests).
+ * - "xyz" needs an explicit provider choice, an https URL ({z}/{x}/{y}) and an attribution.
+ * - Any invalid configuration falls back to "none" with a visible warning.
  *
  * Privacy: tile requests reveal the viewed map area (not the AOI geometry) to the provider.
- * "none" makes no third-party requests.
  */
 export type BasemapProviderId = "osm" | "xyz" | "none";
 
@@ -25,6 +29,8 @@ export interface BasemapEnv {
   provider?: string;
   tileUrl?: string;
   attribution?: string;
+  /** NODE_ENV of the build. "production" disables the development-only osm provider. */
+  nodeEnv?: string;
 }
 
 const OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -40,9 +46,16 @@ const NONE: Basemap = {
 const isLocalHttp = (u: string) => /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(u);
 
 export function resolveBasemap(env: BasemapEnv): Basemap {
-  const provider = (env.provider ?? "").trim().toLowerCase() || "osm";
+  const provider = (env.provider ?? "").trim().toLowerCase() || "none";
   if (provider === "none") return NONE;
   if (provider === "osm") {
+    if (env.nodeEnv === "production")
+      return {
+        ...NONE,
+        warning:
+          "OpenStreetMap tiles are opt-in for local development only (next dev) and are disabled in production builds; " +
+          "showing no basemap. Use provider xyz with a tile server you are licensed to use.",
+      };
     return {
       provider: "osm",
       tiles: OSM_TILES,
@@ -83,6 +96,7 @@ export function resolveBasemap(env: BasemapEnv): Basemap {
 /** Reads the build-time env (Next inlines literal `process.env.NEXT_PUBLIC_*` accesses). */
 export function basemapFromEnv(): Basemap {
   return resolveBasemap({
+    nodeEnv: process.env.NODE_ENV,
     provider: process.env.NEXT_PUBLIC_BASEMAP_PROVIDER,
     tileUrl: process.env.NEXT_PUBLIC_BASEMAP_TILE_URL,
     attribution: process.env.NEXT_PUBLIC_BASEMAP_ATTRIBUTION,

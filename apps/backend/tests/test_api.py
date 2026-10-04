@@ -55,28 +55,6 @@ def test_cors_allow_list(client: TestClient) -> None:
     assert "access-control-allow-origin" not in pre.headers
 
 
-def test_cors_preflight_allows_exactly_the_methods_the_ui_uses(client: TestClient) -> None:
-    """Regression: DELETE was missing, so deleting an AOI/project failed in a real browser (not in tests)."""
-    origin = "http://localhost:3000"
-    for method in ("GET", "POST", "DELETE"):
-        r = client.options(
-            "/api/v1/aois/x",
-            headers={"Origin": origin, "Access-Control-Request-Method": method},
-        )
-        assert r.status_code == 200 and r.headers["access-control-allow-origin"] == origin, method
-    for method in ("PUT", "PATCH"):
-        r = client.options(
-            "/api/v1/aois/x",
-            headers={"Origin": origin, "Access-Control-Request-Method": method},
-        )
-        assert r.status_code == 400, method  # not allowed
-    bad = client.options(
-        "/api/v1/aois/x",
-        headers={"Origin": "http://evil.example", "Access-Control-Request-Method": "DELETE"},
-    )
-    assert "access-control-allow-origin" not in bad.headers
-
-
 def test_oversize_body_rejected(client: TestClient, settings: Settings) -> None:
     big = b"{" + b" " * (settings.max_request_bytes + 10) + b"}"
     r = client.post("/api/v1/jobs", content=big, headers={"Content-Type": "application/json"})

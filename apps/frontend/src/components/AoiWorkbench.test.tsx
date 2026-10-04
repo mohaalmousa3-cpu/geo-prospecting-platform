@@ -94,6 +94,7 @@ const base = (extra: Record<string, Route> = {}) => ({
 
 beforeEach(() => vi.spyOn(window, "confirm").mockReturnValue(true));
 afterEach(() => {
+  vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -394,11 +395,30 @@ describe("AoiWorkbench", () => {
     expect(calls.some((c) => c.init?.method === "DELETE")).toBe(false);
   });
 
-  it("names the basemap provider and its privacy implication", async () => {
+  it("shows no basemap by default and makes no third-party tile claim", async () => {
+    mockApi(base());
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    const note = await screen.findByTestId("basemap-note");
+    expect(note).toHaveTextContent("Basemap: No basemap.");
+    expect(note).not.toHaveTextContent(/reveal the viewed map area/);
+  });
+
+  it("names the provider and the privacy implication when osm is opted in (development)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BASEMAP_PROVIDER", "osm");
     mockApi(base());
     render(<AoiWorkbench MapComponent={MapStub} />);
     const note = await screen.findByTestId("basemap-note");
     expect(note).toHaveTextContent(/OpenStreetMap \(development use only\)/);
     expect(note).toHaveTextContent(/reveal the viewed map area \(not the AOI\)/);
+  });
+
+  it("shows a visible warning when osm is requested in a production build", async () => {
+    vi.stubEnv("NEXT_PUBLIC_BASEMAP_PROVIDER", "osm");
+    vi.stubEnv("NODE_ENV", "production");
+    mockApi(base());
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    const note = await screen.findByTestId("basemap-note");
+    expect(note).toHaveTextContent("Basemap: No basemap.");
+    expect(note).toHaveTextContent(/local development only/);
   });
 });

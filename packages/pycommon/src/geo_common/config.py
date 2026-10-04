@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     # Frontend-facing (read by Next.js; mirrored here only so config stays in one list)
     NEXT_PUBLIC_API_BASE_URL: str = "http://localhost:8000/api/v1"
     NEXT_PUBLIC_CESIUM_ION_TOKEN: str = ""
-    NEXT_PUBLIC_BASEMAP_PROVIDER: Literal["osm", "xyz", "none"] = "osm"
+    NEXT_PUBLIC_BASEMAP_PROVIDER: Literal["osm", "xyz", "none"] = "none"
     NEXT_PUBLIC_BASEMAP_TILE_URL: str = ""
     NEXT_PUBLIC_BASEMAP_ATTRIBUTION: str = ""
 
