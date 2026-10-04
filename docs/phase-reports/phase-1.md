@@ -1,6 +1,6 @@
 # Phase 1 Report — Repo/App Foundation
 
-Status: **implemented; awaiting owner acceptance** (CLAUDE.md §2: a phase is complete only after the owner confirms).
+Status: **accepted by the owner with follow-up checks (2026-10-04)** — see `docs/phase-reports/phase-1-closeout.md`. CI note: this report says GitHub Actions had not run; runs #1–#2 later failed on two defects and run #3 passed (closeout §2).
 Date: 2026-10-04 · Branch: `claude/geo-prospecting-foundation-hmcma4`
 
 ## 1. Scope delivered

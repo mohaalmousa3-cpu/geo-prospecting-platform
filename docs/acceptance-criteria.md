@@ -38,12 +38,13 @@ Evidence: `docs/phase-reports/phase-1.md`. Owner acceptance still required.
 
 
 ## Phase 2 — AOI input and map basics
-- [ ] Coordinates+radius produce a geodesically correct polygon (tested against reference values).
-- [ ] Draw rectangle/polygon on map; AOI saved and reloaded.
-- [ ] Upload of GeoJSON, KML, KMZ, zipped Shapefile accepted; invalid/hostile files rejected with clear errors (zip-bomb, path traversal, bad CRS, empty, self-intersecting, oversize).
-- [ ] AOI normalised to EPSG:4326 + working UTM CRS; ADR-0008 limits enforced server-side and configurable, with boundary tests at, just below and just above each limit (area 25 km², radius 2.5 km, min 0.01 km², vertices, upload size, archive size/file count).
-- [ ] Antimeridian/polar edge cases handled or explicitly rejected.
-- [ ] No analysis results shown in this phase.
+Evidence: `docs/phase-reports/phase-2.md`. Owner acceptance still required.
+- [x] Coordinates+radius produce a geodesically correct polygon (tested against reference values).
+- [x] Draw rectangle/polygon on map; AOI saved and reloaded.
+- [x] Upload of GeoJSON, KML, KMZ, zipped Shapefile accepted; invalid/hostile files rejected with clear errors (zip-bomb, path traversal, bad CRS, empty, self-intersecting, oversize).
+- [ ] AOI normalised to EPSG:4326 + working UTM CRS; ADR-0008 limits enforced server-side and configurable, with boundary tests at, just below and just above each limit (area 25 km², radius 2.5 km, min 0.01 km², vertices, upload size, archive size/file count).  *(Implemented; boundary tests at/just-below/just-above exist for area, min area, radius and vertices. Upload size and archive size/count have rejection tests only above the limit, not at/just below — hence not ticked.)*
+- [x] Antimeridian/polar edge cases handled or explicitly rejected.
+- [x] No analysis results shown in this phase.
 
 ## Phase 3 — Remote sensing connectors
 - [ ] Connector interface implemented with at least STAC (imagery metadata/assets) and one open DEM source.

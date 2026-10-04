@@ -53,6 +53,10 @@ V1 constraints: no authentication (ADR-0005), local storage (ADR-0006), PostgreS
 - JSON Schema / OpenAPI is the source of truth; Pydantic and TS types generated.
 - Core schemas: `AOI`, `Job`, `Target`, `ResultEnvelope`, `Provenance`, `Evidence`, `Disclaimer`.
 
+## 2a. AOI handling (Phase 2, ADR-0012)
+
+`apps/backend/src/app/aoi/`: `geometry.py` (construction, validation, geodesic area, UTM zone), `parsers.py` + `archive.py` (GeoJSON / KML / KMZ / zipped Shapefile, in-memory, hardened), `service.py` (request/upload → normalised draft), `repository.py` (PostGIS persistence). Endpoints under `/api/v1/aois`: `limits`, `preview` (validate without saving), `POST` (create), `upload` (multipart, `?preview=true`), `GET` list/detail, `DELETE`. Contracts (`Aoi`, `AoiDraft`, `AoiSummary`, `AoiList`, `AoiLimits`, request types) live in `packages/schemas`. An AOI is a validated outline plus bookkeeping; it is not a scientific result and carries no envelope fields. The frontend (`AoiWorkbench`, `MapView` on MapLibre) draws sketches and overlays only; numeric forms are the accessible alternative to drawing.
+
 ## 3. Result envelope (mandatory)
 
 Every layer/target returned by the API includes:

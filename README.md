@@ -2,7 +2,7 @@
 
 A scientific web platform for **prospectivity and anomaly screening** from remote-sensing, geological, terrain and thermal data — for gold-related targets, cavity/void-related targets and thermal anomalies — with explicit confidence and uncertainty.
 
-> **Status: Phase 1 (foundation) — implemented, awaiting owner acceptance.** Infrastructure, API skeleton, queue/worker, shared contracts and CI exist. **No scientific engine or scientific output exists yet.**
+> **Status: Phase 1 accepted (with follow-ups); Phase 2 (AOI input and 2D map) implemented, awaiting acceptance.** The platform can define, validate, store and display an Area of Interest. **No analysis, scoring, remote-sensing, Earth Engine or scientific output exists yet.**
 
 ## ⚠️ Scientific disclaimer
 
@@ -77,7 +77,9 @@ Local checks (all of CI): `make sync && make ci`. Integration tests need PostGIS
 | `make licences` | verify the third-party licence register |
 | `make frontend-check` | lint, typecheck, format, tests, build |
 
-Phase 1 contains **no scientific engine and no scientific output**: only health checks, a `noop` job, the queue/worker, shared contracts and guard tests. Status and evidence: [`docs/phase-reports/phase-1.md`](docs/phase-reports/phase-1.md).
+The app contains **no scientific engine and no scientific output**: health checks, a `noop` job, the queue/worker, shared contracts, AOI input/validation/storage with a 2D map, and guard tests. Evidence: [`phase-1.md`](docs/phase-reports/phase-1.md), [`phase-1-closeout.md`](docs/phase-reports/phase-1-closeout.md), [`phase-2.md`](docs/phase-reports/phase-2.md). Job states and queue capacity assumptions: [`docs/job-lifecycle.md`](docs/job-lifecycle.md).
+
+The map basemap defaults to OpenStreetMap tiles for low-volume development; tile requests reveal the viewed map area to the tile provider (never the AOI geometry). Set `NEXT_PUBLIC_BASEMAP_TILE_URL=` (empty) for no basemap (ADR-0012).
 
 ## Key documents
 
@@ -92,9 +94,12 @@ Phase 1 contains **no scientific engine and no scientific output**: only health 
 | [docs/data-sources.md](docs/data-sources.md) | Candidate data sources |
 | [docs/acceptance-criteria.md](docs/acceptance-criteria.md) | Per-phase acceptance |
 | [docs/risk-register.md](docs/risk-register.md) | Risks and mitigations |
-| [docs/adr/](docs/adr/README.md) | Accepted decisions (ADR-0001…0011) |
+| [docs/adr/](docs/adr/README.md) | Accepted decisions (ADR-0001…0012) |
 | [docs/phase-1-plan.md](docs/phase-1-plan.md) | Phase 1 plan |
 | [docs/phase-reports/phase-1.md](docs/phase-reports/phase-1.md) | Phase 1 evidence and deviations |
+| [docs/phase-reports/phase-1-closeout.md](docs/phase-reports/phase-1-closeout.md) | Phase 1 closeout: accepted, open risks, deferred |
+| [docs/phase-2-plan.md](docs/phase-2-plan.md) / [phase-2.md](docs/phase-reports/phase-2.md) | Phase 2 plan and evidence |
+| [docs/job-lifecycle.md](docs/job-lifecycle.md) | Job states, guarantees, provisional capacity |
 | [docs/third-party-licences.md](docs/third-party-licences.md) | Dependency licence register |
 
 ## Licence

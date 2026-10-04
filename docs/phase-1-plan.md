@@ -1,6 +1,6 @@
 # Phase 1 Plan — Repo/App Foundation
 
-Status: **APPROVED (2026-10-04) — in implementation.** T8 approved and recorded as ADR-0011. Implementation notes and deviations are listed in `docs/phase-reports/phase-1.md`.
+Status: **IMPLEMENTED and accepted with follow-ups (2026-10-04); see `docs/phase-reports/phase-1-closeout.md`.** T8 approved and recorded as ADR-0011. Implementation notes and deviations are listed in `docs/phase-reports/phase-1.md`.
 Governing decisions: ADR-0001…0010 (`docs/adr/`). Acceptance: `docs/acceptance-criteria.md` → Phase 1.
 
 ## 1. Goal and boundaries

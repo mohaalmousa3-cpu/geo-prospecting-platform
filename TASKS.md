@@ -3,7 +3,7 @@
 Legend: `[ ]` todo · `[x]` done and verified · Only the **current phase** may be worked on (see `CLAUDE.md`).
 Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 
-**Current phase: 1 — implemented, awaiting owner acceptance (see `docs/phase-reports/phase-1.md`).** Owner decisions of 2026-10-04 are recorded as ADR-0001…0010 (`docs/adr/`). The detailed Phase 1 plan is `docs/phase-1-plan.md`; no application code before it is approved.
+**Current phase: 2 — implemented, awaiting owner acceptance (`docs/phase-reports/phase-2.md`). Phase 1 accepted with follow-ups (`docs/phase-reports/phase-1-closeout.md`).** Owner decisions are recorded as ADRs (`docs/adr/`, 0001…0012). Not started and not allowed yet: Earth Engine, thermal/gold/void scoring, remote-sensing analysis, 3D rendering, any scientific inference layer.
 
 ---
 
@@ -32,14 +32,16 @@ Implemented 2026-10-04; evidence and deviations in `docs/phase-reports/phase-1.m
 - [x] `LICENSE` stays rights-reserved placeholder (ADR-0002)
 
 ## Phase 2 — AOI Input and Map Basics
-- [ ] AOI model + API: create/get/list/delete
-- [ ] Coordinates + radius → polygon (geodesically correct)
-- [ ] Geometry validation, CRS normalisation, area limits, simplification
-- [ ] Upload parsers: GeoJSON, KML, KMZ, zipped Shapefile (with hardened extraction)
-- [ ] MapLibre 2D map: base map, draw rectangle/polygon, edit, display uploaded AOI
-- [ ] Coordinate/radius input form
-- [ ] AOI persistence and reload
-- [ ] Tests: malformed/hostile uploads, antimeridian, self-intersections, huge AOIs
+Implemented 2026-10-04 (plan: `docs/phase-2-plan.md`, ADR-0012, evidence: `docs/phase-reports/phase-2.md`). **Awaiting owner acceptance.** Still no analysis of any kind.
+- [ ] GitHub Actions run green on the Phase 2 commits (check after push)
+- [x] AOI model + API: preview/create/upload/list/get/delete/limits
+- [x] Coordinates + radius → polygon (geodesically correct)
+- [x] Geometry validation, CRS normalisation (EPSG:4326 + working UTM), area limits. *Simplification not done: over-limit inputs are rejected, not simplified.*
+- [x] Upload parsers: GeoJSON, KML, KMZ, zipped Shapefile (in-memory, hardened)
+- [x] MapLibre 2D map: base map, draw rectangle/polygon/centre, display saved & uploaded AOI. *Vertex editing deferred (redraw instead, ADR-0012).*
+- [x] Coordinate/radius input form (and rectangle/polygon numeric forms)
+- [x] AOI persistence and reload
+- [x] Tests: malformed/hostile uploads, antimeridian, self-intersections, huge AOIs
 
 ## Phase 3 — Remote Sensing Connectors
 - [ ] Connector interface (inputs, outputs, quotas, caching, provenance)
