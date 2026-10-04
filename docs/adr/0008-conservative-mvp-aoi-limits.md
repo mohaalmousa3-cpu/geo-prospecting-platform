@@ -17,6 +17,7 @@ Default limits (all configurable by environment variable, **enforced server-side
 | `MIN_AOI_AREA_KM2` | 0.01 | ≈ one 100 m × 100 m Landsat thermal pixel; smaller AOIs give meaningless thermal results |
 | `MAX_AOI_VERTICES` | 2000 | bounds geometry-processing cost |
 | `MAX_UPLOAD_MB` | 10 | |
+| `MAX_PROJECTS` | 20 | bounds local storage (added in Phase 2.5, ADR-0013) |
 | `MAX_STORED_AOIS` | 100 | bounds local storage (added in Phase 2, ADR-0012) |
 | `MAX_ARCHIVE_UNCOMPRESSED_MB` | 50 | zip-bomb guard (KMZ / zipped Shapefile) |
 | `MAX_ARCHIVE_FILES` | 50 | zip-bomb guard |

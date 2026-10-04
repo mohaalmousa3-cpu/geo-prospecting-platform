@@ -22,6 +22,7 @@ export type LonLat = [number, number];
  * @maxItems 4
  */
 export type Bbox = [number, number, number, number];
+export type ProjectName = string;
 
 /**
  * Shared contracts (ADR-0009, ADR-0010, ADR-0011). Single source of truth; Pydantic and TypeScript types are generated from this file.
@@ -36,6 +37,9 @@ export interface GeoContracts {
   aoi_point_radius_request?: AoiPointRadiusRequest;
   aoi_rectangle_request?: AoiRectangleRequest;
   aoi_polygon_request?: AoiPolygonRequest;
+  project?: Project;
+  project_list?: ProjectList;
+  project_create_request?: ProjectCreateRequest;
 }
 export interface Job {
   id: string;
@@ -141,6 +145,7 @@ export interface Aoi {
   details: {};
   warnings: string[];
   created_at: string;
+  project_id: string;
 }
 export interface GeoJsonPolygon {
   type: "Polygon";
@@ -170,6 +175,7 @@ export interface AoiSummary {
   bbox: Bbox;
   area_km2: number;
   created_at: string;
+  project_id: string;
 }
 /**
  * Provisional operational safeguards (ADR-0008), not scientific thresholds.
@@ -183,6 +189,7 @@ export interface AoiLimits {
   max_stored_aois: number;
   max_abs_latitude: number;
   supported_upload_formats: string[];
+  max_projects: number;
 }
 export interface AoiPointRadiusRequest {
   method: "point_radius";
@@ -190,6 +197,10 @@ export interface AoiPointRadiusRequest {
   lat: number;
   lon: number;
   radius_m: number;
+  /**
+   * Required to save; ignored by preview.
+   */
+  project_id?: string;
 }
 export interface AoiRectangleRequest {
   method: "rectangle";
@@ -198,6 +209,10 @@ export interface AoiRectangleRequest {
   south: number;
   east: number;
   north: number;
+  /**
+   * Required to save; ignored by preview.
+   */
+  project_id?: string;
 }
 export interface AoiPolygonRequest {
   method: "polygon";
@@ -208,4 +223,26 @@ export interface AoiPolygonRequest {
    * @minItems 3
    */
   coordinates: [LonLat, LonLat, LonLat, ...LonLat[]];
+  /**
+   * Required to save; ignored by preview.
+   */
+  project_id?: string;
+}
+/**
+ * Container that owns AOIs (and, in future phases, jobs and outputs). Bookkeeping only; no scientific content.
+ */
+export interface Project {
+  id: string;
+  name: ProjectName;
+  description: string | null;
+  aoi_count: number;
+  created_at: string;
+}
+export interface ProjectList {
+  items: Project[];
+  total: number;
+}
+export interface ProjectCreateRequest {
+  name: ProjectName;
+  description?: string | null;
 }

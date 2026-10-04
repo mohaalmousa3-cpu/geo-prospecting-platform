@@ -31,6 +31,15 @@
     },
     "aoi_polygon_request": {
       "$ref": "#/definitions/AoiPolygonRequest"
+    },
+    "project": {
+      "$ref": "#/definitions/Project"
+    },
+    "project_list": {
+      "$ref": "#/definitions/ProjectList"
+    },
+    "project_create_request": {
+      "$ref": "#/definitions/ProjectCreateRequest"
     }
   },
   "definitions": {
@@ -542,6 +551,11 @@
         },
         "radius_m": {
           "type": "number"
+        },
+        "project_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Required to save; ignored by preview."
         }
       }
     },
@@ -574,6 +588,11 @@
         },
         "north": {
           "type": "number"
+        },
+        "project_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Required to save; ignored by preview."
         }
       }
     },
@@ -599,6 +618,11 @@
           },
           "minItems": 3,
           "description": "Outer ring only; open rings are closed automatically."
+        },
+        "project_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Required to save; ignored by preview."
         }
       }
     },
@@ -661,7 +685,8 @@
         "working_crs",
         "details",
         "warnings",
-        "created_at"
+        "created_at",
+        "project_id"
       ],
       "properties": {
         "id": {
@@ -702,6 +727,10 @@
         "created_at": {
           "type": "string",
           "format": "date-time"
+        },
+        "project_id": {
+          "type": "string",
+          "format": "uuid"
         }
       }
     },
@@ -714,7 +743,8 @@
         "method",
         "bbox",
         "area_km2",
-        "created_at"
+        "created_at",
+        "project_id"
       ],
       "properties": {
         "id": {
@@ -736,6 +766,10 @@
         "created_at": {
           "type": "string",
           "format": "date-time"
+        },
+        "project_id": {
+          "type": "string",
+          "format": "uuid"
         }
       }
     },
@@ -771,7 +805,8 @@
         "max_upload_mb",
         "max_stored_aois",
         "max_abs_latitude",
-        "supported_upload_formats"
+        "supported_upload_formats",
+        "max_projects"
       ],
       "properties": {
         "max_area_km2": {
@@ -800,6 +835,89 @@
           "items": {
             "type": "string"
           }
+        },
+        "max_projects": {
+          "type": "integer"
+        }
+      }
+    },
+    "ProjectName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "Project": {
+      "description": "Container that owns AOIs (and, in future phases, jobs and outputs). Bookkeeping only; no scientific content.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "description",
+        "aoi_count",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "$ref": "#/definitions/ProjectName"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        },
+        "aoi_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ProjectCreateRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/ProjectName"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        }
+      }
+    },
+    "ProjectList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "items",
+        "total"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Project"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     }

@@ -19,9 +19,32 @@ POLY = {"method": "polygon", "name": "poly", "coordinates": [[c[0], c[1]] for c 
 ANALYSIS_KEYS = ("score", "prospectiv", "anomaly", "confidence", "target", "rank", "depth", "gold", "void")
 
 
-def client_with(engine: Engine, **overrides: object) -> TestClient:
+class ProjClient(TestClient):
+    """TestClient that saves AOIs into a pre-created project (Phase 2.5) unless a test says otherwise."""
+
+    project_id: str = ""
+
+    def post(self, url, **kw):  # type: ignore[no-untyped-def,override]
+        body = kw.get("json")
+        if url == "/api/v1/aois" and isinstance(body, dict) and "project_id" not in body:
+            kw["json"] = {**body, "project_id": self.project_id}
+        return super().post(url, **kw)
+
+
+def _with_project(c: ProjClient) -> ProjClient:
+    c.project_id = c.post("/api/v1/projects", json={"name": "P"}).json()["id"]
+    return c
+
+
+@pytest.fixture
+def client(engine: Engine, settings: Settings):  # type: ignore[no-untyped-def]
+    with _with_project(ProjClient(create_app(settings, engine=engine))) as c:
+        yield c
+
+
+def client_with(engine: Engine, **overrides: object) -> ProjClient:
     s = Settings(_env_file=None, CORS_ALLOWED_ORIGINS="http://localhost:3000", **overrides)  # type: ignore[arg-type]
-    return TestClient(create_app(s, engine=engine))
+    return _with_project(ProjClient(create_app(s, engine=engine)))
 
 
 def test_limits_endpoint_reports_adr_0008_defaults(client: TestClient) -> None:
@@ -144,7 +167,8 @@ def test_malformed_ids(client: TestClient) -> None:
 
 # ------------------------------------------------------------------ uploads
 def up(client: TestClient, name: str, data: bytes, **kw):  # type: ignore[no-untyped-def]
-    return client.post("/api/v1/aois/upload", files={"file": (name, data)}, **kw)
+    form = {"project_id": getattr(client, "project_id", ""), **kw.pop("data", {})}
+    return client.post("/api/v1/aois/upload", files={"file": (name, data)}, data=form, **kw)
 
 
 @pytest.mark.parametrize(
@@ -175,7 +199,9 @@ def test_upload_name_and_preview(client: TestClient, engine: Engine) -> None:
     with engine.connect() as c:
         assert c.execute(text("SELECT count(*) FROM aoi")).scalar_one() == 0
     named = client.post(
-        "/api/v1/aois/upload", files={"file": ("p.geojson", geojson_polygon(SQ))}, data={"name": "My site"}
+        "/api/v1/aois/upload",
+        files={"file": ("p.geojson", geojson_polygon(SQ))},
+        data={"name": "My site", "project_id": client.project_id},  # type: ignore[attr-defined]
     )
     assert named.json()["name"] == "My site"
 

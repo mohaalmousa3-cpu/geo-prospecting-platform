@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Engine
 
-from app.api import aois, health, jobs
+from app.api import aois, health, jobs, projects
 from app.errors import install_error_handlers
 from app.middleware import BodySizeLimitMiddleware, RequestIdMiddleware
 from geo_common.config import Settings, get_settings
@@ -22,7 +22,7 @@ DESCRIPTION = """
 **V1 has no authentication. Local/private use only — do not expose to the public internet.**
 
 Outputs of this platform are prospectivity/anomaly layers, never confirmation of gold, caves or voids.
-Phase 2 exposes health checks, a `noop` job and AOI input/validation/persistence.
+Phase 2.5 exposes health checks, a `noop` job, projects and AOI input/validation/persistence.
 No analysis, scoring, remote-sensing, Earth Engine or scientific result exists yet.
 """
 
@@ -75,6 +75,7 @@ def create_app(
     app.add_middleware(RequestIdMiddleware)
     app.include_router(health.router, prefix=API_PREFIX)
     app.include_router(jobs.router, prefix=API_PREFIX)
+    app.include_router(projects.router, prefix=API_PREFIX)
     app.include_router(aois.router, prefix=API_PREFIX)
     return app
 

@@ -52,6 +52,7 @@ class Settings(BaseSettings):
     MIN_AOI_AREA_KM2: PositiveFloat = 0.01
     MAX_AOI_VERTICES: PositiveInt = 2000
     MAX_UPLOAD_MB: PositiveInt = 10
+    MAX_PROJECTS: PositiveInt = 20
     MAX_STORED_AOIS: PositiveInt = 100
     MAX_ARCHIVE_UNCOMPRESSED_MB: PositiveInt = 50
     MAX_ARCHIVE_FILES: PositiveInt = 50
@@ -62,8 +63,9 @@ class Settings(BaseSettings):
     # Frontend-facing (read by Next.js; mirrored here only so config stays in one list)
     NEXT_PUBLIC_API_BASE_URL: str = "http://localhost:8000/api/v1"
     NEXT_PUBLIC_CESIUM_ION_TOKEN: str = ""
-    NEXT_PUBLIC_BASEMAP_TILE_URL: str = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-    NEXT_PUBLIC_BASEMAP_ATTRIBUTION: str = "© OpenStreetMap contributors"
+    NEXT_PUBLIC_BASEMAP_PROVIDER: Literal["osm", "xyz", "none"] = "osm"
+    NEXT_PUBLIC_BASEMAP_TILE_URL: str = ""
+    NEXT_PUBLIC_BASEMAP_ATTRIBUTION: str = ""
 
     # Optional connectors / workers: disabled by default (ADR-0004)
     ENABLE_EARTH_ENGINE: bool = False

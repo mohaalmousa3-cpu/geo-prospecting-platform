@@ -262,6 +262,7 @@ class AoiPointRadiusRequest(BaseModel):
     lat: float
     lon: float
     radius_m: float
+    project_id: Annotated[UUID | None, Field(description="Required to save; ignored by preview.")] = None
 
 
 class AoiRectangleRequest(BaseModel):
@@ -274,6 +275,7 @@ class AoiRectangleRequest(BaseModel):
     south: float
     east: float
     north: float
+    project_id: Annotated[UUID | None, Field(description="Required to save; ignored by preview.")] = None
 
 
 class AoiPolygonRequest(BaseModel):
@@ -289,6 +291,7 @@ class AoiPolygonRequest(BaseModel):
             min_length=3,
         ),
     ]
+    project_id: Annotated[UUID | None, Field(description="Required to save; ignored by preview.")] = None
 
 
 class AoiDraft(BaseModel):
@@ -320,6 +323,7 @@ class Aoi(BaseModel):
     details: dict[str, Any]
     warnings: list[str]
     created_at: AwareDatetime
+    project_id: UUID
 
 
 class AoiSummary(BaseModel):
@@ -332,6 +336,7 @@ class AoiSummary(BaseModel):
     bbox: Bbox
     area_km2: float
     created_at: AwareDatetime
+    project_id: UUID
 
 
 class AoiList(BaseModel):
@@ -354,6 +359,38 @@ class AoiLimits(BaseModel):
     max_stored_aois: int
     max_abs_latitude: float
     supported_upload_formats: list[str]
+    max_projects: int
+
+
+class ProjectName(RootModel[str]):
+    root: Annotated[str, Field(max_length=120, min_length=1)]
+
+
+class Project(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    id: UUID
+    name: ProjectName
+    description: Annotated[str | None, Field(max_length=500)]
+    aoi_count: Annotated[int, Field(ge=0)]
+    created_at: AwareDatetime
+
+
+class ProjectCreateRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    name: ProjectName
+    description: Annotated[str | None, Field(max_length=500)] = None
+
+
+class ProjectList(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    items: list[Project]
+    total: Annotated[int, Field(ge=0)]
 
 
 class GeoContracts(BaseModel):
@@ -366,3 +403,6 @@ class GeoContracts(BaseModel):
     aoi_point_radius_request: AoiPointRadiusRequest | None = None
     aoi_rectangle_request: AoiRectangleRequest | None = None
     aoi_polygon_request: AoiPolygonRequest | None = None
+    project: Project | None = None
+    project_list: ProjectList | None = None
+    project_create_request: ProjectCreateRequest | None = None

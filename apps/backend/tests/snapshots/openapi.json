@@ -35,6 +35,11 @@
           "name": {
             "$ref": "#/components/schemas/AoiName"
           },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
+          },
           "vertex_count": {
             "minimum": 3.0,
             "title": "Vertex Count",
@@ -63,7 +68,8 @@
           "working_crs",
           "details",
           "warnings",
-          "created_at"
+          "created_at",
+          "project_id"
         ],
         "title": "Aoi",
         "type": "object"
@@ -130,6 +136,10 @@
             "title": "Max Area Km2",
             "type": "number"
           },
+          "max_projects": {
+            "title": "Max Projects",
+            "type": "integer"
+          },
           "max_radius_m": {
             "title": "Max Radius M",
             "type": "number"
@@ -166,7 +176,8 @@
           "max_upload_mb",
           "max_stored_aois",
           "max_abs_latitude",
-          "supported_upload_formats"
+          "supported_upload_formats",
+          "max_projects"
         ],
         "title": "AoiLimits",
         "type": "object"
@@ -239,6 +250,19 @@
               }
             ]
           },
+          "project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required to save; ignored by preview.",
+            "title": "Project Id"
+          },
           "radius_m": {
             "title": "Radius M",
             "type": "number"
@@ -279,6 +303,19 @@
                 "type": "null"
               }
             ]
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required to save; ignored by preview.",
+            "title": "Project Id"
           }
         },
         "required": [
@@ -313,6 +350,19 @@
           "north": {
             "title": "North",
             "type": "number"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required to save; ignored by preview.",
+            "title": "Project Id"
           },
           "south": {
             "title": "South",
@@ -358,6 +408,11 @@
           },
           "name": {
             "$ref": "#/components/schemas/AoiName"
+          },
+          "project_id": {
+            "format": "uuid",
+            "title": "Project Id",
+            "type": "string"
           }
         },
         "required": [
@@ -366,7 +421,8 @@
           "method",
           "bbox",
           "area_km2",
-          "created_at"
+          "created_at",
+          "project_id"
         ],
         "title": "AoiSummary",
         "type": "object"
@@ -398,6 +454,18 @@
               }
             ],
             "title": "Name"
+          },
+          "project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Id"
           }
         },
         "required": [
@@ -576,6 +644,104 @@
         "title": "LonLat",
         "type": "array"
       },
+      "Project": {
+        "additionalProperties": false,
+        "properties": {
+          "aoi_count": {
+            "minimum": 0.0,
+            "title": "Aoi Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "$ref": "#/components/schemas/ProjectName"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "aoi_count",
+          "created_at"
+        ],
+        "title": "Project",
+        "type": "object"
+      },
+      "ProjectCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "$ref": "#/components/schemas/ProjectName"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ProjectCreateRequest",
+        "type": "object"
+      },
+      "ProjectList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Project"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "ProjectList",
+        "type": "object"
+      },
+      "ProjectName": {
+        "maxLength": 120,
+        "minLength": 1,
+        "title": "ProjectName",
+        "type": "string"
+      },
       "Type": {
         "enum": [
           "Polygon"
@@ -626,7 +792,7 @@
     }
   },
   "info": {
-    "description": "\n**V1 has no authentication. Local/private use only \u2014 do not expose to the public internet.**\n\nOutputs of this platform are prospectivity/anomaly layers, never confirmation of gold, caves or voids.\nPhase 2 exposes health checks, a `noop` job and AOI input/validation/persistence.\nNo analysis, scoring, remote-sensing, Earth Engine or scientific result exists yet.\n",
+    "description": "\n**V1 has no authentication. Local/private use only \u2014 do not expose to the public internet.**\n\nOutputs of this platform are prospectivity/anomaly layers, never confirmation of gold, caves or voids.\nPhase 2.5 exposes health checks, a `noop` job, projects and AOI input/validation/persistence.\nNo analysis, scoring, remote-sensing, Earth Engine or scientific result exists yet.\n",
     "title": "geo-prospecting-platform API",
     "version": "0.1.0"
   },
@@ -657,6 +823,23 @@
               "minimum": 0,
               "title": "Offset",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Project Id"
             }
           }
         ],
@@ -1123,6 +1306,155 @@
         "summary": "Request cancellation",
         "tags": [
           "jobs"
+        ]
+      }
+    },
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "list_projects_api_v1_projects_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List projects (oldest first)",
+        "tags": [
+          "projects"
+        ]
+      },
+      "post": {
+        "operationId": "create_api_v1_projects_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create a project",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/api/v1/projects/{project_id}": {
+      "delete": {
+        "operationId": "delete_project_api_v1_projects__project_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Also delete the project's AOIs",
+            "in": "query",
+            "name": "delete_aois",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Also delete the project's AOIs",
+              "title": "Delete Aois",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete a project",
+        "tags": [
+          "projects"
+        ]
+      },
+      "get": {
+        "operationId": "get_project_api_v1_projects__project_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get a project",
+        "tags": [
+          "projects"
         ]
       }
     }

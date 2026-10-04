@@ -18,6 +18,7 @@ from app.aoi.service import (
     limits_view,
 )
 from app.errors import ApiError
+from app.projects import ProjectNotFoundError
 from geo_common.config import Settings
 from geo_common.models._generated import Aoi, AoiDraft, AoiLimits, AoiList
 
@@ -42,13 +43,17 @@ def _wrap(fn: Any, *a: Any) -> Draft:
         raise ApiError(exc.status, exc.code, exc.message) from exc
 
 
-def _save(request: Request, draft: Draft, name: str | None) -> Aoi:
+def _save(request: Request, draft: Draft, name: str | None, project_id: UUID | None) -> Aoi:
+    if project_id is None:
+        raise ApiError(422, "project_required", "project_id is required to save an AOI")
     if not name or not name.strip():
         raise ApiError(422, "name_required", "an AOI name is required to save")
     if len(name) > 120:
         raise ApiError(422, "name_too_long", "AOI name must be at most 120 characters")
     try:
-        row = _repo(request).create(name.strip(), draft)
+        row = _repo(request).create(project_id, name.strip(), draft)
+    except ProjectNotFoundError as exc:
+        raise ApiError(404, "project_not_found", "project not found") from exc
     except AoiLimitReachedError as exc:
         raise ApiError(409, "aoi_limit_reached", str(exc)) from exc
     return Aoi.model_validate(row)
@@ -67,7 +72,7 @@ def preview(body: RequestBody, request: Request) -> AoiDraft:
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=Aoi, summary="Create an AOI")
 def create(body: RequestBody, request: Request) -> Aoi:
     draft = _wrap(draft_from_request, body, _settings(request))
-    return _save(request, draft, draft.name)
+    return _save(request, draft, draft.name, body.project_id)
 
 
 @router.post("/upload", response_model=None, summary="Create (or preview) an AOI from an uploaded file")
@@ -75,6 +80,7 @@ async def upload(
     request: Request,
     file: Annotated[UploadFile, File()],
     name: Annotated[str | None, Form()] = None,
+    project_id: Annotated[UUID | None, Form()] = None,
     preview: Annotated[bool, Query()] = False,
 ) -> Any:
     s = _settings(request)
@@ -88,7 +94,7 @@ async def upload(
     if preview:
         return AoiDraft.model_validate(draft.as_dict())
     return Response(
-        content=_save(request, draft, draft.name).model_dump_json(),
+        content=_save(request, draft, draft.name, project_id).model_dump_json(),
         media_type="application/json",
         status_code=201,
     )
@@ -99,8 +105,9 @@ def list_aois(
     request: Request,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
+    project_id: Annotated[UUID | None, Query()] = None,
 ) -> AoiList:
-    items, total = _repo(request).list(limit, offset)
+    items, total = _repo(request).list(limit, offset, project_id)
     return AoiList.model_validate({"items": items, "total": total})
 
 

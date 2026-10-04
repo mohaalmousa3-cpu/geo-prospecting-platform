@@ -33,7 +33,7 @@ def db_engine() -> Iterator[Engine]:
 @pytest.fixture
 def engine(db_engine: Engine) -> Engine:
     with db_engine.begin() as c:
-        c.execute(text("TRUNCATE job, aoi CASCADE"))
+        c.execute(text("TRUNCATE job, aoi, project CASCADE"))
     return db_engine
 
 

@@ -20,9 +20,9 @@ def _alembic_config(url: str) -> Config:
     return cfg
 
 
-def upgrade_head(url: str) -> None:
-    command.upgrade(_alembic_config(url), "head")
+def upgrade_head(url: str, revision: str = "head") -> None:
+    command.upgrade(_alembic_config(url), revision)
 
 
-def downgrade_base(url: str) -> None:
-    command.downgrade(_alembic_config(url), "base")
+def downgrade_base(url: str, revision: str = "base") -> None:
+    command.downgrade(_alembic_config(url), revision)

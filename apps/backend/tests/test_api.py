@@ -111,6 +111,8 @@ def test_only_expected_routes_exist_and_no_result_routes(client: TestClient) -> 
         "/api/v1/jobs/{job_id}",
         "/api/v1/jobs/{job_id}/cancel",
         "/api/v1/aois",
+        "/api/v1/projects",
+        "/api/v1/projects/{project_id}",
         "/api/v1/aois/limits",
         "/api/v1/aois/preview",
         "/api/v1/aois/upload",

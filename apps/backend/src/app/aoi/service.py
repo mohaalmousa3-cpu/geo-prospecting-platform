@@ -52,6 +52,7 @@ def limits_view(s: Settings) -> AoiLimits:
         max_vertices=s.MAX_AOI_VERTICES,
         max_upload_mb=s.MAX_UPLOAD_MB,
         max_stored_aois=s.MAX_STORED_AOIS,
+        max_projects=s.MAX_PROJECTS,
         max_abs_latitude=85.0,
         supported_upload_formats=SUPPORTED_FORMATS,
     )
