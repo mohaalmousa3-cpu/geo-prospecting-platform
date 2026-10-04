@@ -18,6 +18,10 @@ EE may be used in early phases for **experimental, non-commercial** work, under 
 7. **Use for client work, paid services, or commercial exploration decisions is NOT covered** by this approval. Before any such use: verify the then-current EE terms and obtain a commercial arrangement or remove EE from that workflow.
 8. EE is not used in CI; tests use recorded fixtures.
 
+## Amendment (2026-10-04, owner approval with constraints)
+- EE MUST remain an **optional, replaceable connector** and MUST NOT become a business-critical dependency: every capability obtained via EE needs (or must be able to get) a non-EE path, or be explicitly labelled unavailable without EE.
+- **Commercial eligibility must be explicitly validated by the account owner** (recorded in writing, in the repo's private notes or an ADR amendment) **before any operational use.** Until then EE stays disabled and is used, at most, for experiments.
+
 ## Consequences
 - Phase 3 builds STAC first; EE connector is a flagged add-on, not a prerequisite for later phases.
 - Any result relying on EE must remain reproducible or clearly labelled as depending on an external proprietary service.

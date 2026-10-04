@@ -3,7 +3,7 @@
 Legend: `[ ]` todo · `[x]` done and verified · Only the **current phase** may be worked on (see `CLAUDE.md`).
 Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 
-**Current phase: 0 → 1 pending approval.** Owner decisions of 2026-10-04 are recorded as ADR-0001…0010 (`docs/adr/`). The detailed Phase 1 plan is `docs/phase-1-plan.md`; no application code before it is approved.
+**Current phase: 1 (approved 2026-10-04, in implementation).** Owner decisions of 2026-10-04 are recorded as ADR-0001…0010 (`docs/adr/`). The detailed Phase 1 plan is `docs/phase-1-plan.md`; no application code before it is approved.
 
 ---
 
@@ -14,8 +14,8 @@ Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 - [x] .env.example, .gitignore, LICENSE guidance
 - [x] Owner decisions recorded as ADRs 0001–0010 and docs updated accordingly
 - [x] Phase 1 plan drafted (`docs/phase-1-plan.md`)
-- [ ] Owner approval of Phase 1 plan and its technical-choice proposals (§2 of the plan)
-- [ ] Owner confirmation of field-validation definitions (ADR-0010 point 3)
+- [x] Owner approval of Phase 1 plan and technical choices; T8 recorded as ADR-0011
+- [x] Owner confirmation of field-validation definitions (ADR-0010, stricter wording)
 
 ## Phase 1 — Repo/App Foundation
 Detailed, ordered tasks with verification commands: **`docs/phase-1-plan.md`** (P1-01 … P1-18). Summary:
@@ -60,7 +60,7 @@ Detailed, ordered tasks with verification commands: **`docs/phase-1-plan.md`** (
 - [ ] Validation notes and known-failure documentation (topography, albedo, moisture, emissivity)
 
 ## Phase 5 — Gold Prospectivity Pipeline
-- [ ] Fix target region(s) and identify geology/structure/occurrence sources for them
+- [ ] **GATE: owner defines target country/region and pilot area before any Phase 5 design work (ADR-0003 amendment).** Then identify geology/structure/occurrence sources for them
 - [ ] Engine design doc for **orogenic gold** (ADR-0003): evidence layers with citations, method (knowledge-driven / data-driven), limits; expert review
 - [ ] Applicability gate (`applicable` / `not_applicable` / `applicability_unknown`)
 - [ ] Evidence layer builders for the orogenic model (structure, host-lithology context, alteration proxies where bedrock exposed, geochemistry/geophysics if available)
@@ -128,10 +128,8 @@ Detailed, ordered tasks with verification commands: **`docs/phase-1-plan.md`** (
 | 9–10 | Science rules | Strict naming/envelope; no "confirmed" without field validation (ADR-0009, 0010) |
 
 ## Open Questions (require owner input)
-1. **Phase 1 technical choices** proposed in `docs/phase-1-plan.md` §2 (Python tooling, Node package manager, schema generators, base images).
-2. **Field-validation definitions** (ADR-0010 point 3): confirm or amend.
-3. **Target region(s)** for orogenic-gold work — determines usable geology/structure data (needed before Phase 5 design doc).
+3. **Target country/region and initial pilot area** — hard gate for Phase 5 design; not needed for Phases 1–2.
 4. **Validation data** — known orogenic occurrences and cavity/void inventories the owner can supply (without these, all engines stay *experimental*).
-5. **Earth Engine account status** — is the intended use strictly non-commercial/research? Verify current terms before Phase 3 EE work.
+5. **Earth Engine commercial eligibility** — account owner must validate in writing before any operational use (ADR-0004 amendment).
 6. **Reference hardware** for profiling ADR-0008 limits (CPU/RAM/disk).
 7. **Hosting target** — deferred; any non-local deployment is blocked by ADR-0005 until a new ADR.

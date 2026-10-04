@@ -66,8 +66,8 @@ Numeric scores are *relative rankings* unless calibration against independent va
 ## 4b. Field validation (ADR-0010)
 
 - "Confirmed" wording is allowed only for a target with a **field-validation record**. In V1 no such workflow exists, so every target is `validation_status = unvalidated`.
-- Geophysical anomalies (ERT/GPR/IP/magnetics) are evidence, not confirmation.
-- Proposed validation definitions (pending owner confirmation): gold = accredited-lab assay on documented samples, or logged and assayed drill intersection by a qualified person; cavity = direct observation/survey or documented drill/excavation intersection by a qualified person.
+- Geophysical anomalies (ERT/GPR/IP/magnetics) are evidence, not confirmation. **Even when several methods agree, they may only raise a target to a high-confidence investigation priority; confirmation requires direct verification or lab-backed evidence.**
+- Validation definitions (approved): gold = accredited-lab assay on documented samples, or logged and assayed drill intersection by a qualified person; cavity = direct observation/survey or documented drill/excavation intersection by a qualified person.
 - Validated wording is scoped to the specific observation (e.g. "assay-confirmed gold at sample S-12"), never "deposit" or resource language.
 
 ## 4c. Mandatory result fields (ADR-0009)

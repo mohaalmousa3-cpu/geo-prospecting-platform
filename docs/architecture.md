@@ -107,8 +107,8 @@ Uniform interface: `describe()`, `estimate_cost(aoi, window)`, `fetch(aoi, windo
 | `apps/backend` | API |
 | `workers/<engine>` | Engines |
 | `packages/schemas` | Contracts |
-| `packages/pycommon` (*proposed, ADR-0011 pending*) | Shared Python: config, `StorageBackend`, `JobQueue`, generated envelope models |
-| `workers/runner` (*proposed*) | Generic worker loop + `noop` handler |
+| `packages/pycommon` (ADR-0011) | Shared Python: config, `StorageBackend`, `JobQueue`, generated envelope models |
+| `workers/runner` | Generic worker loop + `noop` handler |
 | `infrastructure/` | Docker/CI |
 | `tests/{unit,integration,scientific}` | Tests |
 

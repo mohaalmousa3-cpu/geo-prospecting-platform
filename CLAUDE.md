@@ -17,7 +17,7 @@ These rules are mandatory for every Claude session on this repository. If a user
 
 State in your first message which phase/task you are working on. If it is unclear, ask.
 
-## 1a. Binding Decisions (ADR-0001 … ADR-0010)
+## 1a. Binding Decisions (ADR-0001 … ADR-0011)
 
 Do not contradict these without a superseding ADR approved by the owner:
 
@@ -28,6 +28,10 @@ Do not contradict these without a superseding ADR approved by the owner:
 - **Local filesystem storage** via `StorageBackend`; do not add MinIO/S3 (0006).
 - **PostgreSQL-backed queue** via `JobQueue`; do not add Redis/Celery/RQ (0007).
 - **MVP limits** from ADR-0008 enforced server-side; do not raise them to make something work (0008).
+- `packages/pycommon` (`geo_common`) holds only shared contracts, schemas, queue/storage abstractions, shared config and generic utilities — **never analysis logic** (0011).
+- **Phase 5 scientific design must not begin** until the owner defines the target country/region and pilot area (0003 amendment).
+- Geophysics can at most raise a target to *high-confidence investigation priority*, never confirmed (0010 amendment). AOI/upload limits are provisional operational safeguards, not scientific thresholds (0008).
+- EE must stay optional/replaceable; the account owner must validate commercial eligibility before operational use (0004 amendment).
 - **Naming/envelope rules** of ADR-0009 and **no "confirmed" wording** per ADR-0010; `validation_status` is always `unvalidated` in V1.
 
 ## 2. Phase-by-Phase Development
@@ -72,7 +76,7 @@ Do not contradict these without a superseding ADR approved by the owner:
 ## 6. Architecture Discipline
 
 - Follow `docs/architecture.md`. Deviations require an ADR in `docs/adr/` approved by the user.
-- Keep modules decoupled: frontend ↔ API ↔ queue ↔ workers. Workers never import API code; shared contracts live in `packages/schemas/`.
+- Keep modules decoupled: frontend ↔ API ↔ queue ↔ workers. Workers never import API code; language-neutral contracts live in `packages/schemas/`, shared Python code in `packages/pycommon/` (ADR-0011).
 - Each third-party scientific tool is wrapped behind an internal interface (see `docs/dependency-strategy.md`).
 - Check licences before adding any dependency; record it in `docs/dependency-strategy.md`.
 - Configuration via environment variables (`.env.example` documents all). No hard-coded secrets, paths or endpoints.

@@ -17,6 +17,9 @@ Orogenic-gold scope rules:
 4. Placer, supergene or transported-cover settings are explicitly **not modelled**; cover reduces confidence.
 5. Validation uses spatial cross-validation against known orogenic occurrences; until completed the engine is labelled *experimental* and scores *uncalibrated*.
 
+## Amendment (2026-10-04)
+**Phase 5 scientific design MUST NOT begin until the target country/region and an initial pilot area are explicitly defined by the owner.** Phases 1–2 may proceed without them.
+
 ## Consequences
 - Phase 5 design doc, evidence layers, and tests are orogenic-specific.
 - Void and thermal engines are unaffected.

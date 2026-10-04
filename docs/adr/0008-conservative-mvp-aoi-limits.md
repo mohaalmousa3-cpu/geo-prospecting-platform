@@ -25,7 +25,7 @@ Default limits (all configurable by environment variable, **enforced server-side
 | `WORKER_CONCURRENCY` | 1 | |
 | `MAX_QUEUED_JOBS` | 10 | |
 
-**These numbers are starting guesses (confidence: *guess*), not measured.** They must be re-evaluated after Phase 3–4 profiling on the reference machine, and changed only via a documented update to this ADR.
+**These limits are provisional operational safeguards, not validated scientific thresholds** (owner clarification 2026-10-04); they say nothing about the scale at which any method works. **These numbers are starting guesses (confidence: *guess*), not measured.** They must be re-evaluated after Phase 3–4 profiling on the reference machine, and changed only via a documented update to this ADR.
 
 ## Consequences
 - Requests exceeding limits are rejected with a specific error stating the limit and value.
