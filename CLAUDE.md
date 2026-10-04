@@ -9,11 +9,26 @@ These rules are mandatory for every Claude session on this repository. If a user
 3. `MASTER_SPEC.md`
 4. `TASKS.md` — identify the **current phase** and the specific task
 5. `docs/acceptance-criteria.md` — the section for the current phase
-6. `docs/architecture.md` and `docs/dependency-strategy.md` — if the task touches structure or dependencies
-7. `docs/risk-register.md` — if the task touches anything flagged there
-8. Relevant `README.md` in the directory you will modify
+6. `docs/adr/README.md` and every ADR relevant to the task — accepted ADRs are binding
+7. `docs/architecture.md` and `docs/dependency-strategy.md` — if the task touches structure or dependencies
+8. `docs/risk-register.md` — if the task touches anything flagged there
+9. `docs/phase-1-plan.md` (or the current phase's plan) when working on that phase
+10. Relevant `README.md` in the directory you will modify
 
 State in your first message which phase/task you are working on. If it is unclear, ask.
+
+## 1a. Binding Decisions (ADR-0001 … ADR-0010)
+
+Do not contradict these without a superseding ADR approved by the owner:
+
+- Repo is **private**, rights reserved; no licence chosen; no vendored third-party source (0001, 0002).
+- Gold model = **orogenic only**, with applicability gate; never generalise to "gold" (0003).
+- **Earth Engine**: optional, flag off by default, experimental/non-commercial only, never in CI, never a hard dependency, no credentials in repo (0004).
+- **No authentication** in V1; local/loopback only; do not add auth, accounts or public-exposure config (0005).
+- **Local filesystem storage** via `StorageBackend`; do not add MinIO/S3 (0006).
+- **PostgreSQL-backed queue** via `JobQueue`; do not add Redis/Celery/RQ (0007).
+- **MVP limits** from ADR-0008 enforced server-side; do not raise them to make something work (0008).
+- **Naming/envelope rules** of ADR-0009 and **no "confirmed" wording** per ADR-0010; `validation_status` is always `unvalidated` in V1.
 
 ## 2. Phase-by-Phase Development
 
@@ -50,6 +65,8 @@ State in your first message which phase/task you are working on. If it is unclea
 - Every pipeline must have **bounded compute**: AOI area limit, time-window limit, max scenes, timeouts. No unbounded loops over large archives.
 - Prefer cloud-optimised formats (COG, Zarr) and server-side reductions to avoid large downloads.
 - Do not add always-on cloud infrastructure. Local Docker Compose is the default.
+- Earth Engine usage (when ever enabled) stays within free quotas and non-commercial scope (ADR-0004); no billing-enabled projects without approval.
+- Enforce the ADR-0008 limits in the backend; never only in the UI.
 - Never assume unlimited CPU/RAM/disk; document expected resource use for heavy steps.
 
 ## 6. Architecture Discipline
@@ -71,6 +88,7 @@ State in your first message which phase/task you are working on. If it is unclea
 
 ## 8. Security and Data Handling
 
+- V1 has no authentication (ADR-0005): bind services to `127.0.0.1`, keep CORS allow-listed, never document or configure public exposure.
 - Validate and sanitise all uploads (size, type, zip-bomb, path traversal, geometry validity).
 - No secrets in code, logs, docs, or commits. Use `.env` (git-ignored) and `.env.example` (placeholders only).
 - Treat user AOIs and uploads as potentially sensitive; no third-party sharing.

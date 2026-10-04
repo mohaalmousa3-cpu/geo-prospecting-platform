@@ -21,20 +21,25 @@ A phase is **accepted** only when all criteria are met, evidence is recorded (te
 - [ ] User review completed.
 
 ## Phase 1 — Repo/app foundation
-- [ ] `docker compose up` starts postgis, redis, backend, worker, frontend from a clean clone.
+- [ ] `docker compose up` starts postgis, backend, worker, frontend from a clean clone (no Redis, no MinIO); ports bound to 127.0.0.1.
 - [ ] `/api/v1/health` returns OK; frontend status page shows backend health.
 - [ ] Alembic migrations apply cleanly; PostGIS extension enabled; initial tables created.
-- [ ] A no-op job travels API → queue → worker → DB with correct status transitions.
+- [ ] A no-op job travels API → `job` table → worker → DB with correct status transitions.
+- [ ] Queue integration tests pass: concurrent claim (no double-claim), lease expiry recovery, attempt limit, hard timeout kill, cancellation, `MAX_QUEUED_JOBS` enforcement.
+- [ ] `StorageBackend` local implementation rejects path traversal and absolute keys (tested).
+- [ ] Result envelope requires `validation_status`, `calibration_status`, `engine_status`; `validation_status` accepts only `unvalidated`.
+- [ ] Forbidden-term scan (ADR-0009) runs in CI over source, fixtures and UI strings, with a documented docs allow-list.
+- [ ] No authentication code, Redis, or MinIO present; README states local/private-only.
 - [ ] Schema pipeline generates Pydantic and TS types from `packages/schemas`; CI fails on drift.
 - [ ] Result envelope schema rejects objects missing confidence/uncertainty/explanation/sources (tested).
 - [ ] CI runs lint, type-check, tests, secret scan.
-- [ ] Licence decision recorded (ADR) and `LICENSE` added.
+- [ ] `LICENSE` remains the rights-reserved placeholder (ADR-0002); `docs/third-party-licences.md` exists and lists all Phase 1 dependencies.
 
 ## Phase 2 — AOI input and map basics
 - [ ] Coordinates+radius produce a geodesically correct polygon (tested against reference values).
 - [ ] Draw rectangle/polygon on map; AOI saved and reloaded.
 - [ ] Upload of GeoJSON, KML, KMZ, zipped Shapefile accepted; invalid/hostile files rejected with clear errors (zip-bomb, path traversal, bad CRS, empty, self-intersecting, oversize).
-- [ ] AOI normalised to EPSG:4326 + working UTM CRS; area limits enforced and configurable.
+- [ ] AOI normalised to EPSG:4326 + working UTM CRS; ADR-0008 limits enforced server-side and configurable, with boundary tests at, just below and just above each limit (area 25 km², radius 2.5 km, min 0.01 km², vertices, upload size, archive size/file count).
 - [ ] Antimeridian/polar edge cases handled or explicitly rejected.
 - [ ] No analysis results shown in this phase.
 
@@ -44,7 +49,7 @@ A phase is **accepted** only when all criteria are met, evidence is recorded (te
 - [ ] Caching works (second identical request makes no external call; tested).
 - [ ] Request budgets/quotas enforced; clear errors on exceed.
 - [ ] CI uses recorded fixtures only; no live network calls in tests.
-- [ ] Earth Engine connector, if present, is flag-disabled by default, and contains no credentials.
+- [ ] Earth Engine connector, if present, is flag-disabled by default (`ENABLE_EARTH_ENGINE=false`), imports EE lazily, contains no credentials, is never used in CI, records `via: earth_engine` in provenance, and the platform passes all tests with it disabled (ADR-0004).
 - [ ] Missing-coverage/cloudy cases yield `insufficient_data`, not silent defaults.
 
 ## Phase 4 — Thermal pipeline
@@ -57,7 +62,9 @@ A phase is **accepted** only when all criteria are met, evidence is recorded (te
 - [ ] Engine flagged *experimental* until validated.
 
 ## Phase 5 — Gold prospectivity pipeline
-- [ ] Deposit type(s) in scope chosen by the user and documented; model invalid outside scope is flagged.
+- [ ] Deposit model is **orogenic gold** (ADR-0003), recorded as `deposit_model` in every result; no other deposit type is implied anywhere in UI/API/docs.
+- [ ] Applicability gate implemented and tested: `not_applicable` → no score; `applicability_unknown` → confidence capped at low.
+- [ ] Target region(s) fixed and geology/structure sources identified for them before design-doc approval.
 - [ ] Evidence layers documented with rationale and citations.
 - [ ] Prospectivity + uncertainty surfaces produced; scores labelled uncalibrated unless calibrated.
 - [ ] Validation performed with spatial cross-validation on available known occurrences; metrics and limitations documented (or engine remains *experimental*).

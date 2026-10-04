@@ -7,16 +7,17 @@ Status: Draft v0.1 · Changes via ADR (`docs/adr/`).
 ```
  Browser (Next.js)
    ├─ MapLibre GL (2D)     ├─ CesiumJS (3D)
-        │ HTTPS (REST/JSON, optional SSE for job status)
+        │ HTTP on loopback (REST/JSON; polling for job status)
         ▼
- FastAPI backend ──── PostgreSQL + PostGIS   (AOI, jobs, targets, provenance)
-        │                    ▲
-        │ enqueue            │ read/write results
-        ▼                    │
-   Redis queue ──► Workers ──┴──► Object storage (COG rasters, uploads, reports)
-                     │
-                     └──► External data (STAC, open DEM/geology APIs, optional Earth Engine)
+ FastAPI backend ──── PostgreSQL + PostGIS   (AOI, jobs = the queue, targets, provenance)
+        │ insert job row            ▲  claim (SKIP LOCKED) / heartbeat / complete
+        │                           │
+        └──────────────────────► Workers ──► Local filesystem storage (COG rasters, uploads, reports)
+                                    │
+                                    └──► External data (STAC, open DEM/geology APIs, optional Earth Engine)
 ```
+
+V1 constraints: no authentication (ADR-0005), local storage (ADR-0006), PostgreSQL-backed queue (ADR-0007). No Redis, no MinIO.
 
 ## 2. Components
 
@@ -41,11 +42,12 @@ Status: Draft v0.1 · Changes via ADR (`docs/adr/`).
 
 ### Data layer
 - **PostGIS**: AOIs, jobs, targets, evidence references, provenance, user annotations.
-- **Object storage**: rasters as Cloud-Optimised GeoTIFF; uploads; reports. Default local volume or MinIO (ADR pending). Interface abstracted for S3-compatible swap.
+- **File storage**: rasters as Cloud-Optimised GeoTIFF; uploads; reports. Local filesystem only in V1 via `StorageBackend` (`put/get/exists/delete/open_path`); logical keys, traversal-safe (ADR-0006). A later S3-compatible backend is a swap behind the same interface.
 - **Cache**: deterministic keys (source + AOI hash + params + version) to avoid re-fetching.
 
 ### Queue
-- Redis-backed; library chosen by ADR (Celery / Dramatiq / RQ / arq). Requirements: retries, timeouts, priorities, per-engine routing, visibility of state.
+- The `job` table in PostgreSQL is the queue (ADR-0007): transactional enqueue, atomic claim with `FOR UPDATE SKIP LOCKED`, lease + heartbeat, crash recovery, attempt limits, hard timeout via child process, cancellation. Accessed only through a `JobQueue` interface so it can later be replaced by RQ/Celery.
+- Defaults: 1 worker, poll every 2 s, `MAX_QUEUED_JOBS=10`.
 
 ### Shared schemas (`packages/schemas`)
 - JSON Schema / OpenAPI is the source of truth; Pydantic and TS types generated.
@@ -67,29 +69,34 @@ Every layer/target returned by the API includes:
 | `provenance` | run id, parameters, code version, environment digest |
 | `depth` | present only if `depth_basis` ∈ {`field_geophysics`, `direct_verification`} |
 | `disclaimer_id` | reference to mandatory disclaimer text |
+| `validation_status` | `unvalidated` only in V1 (ADR-0010) |
+| `calibration_status` | `uncalibrated` by default (ADR-0009) |
+| `engine_status` | `experimental` until validated (ADR-0009) |
+| `deposit_model` | gold results only: `orogenic` (ADR-0003); plus `applicability` ∈ applicable / applicability_unknown |
 
 ## 4. Job lifecycle
 
-`created → validated → queued → running → (succeeded | failed | cancelled | insufficient_data)`
+API-side (synchronous, before insert): request received → limits and AOI validated (ADR-0008) → job row inserted.
+Persisted statuses: `queued → running → (succeeded | failed | cancelled | insufficient_data)`; an expired lease returns `running → queued` until `max_attempts`, then `failed`.
 
 `insufficient_data` is a normal terminal state with an explanation.
 
 ## 5. Connector design (Phase 3)
 
-Uniform interface: `describe()`, `estimate_cost(aoi, window)`, `fetch(aoi, window) -> Assets+Provenance`. Connectors declare quota, licence, and offline-mock fixtures. Earth Engine is optional, behind a feature flag.
+Uniform interface: `describe()`, `estimate_cost(aoi, window)`, `fetch(aoi, window) -> Assets+Provenance`. Connectors declare quota, licence, what AOI information is sent to the provider, and offline-mock fixtures. STAC/open sources are the default. Earth Engine is optional, behind `ENABLE_EARTH_ENGINE` (default false), experimental/non-commercial only (ADR-0004).
 
 ## 6. Cross-cutting
 
 - **Provenance**: recorded for every dataset and processing step.
 - **Reproducibility**: pinned dependency versions; container digests recorded.
 - **Observability**: structured logs with job id; metrics later.
-- **Security**: upload hardening (zip-bomb limits, path traversal, geometry validation); secrets via environment only; auth deferred (Open Question).
+- **Security**: upload hardening (zip-bomb limits, path traversal, geometry validation); secrets via environment only; **no authentication in V1 (ADR-0005)** — loopback-bound ports, CORS allow-list, never publicly exposed.
 - **Config**: environment variables only (`.env.example`).
 - **CRS**: store EPSG:4326; compute in a local projected CRS (UTM) chosen per AOI; always record CRS.
 
 ## 7. Deployment
 
-- Dev: Docker Compose (postgis, redis, backend, worker(s), frontend, optional minio).
+- Dev: Docker Compose (postgis, backend, worker, frontend) with ports published on `127.0.0.1` only.
 - Production: deferred to ADR; must not require paid managed services by default.
 
 ## 8. Directory mapping
@@ -100,6 +107,8 @@ Uniform interface: `describe()`, `estimate_cost(aoi, window)`, `fetch(aoi, windo
 | `apps/backend` | API |
 | `workers/<engine>` | Engines |
 | `packages/schemas` | Contracts |
+| `packages/pycommon` (*proposed, ADR-0011 pending*) | Shared Python: config, `StorageBackend`, `JobQueue`, generated envelope models |
+| `workers/runner` (*proposed*) | Generic worker loop + `noop` handler |
 | `infrastructure/` | Docker/CI |
 | `tests/{unit,integration,scientific}` | Tests |
 

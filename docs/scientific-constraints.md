@@ -56,6 +56,24 @@ Numeric scores are *relative rankings* unless calibration against independent va
 - Depth of investigation is limited and must be displayed.
 - GPR penetration depends strongly on ground conductivity.
 
+## 4a. Gold model scope: orogenic only (ADR-0003)
+
+- The only gold model is **orogenic gold**. No result may be labelled generically as "gold potential" without `deposit_model = orogenic` shown beside it.
+- An **applicability gate** precedes scoring: `applicable` / `not_applicable` / `applicability_unknown`. `not_applicable` → no score. `applicability_unknown` (e.g. no geology coverage) → confidence capped at *low*.
+- Placer, supergene, transported-cover and other deposit types are not modelled; the UI must not suggest otherwise.
+- Candidate evidence layers (structure, host-lithology context, alteration proxies where bedrock is exposed, geochemistry/geophysics where available) are defined, cited and expert-reviewed in the Phase 5 design doc; no thresholds or weights are asserted here.
+
+## 4b. Field validation (ADR-0010)
+
+- "Confirmed" wording is allowed only for a target with a **field-validation record**. In V1 no such workflow exists, so every target is `validation_status = unvalidated`.
+- Geophysical anomalies (ERT/GPR/IP/magnetics) are evidence, not confirmation.
+- Proposed validation definitions (pending owner confirmation): gold = accredited-lab assay on documented samples, or logged and assayed drill intersection by a qualified person; cavity = direct observation/survey or documented drill/excavation intersection by a qualified person.
+- Validated wording is scoped to the specific observation (e.g. "assay-confirmed gold at sample S-12"), never "deposit" or resource language.
+
+## 4c. Mandatory result fields (ADR-0009)
+
+`confidence`, `uncertainty`, `explanation`, `sources`, `provenance`, `disclaimer_id`, `validation_status`, `calibration_status`, `engine_status`. The API refuses to serialise a result missing any of them.
+
 ## 5. Provenance requirements
 
 For each result store: dataset IDs/versions/dates/licences, processing steps, parameters, software and dependency versions, code commit, run id, AOI hash, CRS.

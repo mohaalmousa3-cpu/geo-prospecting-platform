@@ -31,6 +31,13 @@ The platform is a **decision-support and target-prioritisation tool**. It narrow
 - Mobile apps, real-time streaming, multi-tenant billing.
 - Paid data/services as a default dependency.
 - Autonomous decision making about drilling, excavation or entry into caves/voids (safety-critical).
+- Authentication, multi-user, public/hosted deployment (V1 is local/private only — ADR-0005).
+- Gold deposit types other than orogenic (ADR-0003).
+- MinIO/S3 storage and Redis (ADR-0006, ADR-0007).
+- AOIs above the MVP limits (25 km²; ADR-0008).
+
+### Accepted scope decisions (2026-10-04)
+Binding; see `docs/adr/`. Private repository (0001) with rights reserved (0002); **orogenic gold is the only gold model** (0003); Earth Engine optional and experimental/non-commercial only (0004); no authentication in V1 (0005); local storage (0006); PostgreSQL-backed queue (0007); conservative AOI/compute limits — 25 km² AOI, 20 scenes, 1800 s jobs (0008); strict naming with mandatory confidence/uncertainty (0009); no "confirmed" gold/cavity wording without field validation (0010).
 
 ## 3. Scientific Boundaries (normative)
 
@@ -42,7 +49,9 @@ Full text: `docs/scientific-constraints.md`. Summary — these are **MUST/MUST N
 4. Subsurface depth MUST only be shown when derived from uploaded field geophysics or direct verification, and then labelled with method and uncertainty.
 5. Every result MUST carry confidence and uncertainty.
 6. Every target MUST carry a human-readable explanation and source metadata (dataset, version, acquisition date, processing steps, parameters, code version).
-7. Language in UI, API, reports and code comments MUST use calibrated terms (see §3 of `docs/scientific-constraints.md`): "anomaly", "prospective", "consistent with", "requires field verification".
+7. "Confirmed" status requires a field-validation record for the specific target (ADR-0010). In V1 every target is `validation_status = unvalidated`; the validation workflow is not built.
+8. Gold prospectivity is **orogenic-only** with an applicability gate (ADR-0003); AOIs outside that setting get no score or capped confidence.
+9. Language in UI, API, reports and code comments MUST use calibrated terms (see §3 of `docs/scientific-constraints.md`): "anomaly", "prospective", "consistent with", "requires field verification".
 
 ## 4. Core Workflows
 
@@ -93,8 +102,9 @@ Detail: `docs/architecture.md`.
 - **Frontend**: Next.js (TypeScript), MapLibre GL JS (2D), CesiumJS (3D).
 - **Backend API**: FastAPI (Python). Owns AOI, job, result, provenance APIs. No heavy compute in request handlers.
 - **Workers**: Python background workers consuming a job queue; each engine is an isolated module with a typed interface.
-- **Data**: PostgreSQL + PostGIS (metadata, vectors, provenance); object storage for rasters (local volume / MinIO by default; COG format).
-- **Queue**: Redis-backed queue (library chosen by ADR; candidates: Celery, Dramatiq, RQ, arq).
+- **Data**: PostgreSQL + PostGIS (metadata, vectors, provenance); rasters as COG on the **local filesystem** behind a `StorageBackend` interface (ADR-0006; no MinIO in V1).
+- **Queue**: **PostgreSQL-backed job table** with `FOR UPDATE SKIP LOCKED` claiming, behind a `JobQueue` interface (ADR-0007; no Redis in V1).
+- **Access model (V1)**: no authentication; local/private deployment only, loopback-bound (ADR-0005).
 - **Shared schemas**: JSON Schema / OpenAPI as the single source of truth; generated TS and Pydantic types.
 - **Infra**: Docker Compose for local/dev; production orchestration deferred to an ADR.
 
@@ -105,11 +115,11 @@ Principles: modular engines, explicit interfaces, reproducible runs, provenance 
 | Engine | Purpose | Candidate reuse |
 |---|---|---|
 | Ingest/AOI | Parse/validate/normalise geometries | GDAL/OGR, Shapely, pyproj, Fiona/pyogrio |
-| Connectors | Fetch EO/DEM/geology data | Google Earth Engine (optional), STAC clients (pystac-client), direct open APIs |
+| Connectors | Fetch EO/DEM/geology data | STAC clients (pystac-client) and open APIs by default; Google Earth Engine optional, flagged, non-commercial only |
 | Terrain | Slope, aspect, curvature, TPI, lineaments, drainage | GDAL, WhiteboxTools, RichDEM |
 | Thermal | LST retrieval, anomaly detection, temporal stability | Landsat LST workflows (Collection 2 ST products) |
 | Deformation | InSAR time series (optional, heavy) | MintPy (input from ISCE/ARIA/HyP3 products) |
-| Gold prospectivity | Evidence layers → weights/ML → prospectivity + uncertainty | EIS Toolkit, EnMAP-Box concepts, scikit-learn |
+| Gold prospectivity | **Orogenic-gold** evidence layers → weights/ML → prospectivity + uncertainty, behind an applicability gate | EIS Toolkit, EnMAP-Box concepts, scikit-learn |
 | Void evidence | Multi-evidence integration (terrain, thermal, deformation, geology) | custom, with EIS Toolkit patterns |
 | Geophysics | ERT/IP/GPR/magnetics processing and inversion | ResIPy, pyGIMLi, GPRPy |
 | Geological modelling | 3D geological model from constraints (Phase 8+, optional) | GemPy |

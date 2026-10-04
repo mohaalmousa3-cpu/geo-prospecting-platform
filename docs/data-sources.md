@@ -52,9 +52,12 @@ OpenStreetMap-derived tiles (respect tile usage policy; prefer self-hosted or pe
 ## 7. Platforms (optional connectors)
 | Platform | Role | Constraint |
 |---|---|---|
-| Google Earth Engine | Server-side EO processing | Optional, flagged; terms (non-commercial vs commercial) and credentials need user decision; no keys in repo. |
+| Google Earth Engine | Server-side EO processing | Optional, `ENABLE_EARTH_ENGINE=false` by default; experimental/non-commercial only (ADR-0004); STAC remains the default path; no keys in repo; record `via: earth_engine` in provenance. |
 | STAC APIs (pystac-client) | Default open catalogue access | Preferred default. |
 | Microsoft Planetary Computer / AWS Open Data / CDSE | Hosted open data | Verify rate limits/terms. |
+
+## 7a. Orogenic-gold data needs (ADR-0003)
+Phase 5 needs, per target region: bedrock geology (lithology, metamorphic context), fault/shear-zone mapping, known orogenic occurrences (validation and bias assessment), and optionally regional geochemistry and airborne magnetics/radiometrics. Availability varies strongly by country; **the target region(s) are not yet fixed** and determine which geological-survey sources are usable (open question in `TASKS.md`). Each connector must state what AOI information it sends to the provider.
 
 ## 8. Data-source metadata required per dataset
 `id`, `name`, `provider`, `version`, `licence`, `access_method`, `spatial_resolution`, `temporal_coverage`, `known_limitations`, `citation`, `retrieved_at`, `checksum` (if downloaded).

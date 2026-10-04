@@ -28,15 +28,16 @@ Principles: prefer free/open source; integrate via library/CLI behind internal i
 | MapLibre GL JS | BSD-3-Clause | |
 | CesiumJS | Apache-2.0 | Cesium ion (hosted terrain/imagery) is a **paid/limited-tier service — optional**; default to open terrain sources. |
 | GDAL / Rasterio / Shapely / pyproj | MIT/X, BSD | |
-| Redis | Licence changed in recent versions (RSAL/SSPL/AGPL options) — **verify**; consider Valkey (BSD) as drop-in | Decide via ADR. |
-| MinIO | AGPL-3.0 — **verify**; used as separate service only | Local-volume default avoids it. |
+| ~~Redis~~ | **Not used in V1** (ADR-0007: PostgreSQL-backed queue) | Licence question closed for V1. |
+| ~~MinIO~~ | **Not used in V1** (ADR-0006: local filesystem) | Licence question closed for V1. |
 | Docker / Compose | Apache-2.0 | |
 
 ## 3. Licence strategy
 
 - Copyleft tools (GPL/EUPL/AGPL) are run as **separate processes/images** communicating via files, CLI or queue, to limit propagation. *Whether this suffices legally is a question for qualified legal review* — not decided here.
-- The repository licence is an open question (TASKS.md #1). Until chosen, avoid vendoring any third-party source into this repo.
-- Maintain `docs/third-party-licences.md` (create in Phase 1) listing: name, version, licence, how used, link, verification date.
+- The repository is private with rights reserved and **no open-source licence is chosen** (ADR-0001, ADR-0002). Never vendor third-party source into this repo.
+- Internal use differs from distribution: publication, hosting for third parties, or distributing images changes the licence analysis (network-use clauses of EUPL/AGPL-type licences: confidence *guess*; get qualified legal review before any external exposure).
+- Maintain `docs/third-party-licences.md` (created in Phase 1, task P1-12) listing: name, version, licence, how used, link, verification date.
 
 ## 4. Wrapping rule
 
@@ -59,4 +60,5 @@ Each third-party scientific tool is accessed only through an internal adapter (`
 
 ## 7. Cost-related options (all optional, default off)
 
-Google Earth Engine (free for non-commercial/research under its terms — **verify applicability**; commercial use is paid), Cesium ion, commercial imagery/SAR, managed cloud services.
+- **Google Earth Engine** — approved only for experimental / non-commercial use, flag-off by default, behind the connector interface (ADR-0004). Commercial use is **not** covered; verify current terms before first use (confidence the free tier is non-commercial only: *likely*).
+- Cesium ion, commercial imagery/SAR, managed cloud services — not approved.

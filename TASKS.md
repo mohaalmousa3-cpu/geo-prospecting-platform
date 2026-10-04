@@ -3,7 +3,7 @@
 Legend: `[ ]` todo · `[x]` done and verified · Only the **current phase** may be worked on (see `CLAUDE.md`).
 Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 
-**Current phase: 0 (completing)**
+**Current phase: 0 → 1 pending approval.** Owner decisions of 2026-10-04 are recorded as ADR-0001…0010 (`docs/adr/`). The detailed Phase 1 plan is `docs/phase-1-plan.md`; no application code before it is approved.
 
 ---
 
@@ -12,22 +12,23 @@ Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 - [x] MASTER_SPEC.md, CLAUDE.md, TASKS.md, README.md
 - [x] docs: architecture, scientific-constraints, dependency-strategy, data-sources, acceptance-criteria, risk-register
 - [x] .env.example, .gitignore, LICENSE guidance
-- [ ] User review and resolution of Open Questions (see end of this file)
-- [ ] User sign-off to start Phase 1
+- [x] Owner decisions recorded as ADRs 0001–0010 and docs updated accordingly
+- [x] Phase 1 plan drafted (`docs/phase-1-plan.md`)
+- [ ] Owner approval of Phase 1 plan and its technical-choice proposals (§2 of the plan)
+- [ ] Owner confirmation of field-validation definitions (ADR-0010 point 3)
 
 ## Phase 1 — Repo/App Foundation
-- [ ] Decide licence (ADR-0001) and add LICENSE
-- [ ] Decide queue library (ADR-0002) and object storage default (ADR-0003)
-- [ ] Docker Compose: postgres+postgis, redis, backend, worker, frontend
-- [ ] FastAPI skeleton: `/health`, config loading, structured logging, versioned API prefix
-- [ ] DB migrations setup (Alembic) with PostGIS enabled; initial tables: `aoi`, `job`, `result`, `provenance`
-- [ ] Worker skeleton: consumes a no-op job, records status transitions
-- [ ] Next.js skeleton (TypeScript, lint, formatting) with a status page calling `/health`
-- [ ] Shared schema pipeline: JSON Schema → Pydantic + TS types
-- [ ] Mandatory result envelope schema (confidence, uncertainty, evidence, sources, disclaimer)
-- [ ] CI: lint, type-check, unit tests, schema validation, secret scan
-- [ ] Pre-commit hooks; contribution notes
-- [ ] Scientific-guard test scaffold (forbidden-term check, envelope completeness)
+Detailed, ordered tasks with verification commands: **`docs/phase-1-plan.md`** (P1-01 … P1-18). Summary:
+- [ ] Tooling and CI baseline (lint, type-check, tests, secret scan, forbidden-term scan)
+- [ ] Docker Compose: postgis, backend, worker, frontend — loopback ports, no Redis, no MinIO
+- [ ] FastAPI skeleton: `/health`, config, logging, `/api/v1`
+- [ ] Alembic + PostGIS; tables `aoi`, `job`, `result`, `provenance`
+- [ ] `StorageBackend` (local) and `JobQueue` (PostgreSQL) interfaces with tests
+- [ ] Worker with claim/lease/heartbeat/timeout/cancel and a no-op job
+- [ ] Schemas → Pydantic/TS generation; result envelope incl. `validation_status`, `calibration_status`, `engine_status`
+- [ ] Next.js skeleton + status page
+- [ ] Scientific-guard tests; `docs/third-party-licences.md`
+- [ ] `LICENSE` stays rights-reserved placeholder (ADR-0002)
 
 ## Phase 2 — AOI Input and Map Basics
 - [ ] AOI model + API: create/get/list/delete
@@ -44,7 +45,7 @@ Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 - [ ] STAC connector (open catalogues) — Landsat, Sentinel-2, Sentinel-1 metadata/assets
 - [ ] DEM connector (open DEM, e.g. Copernicus/SRTM — final choice via ADR)
 - [ ] Geology / mineral-occurrence connector(s) (open datasets only)
-- [ ] Google Earth Engine connector — **optional**, behind feature flag, requires user approval + credentials
+- [ ] Google Earth Engine connector — **optional**, `ENABLE_EARTH_ENGINE=false` by default, experimental/non-commercial only, lazy import, no credentials in repo, never in CI (ADR-0004)
 - [ ] Caching layer, request budgets, retry/back-off, offline mock fixtures
 - [ ] Provenance capture for every fetched asset
 - [ ] Tests with recorded fixtures (no live calls in CI)
@@ -59,8 +60,10 @@ Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 - [ ] Validation notes and known-failure documentation (topography, albedo, moisture, emissivity)
 
 ## Phase 5 — Gold Prospectivity Pipeline
-- [ ] Engine design doc: evidence layers, method (knowledge-driven / data-driven), limits
-- [ ] Evidence layer builders (alteration indices, lineaments, lithology proximity, geochemistry if available)
+- [ ] Fix target region(s) and identify geology/structure/occurrence sources for them
+- [ ] Engine design doc for **orogenic gold** (ADR-0003): evidence layers with citations, method (knowledge-driven / data-driven), limits; expert review
+- [ ] Applicability gate (`applicable` / `not_applicable` / `applicability_unknown`)
+- [ ] Evidence layer builders for the orogenic model (structure, host-lithology context, alteration proxies where bedrock exposed, geochemistry/geophysics if available)
 - [ ] Integration via EIS Toolkit (or alternative per ADR)
 - [ ] Prospectivity surface + uncertainty surface
 - [ ] Target extraction, ranking, explanation generation
@@ -112,13 +115,23 @@ Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 - Mobile/offline field companion
 - Collaborative annotation
 
-## Open Questions (require user approval)
-1. **Licence** for this repository (affects use of GPL/EUPL dependencies).
-2. **Queue library** (Celery / Dramatiq / RQ / arq).
-3. **Object storage** default (local volume vs MinIO).
-4. **Earth Engine**: allowed at all? Whose credentials/quota? (non-commercial vs commercial terms)
-5. **Target regions / deposit types** — gold models are deposit-type specific; which type(s) first?
-6. **Validation data** — are there known sites/benchmarks the user can provide?
-7. **Authentication** needs in the first release.
-8. **Compute budget** — target hardware and per-job limits.
-9. **Hosting target** for eventual deployment.
+## Decisions resolved (2026-10-04)
+| # | Former question | Resolution |
+|---|---|---|
+| 1–2 | Licence | Private repo, rights reserved, no OSS licence (ADR-0001, 0002) |
+| 3 | Deposit type | Orogenic gold only (ADR-0003) |
+| 4 | Earth Engine | Optional; experimental/non-commercial only (ADR-0004) |
+| 5 | Authentication | None in V1; local/private only (ADR-0005) |
+| 6 | Object storage | Local filesystem; no MinIO (ADR-0006) |
+| 7 | Queue | PostgreSQL-backed; no Redis (ADR-0007) |
+| 8 | Limits | Conservative MVP limits (ADR-0008) |
+| 9–10 | Science rules | Strict naming/envelope; no "confirmed" without field validation (ADR-0009, 0010) |
+
+## Open Questions (require owner input)
+1. **Phase 1 technical choices** proposed in `docs/phase-1-plan.md` §2 (Python tooling, Node package manager, schema generators, base images).
+2. **Field-validation definitions** (ADR-0010 point 3): confirm or amend.
+3. **Target region(s)** for orogenic-gold work — determines usable geology/structure data (needed before Phase 5 design doc).
+4. **Validation data** — known orogenic occurrences and cavity/void inventories the owner can supply (without these, all engines stay *experimental*).
+5. **Earth Engine account status** — is the intended use strictly non-commercial/research? Verify current terms before Phase 3 EE work.
+6. **Reference hardware** for profiling ADR-0008 limits (CPU/RAM/disk).
+7. **Hosting target** — deferred; any non-local deployment is blocked by ADR-0005 until a new ADR.

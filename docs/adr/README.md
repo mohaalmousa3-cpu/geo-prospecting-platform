@@ -1,5 +1,19 @@
 # Architecture Decision Records
 
-One file per decision: `NNNN-title.md` with Context, Decision, Consequences, Status.
+One file per decision: `NNNN-title.md` with Status, Context, Decision, Consequences. Changes to an accepted ADR require a new ADR that supersedes it.
 
-Pending ADRs: 0001 licence · 0002 queue library · 0003 object storage · 0004 Redis vs Valkey · 0005 Python env tooling · 0006 deployment target · 0007 Earth Engine policy.
+| ADR | Decision | Status |
+|---|---|---|
+| [0001](0001-private-repository.md) | Repository stays private | Accepted |
+| [0002](0002-licence-deferred-rights-reserved.md) | No open-source licence yet; rights reserved | Accepted |
+| [0003](0003-orogenic-gold-initial-model.md) | Phase 5 gold model = orogenic gold only | Accepted |
+| [0004](0004-earth-engine-experimental-noncommercial.md) | Earth Engine: experimental / non-commercial, optional, off by default | Accepted (conditions) |
+| [0005](0005-no-authentication-v1.md) | No authentication in V1; local/private only | Accepted |
+| [0006](0006-local-storage-no-minio.md) | Local filesystem storage; no MinIO | Accepted |
+| [0007](0007-postgres-backed-job-queue.md) | PostgreSQL-backed job queue; no Redis in V1 | Accepted |
+| [0008](0008-conservative-mvp-aoi-limits.md) | Conservative MVP AOI/compute limits | Accepted |
+| [0009](0009-scientific-naming-confidence-uncertainty.md) | Strict naming; mandatory confidence/uncertainty | Accepted |
+| [0010](0010-no-confirmed-claims-without-field-validation.md) | No "confirmed" language without field validation | Accepted (definitions pending confirmation) |
+
+## Still undecided (no ADR yet)
+Python environment tooling and Node package manager (proposed in `docs/phase-1-plan.md`), deployment target, target region(s), reference hardware.

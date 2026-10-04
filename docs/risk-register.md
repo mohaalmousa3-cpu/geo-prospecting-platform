@@ -5,15 +5,16 @@ Likelihood (L) / Impact (I): Low · Med · High. Review at each phase boundary. 
 | ID | Category | Risk | L | I | Mitigation | Trigger / Indicator |
 |---|---|---|---|---|---|---|
 | S-1 | Scientific | Remote-sensing signals are non-unique; outputs interpreted as proof | High | High | Mandatory language rules, envelope, disclaimers, guard tests, explanation with counter-evidence | Any UI/API string implying confirmation |
-| S-2 | Scientific | Gold models mis-applied to wrong deposit type/climate/cover | High | High | Explicit deposit-type scope; flag out-of-scope AOIs; confidence reduction | AOI outside validated domain |
+| S-2 | Scientific | Orogenic-gold model applied to non-orogenic settings, or mistaken for a general gold model | High | High | ADR-0003: orogenic-only, `deposit_model` shown on every result, applicability gate (`not_applicable` → no score, `applicability_unknown` → low confidence) | AOI outside orogenic setting; no geology coverage |
 | S-3 | Scientific | Thermal anomalies dominated by confounders (albedo, moisture, slope, season) | High | High | Confounder normalisation, temporal persistence, capped confidence for single-date | Anomalies correlate with slope/aspect |
 | S-4 | Scientific | Training data sparse/biased → overfit prospectivity | High | Med | Spatial CV, uncertainty maps, label experimental status | Large CV vs random-CV gap |
 | S-5 | Scientific | Inversion non-uniqueness misread as ground truth (Phase 8) | Med | High | Show DOI, misfit, regularisation, warnings | Users citing sections as definitive |
 | S-6 | Scientific | Invented thresholds/weights enter code | Med | High | `TODO(science-review)` convention, citations required, expert review | Magic numbers in PRs |
 | L-1 | Licensing | Copyleft dependencies (EUPL/GPL/AGPL) constrain repo licence/distribution | High | High | Process isolation, licence ADR before Phase 1 code, `third-party-licences.md`, legal review | Dependency added without record |
 | L-2 | Licensing | Data licences restrict use/redistribution (DEMs, geology surveys, cave inventories) | Med | High | Per-source licence metadata, no redistribution by default, respect restrictions | Source lacking licence field |
-| L-3 | Licensing | Earth Engine / Cesium ion / tile providers terms (commercial use, quotas) | Med | Med | Optional + flagged; terms checked before enabling | Enabling without review |
-| L-4 | Licensing | Redis/MinIO licence changes | Med | Low | ADR; consider Valkey / local volume | Upstream licence change |
+| L-3 | Licensing | Earth Engine non-commercial restriction breached (mineral prospecting is often commercial); Cesium ion / tile provider terms | Med | High | ADR-0004: EE optional, off by default, non-commercial experiments only, never a hard dependency, no billing; STAC default; re-check terms before first use and before any commercial use | Any client/commercial use of EE-derived results; enabling without review |
+| L-4 | Licensing | ~~Redis/MinIO licence changes~~ | — | — | **Closed for V1**: neither is used (ADR-0006, ADR-0007). Reopen if either is introduced | — |
+| L-5 | Licensing | Private/internal use of copyleft tools later becomes distribution or third-party hosting | Med | High | ADR-0002: process isolation, no vendored source, `third-party-licences.md`, legal review before any external exposure | Plan to publish, host for others, or ship images |
 | I-1 | Infrastructure | Heavy geo stacks (GDAL, pyGIMLi, MintPy) have fragile installs | High | Med | Separate pinned images, conda-lock, CI build of images | Image build failures |
 | I-2 | Infrastructure | Dev/prod parity gaps; no production target chosen | Med | Med | Compose-first, ADR for deployment, avoid managed-service lock-in | — |
 | I-3 | Infrastructure | Disk/RAM exhaustion from rasters | Med | High | Quotas, AOI limits, cleanup jobs, COG/windowed reads | Disk alarms |
@@ -33,4 +34,8 @@ Likelihood (L) / Impact (I): Low · Med · High. Review at each phase boundary. 
 | C-3 | Scaling | 3D rendering performance on large AOIs | Med | Med | LOD, tiling, resolution caps, perf budget | Frame-rate drops |
 | P-1 | Project | Scope creep / building ahead of phase | High | Med | CLAUDE.md phase rules, backlog | Out-of-phase PRs |
 | P-2 | Project | Lack of domain-expert review and validation data | High | High | Seek expert reviewer and benchmark sites early; engines stay *experimental* | No reviewer by Phase 4 |
-| P-3 | Project | Security: hostile uploads, data leaks | Med | High | Upload hardening, size limits, no secrets in repo, auth ADR | — |
+| P-3 | Project | Security: hostile uploads, data leaks | Med | High | Upload hardening, size limits, no secrets in repo | — |
+| P-4 | Project / Security | **No authentication in V1** (ADR-0005): anyone reaching the API can read all AOIs/results and consume compute | Med | High | Loopback-only port binding, CORS allow-list, no public deployment, ADR-0008 limits, new ADR + threat review before any shared/hosted use | Any non-local deployment or port-forwarding |
+| P-5 | Project | Hand-rolled PostgreSQL job queue has claim/lease/timeout bugs (ADR-0007): lost, duplicated or stuck jobs | Med | Med | Integration tests (concurrent claim, crash recovery, timeout, cancel), `JobQueue` interface for swap to RQ/Celery or a Postgres queue library | Stuck `running` jobs; duplicate results |
+| P-6 | Project | MVP limits (ADR-0008) are unmeasured guesses; may be too tight or still too loose | Med | Low | Profile in Phases 3–4 on reference hardware; update ADR | Jobs OOM/time out, or users blocked by limits |
+| P-7 | Scientific / Process | Field-validation definitions (ADR-0010) unconfirmed and no validation workflow in V1; no ground-truth data available | High | High | Owner confirms definitions; keep all engines *experimental*; seek benchmark orogenic sites and cavity inventories | No validation dataset by Phase 5 |
