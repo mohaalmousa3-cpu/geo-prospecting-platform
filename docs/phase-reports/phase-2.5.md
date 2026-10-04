@@ -1,7 +1,7 @@
 # Phase 2.5 Report — Structural Hardening (project entity, basemap abstraction)
 
 Status: **approved by the owner with two required follow-ups, now implemented** (§6). Phase 3 has **not** been started; its plan is `docs/phase-3-plan.md` (proposal only).
-> **Status note (2026-10-04, reconciliation).** The status line above and the "proposal only" wording are preserved as written when the report was produced. Since then the Phase 3 plan was finalized and approved by the owner with constraints; Phase 3 is Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started. The owner's approval of this phase is *conditional* (the two follow-ups in §6); the follow-ups are *reported implemented and tested*; a **separate owner sign-off on the follow-ups is not recorded**, and approval of the Phase 3 plan is not that sign-off.
+> **Status note (2026-10-04, reconciliation).** The status line above and the "proposal only" wording are preserved as written when the report was produced. Since then the Phase 3 plan was finalized and approved by the owner with constraints; Phase 3 is Planned — blocked pending an explicit start instruction, an explicit owner decision on ADR-0014 (Proposed) and decision D8 (OPEN); prerequisite-phase acceptance decisions recorded 2026-10-05; plan approved with constraints; implementation not started. The owner's approval of this phase is *conditional* (the two follow-ups in §6); the follow-ups are *reported implemented and tested*; a **separate owner sign-off on the follow-ups is not recorded**, and approval of the Phase 3 plan is not that sign-off. **Update 2026-10-05 (owner decision D-1):** the owner accepted the two required follow-ups (browser smoke test in CI; default basemap `none`) and the derived-CORS addition within their documented scope and closed this phase's acceptance gate (not a claim of exhaustive UI-interaction or runtime-displayed-text coverage). Evidence relied on: CI run #11 on `5ac5a27` (https://github.com/mohaalmousa3-cpu/geo-prospecting-platform/actions/runs/37222835783) and a clean-checkout Compose run of the same commit (locally reported). The sentence above that no separate sign-off is recorded is historical.
 
 Scope statement: **no analysis, scoring, Earth Engine, 3D or auth expansion.** Only bookkeeping (projects), AOI ownership, and a configuration abstraction.
 Decisions: ADR-0013 · Relationships: `docs/data-model.md`.
@@ -41,18 +41,18 @@ Decisions: ADR-0013 · Relationships: `docs/data-model.md`.
 - Real-world AOI files and OSM policy remain open from Phase 2 (risks P-9, P-10).
 
 ## 4. Acceptance checklist (tick when you accept)
-> Status note (2026-10-04): these boxes are the **owner's** and are intentionally unticked; none was changed in this reconciliation. Evidence is in §2, §6 and the status note under §3. Item 9 ("`make ci` green locally and the GitHub Actions run green on the final commit") has verification evidence (run #7 historical; run #10 current committed HEAD) but remains the owner's to tick. Item 10 ("owner decisions below are given") is only partly evidenced: the owner's reply set conditions (§6) and no separate sign-off on them is recorded.
+> Status note (2026-10-04, historical): these boxes were the **owner's** and were intentionally unticked; none was changed in that reconciliation. **Update 2026-10-05:** ticked on the owner's decision D-1 (acceptance of the follow-ups and the derived-CORS addition, closing the gate); items 1–8 rest on the verification already recorded in §2 and §6, item 9 on CI runs #7 (historical), #10 and #11 (`5ac5a27`), and item 10 on the owner's decisions of 2026-10-05. Evidence is in §2, §6 and the status note under §3. Item 9 ("`make ci` green locally and the GitHub Actions run green on the final commit") has verification evidence (run #7 historical; run #10 current committed HEAD) but remains the owner's to tick. Item 10 ("owner decisions below are given") is only partly evidenced: the owner's reply set conditions (§6) and no separate sign-off on them is recorded.
 
-- [ ] 1. A `project` entity exists with name/description and a bounded count (`MAX_PROJECTS`).
-- [ ] 2. Every AOI belongs to exactly one project; existing AOIs were migrated, not lost.
-- [ ] 3. API/contracts/persistence updated; saving requires a project; preview does not.
-- [ ] 4. The UI offers the smallest project flow (select / create / delete) and scopes AOIs to the selected project.
-- [ ] 5. Basemap is configured through a provider abstraction with `osm` / `xyz` / `none`, validated, with the privacy note shown.
-- [ ] 6. `docs/data-model.md` and ADR-0013 describe project ↔ AOI ↔ future jobs ↔ outputs and deletion rules.
-- [ ] 7. AOI validation and upload hardening behave exactly as before (tests unchanged in substance).
-- [ ] 8. No analysis, scoring, Earth Engine, 3D or auth expansion was added.
-- [ ] 9. `make ci` green locally and the GitHub Actions run green on the final commit.
-- [ ] 10. Owner decisions below are given.
+- [x] 1. A `project` entity exists with name/description and a bounded count (`MAX_PROJECTS`).
+- [x] 2. Every AOI belongs to exactly one project; existing AOIs were migrated, not lost.
+- [x] 3. API/contracts/persistence updated; saving requires a project; preview does not.
+- [x] 4. The UI offers the smallest project flow (select / create / delete) and scopes AOIs to the selected project.
+- [x] 5. Basemap is configured through a provider abstraction with `osm` / `xyz` / `none`, validated, with the privacy note shown.
+- [x] 6. `docs/data-model.md` and ADR-0013 describe project ↔ AOI ↔ future jobs ↔ outputs and deletion rules.
+- [x] 7. AOI validation and upload hardening behave exactly as before (tests unchanged in substance).
+- [x] 8. No analysis, scoring, Earth Engine, 3D or auth expansion was added.
+- [x] 9. `make ci` green locally and the GitHub Actions run green on the final commit.
+- [x] 10. Owner decisions below are given.
 
 ## 5. Decisions for the owner
 1. Accept Phase 2.5 (checklist above) so Phase 3 may be planned.

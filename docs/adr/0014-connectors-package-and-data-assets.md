@@ -1,6 +1,6 @@
 # ADR-0014: Connectors package, `data_asset` entity and job↔project/AOI linkage (Phase 3)
 
-- **Status:** **PROPOSED — NOT APPROVED, NOT IMPLEMENTED.** The owner's "approved with constraints" (2026-10-04) accepted the Phase 3 *plan* and asked that this ADR stay Proposed until the owner explicitly marks it Approved after the final documentation pass. Do not treat the decisions below as binding yet, and write no code for them. (Status wording, 2026-10-04: Phase 3 is blocked pending prerequisite acceptance reconciliation; this ADR's design is unchanged.)
+- **Status:** **PROPOSED — NOT APPROVED, NOT IMPLEMENTED.** The owner's "approved with constraints" (2026-10-04) accepted the Phase 3 *plan* and asked that this ADR stay Proposed until the owner explicitly marks it Approved after the final documentation pass. Do not treat the decisions below as binding yet, and write no code for them. (Status wording, updated 2026-10-05: Phase 3 is blocked pending an explicit start instruction, an owner decision on this ADR and decision D8; this ADR's design is unchanged.)
 - **Date:** 2026-10-04
 - **Proposed by:** Claude, per `docs/phase-3-plan.md`
 

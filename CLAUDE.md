@@ -19,7 +19,7 @@ State in your first message which phase/task you are working on. If it is unclea
 
 ## 1a. Binding Decisions (ADR-0001 … ADR-0013)
 
-Do not contradict these without a superseding ADR approved by the owner. Authority differs by record: ADR-0001…0011 are owner decisions; ADR-0012 and ADR-0013 are design decisions recorded as accepted within owner-approved phase scopes (scope approval is not a separate explicit owner approval of every provision; ADR-0012 records that the owner may veto any point); ADR-0014 is Proposed.
+Do not contradict these without a superseding ADR approved by the owner. Authority differs by record: ADR-0001…0011 are owner decisions; ADR-0012 and ADR-0013 are design decisions recorded as accepted within owner-approved phase scopes (scope approval is not a separate explicit owner approval of every provision; ADR-0012 records that the owner may veto any point; the ADR-0013 follow-up amendment was explicitly accepted by the owner on 2026-10-05); ADR-0014 is Proposed.
 
 - Repo is **private**, rights reserved; no licence chosen; no vendored third-party source (0001, 0002).
 - Gold model = **orogenic only**, with applicability gate; never generalise to "gold" (0003).

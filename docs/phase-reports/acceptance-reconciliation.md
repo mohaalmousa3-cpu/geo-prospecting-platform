@@ -1,8 +1,8 @@
 # Acceptance Reconciliation — Phases 0, 1, 2, 2.5
 
-Date: 2026-10-04 · Base commit: `da90ce2b7051dc650dfcb4247155a4eccbf4a8f0` (branch `docs/status-refresh-adr-0013`). Sections 4–7 record local verification on the **dirty working tree** over that base (before the commit that contains this file). Post-push CI evidence for the new commit is **not** recorded here (it cannot be: this file is part of that commit); see the hand-over message.
+Date: 2026-10-04 (verification rounds) · updated 2026-10-05 (owner decisions D-1…D-6 recorded in §2a; evidence for commit `5ac5a27` in §3 and §4b) · Base commit of the verification rounds: `da90ce2b7051dc650dfcb4247155a4eccbf4a8f0` (branch `docs/status-refresh-adr-0013`). Sections 4–7 record local verification on the **dirty working tree** over that base (before the commit that contains this file). CI evidence for commit `5ac5a27` (run #11) is recorded in §3; the CI result of the later documentation-only commit that records the 2026-10-05 decisions is **not** recorded here (a commit cannot cite its own run).
 
-> **What this document is not.** It is **not** a phase acceptance, **not** an owner acceptance, and **not** CI evidence for any new commit. It records, per criterion, what was implemented, what was verified (and where), what the owner decided (as transcribed), and what is still open. No acceptance checkbox anywhere was changed by it. Phase 3 remains: *Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started.* ADR-0014 is Proposed and non-binding; decision D8 is OPEN.
+> **What this document is — and is not.** It is **not** itself an acceptance: owner acceptance exists only as the owner's decisions transcribed in §2 and §2a. It records, per criterion, what was implemented, what was verified (and where), what the owner decided (as transcribed), and what is still open. After the owner's decisions of 2026-10-05 only the checkboxes those decisions support were ticked (listed in §2a). The local runs in §4–§4a are **not** CI evidence for any committed SHA. Phase 3 remains: *Planned — blocked pending an explicit start instruction, an explicit owner decision on ADR-0014 (Proposed) and decision D8 (OPEN); prerequisite-phase acceptance decisions recorded 2026-10-05; plan approved with constraints; implementation not started.* ADR-0014 is Proposed and non-binding; decision D8 is OPEN.
 
 Four kinds of statement are kept apart throughout:
 
@@ -39,7 +39,34 @@ Base `da90ce2`; uncommitted at the time of verification:
 
 **No owner message found or transcribed** records: (a) an explicit owner decision that the two Phase 2.5 follow-ups meet the owner's requirement; (b) a Phase 0 acceptance; (c) the owner ticking any checklist box.
 
-## 3. CI evidence (GitHub Actions, workflow `ci`, branch `claude/geo-prospecting-foundation-hmcma4`; read on 2026-10-04)
+## 2a. Owner decisions of 2026-10-05 — faithful transcription (D-1 … D-6)
+
+**Transcription by Claude of the owner's chat message of 2026-10-05; not an independent signed record** (the owner stated that no additional formal signature is needed). Baseline named by the owner: `5ac5a278a9b93aaab4877e7ef84aa2640ff94b7c`. The owner relied on the CI run #11 report and the clean-checkout Compose verification of that commit, "with the limits of the evidence stated". Original text (Arabic), verbatim:
+
+> D-1 — قبول بقيود: أقبل متابعتَي المرحلة 2.5: اختبار المتصفح في CI، وbasemap الافتراضي none. وأقبل إضافة CORS المشتقة ضمن نطاقها الموثق. هذا يغلق بوابة قبول المرحلة 2.5، ولا يعني تغطية شاملة لكل تفاعلات الواجهة أو النصوص المعروضة وقت التشغيل.
+>
+> D-2 — قبول ضمن النطاق التاريخي: أعتبر معيار "لا كود تطبيقي" مستوفى عند ca2d4e4، وليس شرطاً على HEAD الحالي. أقبل المرحلة 0 ضمن نطاق التخطيط والتأسيس التاريخي. لا تعتبر ذلك إثباتاً بأن كل الوثائق الحالية خالية من التناقضات.
+>
+> D-3 — قبول: أعتبر الأدلة المبلّغ عنها كافية لقبول البنود الثلاثة المفتوحة في المرحلة 1 وبند CI في TASKS. تشغيل Compose من نسخة نظيفة كافٍ ضمن الفحوص المنفذة. لا أطلب جولة تحقق عامة إضافية.
+>
+> D-4 — قبول محدد: أقبل إغلاق فجوة اختبارات حدود الرفع والأرشيف التي عالجتها الاختبارات الجديدة المرتكبة والمبلّغ عن نجاحها في CI #11. لا تستنتج من اختبارات الرفع والأرشيف وحدها استيفاء معيار CRS/الحدود المركب كله. إذا كان صندوق الاختيار يشمل جوانب أخرى، اربطها بأدلتها القائمة؛ وأبقِ أي جانب غير مدعوم مفتوحاً.
+>
+> D-5 — قبول: أقر تقوية حارس المصطلحات وبوابة تدقيق التبعيات المقفولة، مع إبقاء حدود الحارس موثقة. وأقر إضافة docs/** إلى فلتر فروع push في workflow. لا توسّع صلاحيات GitHub token.
+>
+> D-6 — قبول مؤقت بقيود: أقبل استثناء المخاطرة التطويرية لسلسلة braces الموثقة والتنبيه GHSA-vfj7-8cjw-p6xm حتى 2026-11-04. الشروط: settings.next.rootDir يبقى غير مضبوط؛ لا تصل أنماط يحددها المستخدم إلى هذا المسار؛ لا تُشغّل هذه الأدوات على مستودعات غير موثوقة؛ نتائج الإنتاج وفشل الماسح تبقى مانعة لنجاح البوابة؛ تحذيرات التطوير تبقى ظاهرة بلا قمع؛ تُراجع المخاطرة مبكراً عند توفر إصلاح متوافق. هذا ليس قبولاً لأي ثغرة تطوير مستقبلية. عند انتهاء المهلة يلزم قرار تجديد أو معالجة؛ لا تمديد تلقائي. إذا تغيرت شروط التعرض، أبلغني لإعادة تقييم الاستثناء.
+>
+> (Also stated: record these as a faithful transcription with date and scope; update only the status and checkboxes these decisions support; keep unsupported criteria open and explain; record run #11 as evidence for `5ac5a278…` and Compose as locally reported evidence for the same commit; no extra code changes; no merge; Phase 3 not started; acceptance of earlier phases is not permission to start Phase 3; ADR-0014 stays Proposed and non-binding and D8 stays OPEN until the owner's explicit decisions and a separate start instruction.)
+
+| Decision | Scope / limits (as stated) | Effect recorded in the repository |
+|---|---|---|
+| **D-1** accept with limits | the two Phase 2.5 follow-ups and the derived-CORS addition, within their documented scope; not exhaustive UI-interaction or runtime-displayed-text coverage | Phase 2.5 acceptance gate closed; `phase-2.5.md` §4 items 1–10 ticked; status notes updated |
+| **D-2** accept within the historical scope | "no application code" satisfied **at `ca2d4e4`**, not a condition on HEAD; Phase 0 accepted as planning/scaffolding; not a proof that current documents are contradiction-free | Phase 0 boxes ticked: *constraints referenced*, *open questions listed*, *no application code (as of `ca2d4e4`)*, *user review completed*. **Left open: *all files exist and are internally consistent*** |
+| **D-3** accept | reported evidence sufficient for the three open Phase 1 boxes and the `TASKS.md` CI box; clean-checkout Compose run sufficient among the checks performed; no further general verification round requested | Phase 1 boxes (forbidden-term scan in CI, schema pipeline/drift, CI runs lint/type/tests/secret scan) and `TASKS.md` "CI workflow executed green" ticked; forbidden-term tick carries the documented guard limits (§6) |
+| **D-4** accept, specific | the upload/archive boundary-test gap, via the committed tests green in CI #11; **not** the whole composite CRS/limits criterion by those tests alone | the composite box was examined aspect by aspect (see `acceptance-criteria.md` Phase 2 note) and ticked because each aspect has its own existing evidence; reprojection from CRSs other than EPSG:32632 is explicitly *not* claimed. **The `TASKS.md` Phase 2 box "GitHub Actions run green on the Phase 2 commits" stays open** — D-4 does not mention it |
+| **D-5** accept | terminology-guard hardening and the locked-dependency audit gate, with the guard's limits kept documented; `docs/**` added to the `push` branch filter; GitHub token permissions not to be widened | no checkbox; §6 and §7a stand; workflow keeps `permissions: contents: read` |
+| **D-6** accept, temporary | dev-only `braces` chain, advisory GHSA-vfj7-8cjw-p6xm, **until 2026-11-04**; conditions below (§7b) | no checkbox; recorded in §7b; no automatic extension |
+
+## 3. CI evidence (GitHub Actions, workflow `ci`, branch `claude/geo-prospecting-foundation-hmcma4`; read on 2026-10-04 and 2026-10-05)
 
 | Run | Commit | Result | Notes |
 |---|---|---|---|
@@ -52,7 +79,8 @@ Base `da90ce2`; uncommitted at the time of verification:
 | #7 | `02b6b05` | success | 6 jobs incl. `e2e` — **historical evidence** for the Phase 2.5 follow-ups |
 | #8 | `9a7947e` | cancelled | superseded |
 | #9 | `c3cf3a3` | success | run-level conclusion only |
-| #10 | `da90ce2` | success | 6 jobs incl. `e2e`; code-identical to `02b6b05` (the 8 files changed since are documentation) — CI evidence for the committed baseline |
+| #10 | `da90ce2` | success | 6 jobs incl. `e2e`; code-identical to `02b6b05` (the 8 files changed since are documentation) — CI evidence for that baseline (historical) |
+| **#11** | **`5ac5a278a9b93aaab4877e7ef84aa2640ff94b7c`** (branch `docs/status-refresh-adr-0013`) | **success** | 6 jobs: python (lint, types, unit, integration, guards, licences), frontend (+ schema drift), `e2e` browser smoke test, docker build, secret scan (gitleaks, CI image), **dependency audit (locked deps)** — audit log: Python production CLEAN (37), Python all groups CLEAN (63), npm production CLEAN, npm full FINDINGS (5 high, dev-only, printed as warnings), `exit=0`. CI evidence for this commit. https://github.com/mohaalmousa3-cpu/geo-prospecting-platform/actions/runs/37222835783 |
 
 Scope limits of CI: it does not run `docker compose up` (only a build), its secret scan/audit/licence steps are as described, and the **dependency-audit job is report-only and, as written, audits the wrong environment** (§7).
 
@@ -103,6 +131,21 @@ Same dirty tree over `da90ce2` plus the §1 tooling changes; same environment as
 | Residue check on mutation-touched production files | identical to `HEAD` (see §1) |
 
 A staged-content gitleaks scan is run immediately before committing (reported in the hand-over message).
+
+## 4b. Clean-checkout Compose verification of commit `5ac5a27` (local, reported — not CI)
+
+Clone of `origin/docs/status-refresh-adr-0013`; `HEAD` = `5ac5a278a9b93aaab4877e7ef84aa2640ff94b7c`, working tree clean. Isolated Compose project `geo-clean` with a temporary git-ignored `.env` (placeholder values, random throw-away DB password, `CORS_ALLOWED_ORIGINS=http://127.0.0.1:3000` for the test browser origin), disposable data. Environment limits: Docker started manually in the sandbox; images built behind a TLS-intercepting proxy using the sandbox CA bundle (build time only); Chromium from `/opt/pw-browsers`.
+
+| Check | Outcome |
+|---|---|
+| `docker compose up -d --build` | exit 0; services postgis, migrate, worker, backend, frontend (no Redis/MinIO) |
+| Migrations | `alembic_version = 0003`; `postgis` present; 9 public tables |
+| Health | `/api/v1/health` ok; `/health/ready` 200; frontend 200 |
+| Ports | backend `127.0.0.1:8000`, frontend `127.0.0.1:3000`; PostgreSQL not published |
+| `noop` job | `succeeded`, `attempts=1` |
+| Browser smoke test against the stack (`npm ci` then `npx playwright test`, servers reused) | 1 passed (5.2 s) |
+| Dependency-audit gate from the clean checkout | exit 0 (same results as CI) |
+| Teardown | `down -v`; 0 containers/volumes left; `.env` removed |
 
 ## 5. Upload / archive boundary tests (item added this round)
 
@@ -192,17 +235,18 @@ Installed path (`npm ls`, lockfile): `eslint-config-next@16.3.8 → @next/eslint
 - The only fix `npm audit` offers is `eslint-config-next@14.2.35` (`isSemVerMajor: true`) — a **major downgrade** from 16.3.8 for a Next 16 project. Not applied. `npm audit fix --force` was not run; no Next-related package was downgraded; no override was added; lockfiles are unchanged.
 - The advisory text itself could not be retrieved (the sandbox only reaches repository-scoped GitHub endpoints); the title, CWE-674, CVSS 7.5 and range above come from the npm audit report.
 
-**Proposed time-limited exception — PENDING YOUR DECISION (not accepted on your behalf; nothing is suppressed and the CI warning stays visible):**
+**Time-limited exception — ACCEPTED (conditional) by owner decision D-6, 2026-10-05, until 2026-11-04.** Scope: the five dev-only packages of the chain above (`eslint-config-next`, `@next/eslint-plugin-next`, `fast-glob`, `micromatch`, `braces`) and advisory GHSA-vfj7-8cjw-p6xm. Conditions (as stated by the owner):
 
-| Item | Proposal |
-|---|---|
-| Scope | the five dev-only packages in the single chain above (`eslint-config-next`, `@next/eslint-plugin-next`, `fast-glob`, `micromatch`, `braces`); no production dependency |
-| Exposure limits | (1) `settings.next.rootDir` stays unset in `apps/frontend/eslint.config.mjs`; (2) no lint/glob pattern is built from user input; (3) production `npm audit` must remain at 0 (it already fails the gate otherwise); (4) no tool in the chain is run on untrusted repositories |
-| Mitigation (optional, needs approval) | a unit test asserting that `eslint.config.mjs` does not set `settings.next.rootDir` |
-| Review date | **2026-11-04** (30 days), or earlier when `braces`/`micromatch`/`fast-glob` publish a release or `eslint-config-next` drops `fast-glob` |
-| Decision needed | accept the exception for this period, or direct another remedy |
+1. `settings.next.rootDir` stays unset (`apps/frontend/eslint.config.mjs`).
+2. No user-specified pattern reaches this path.
+3. These tools are not run on untrusted repositories.
+4. Production findings and scanner failures remain gate-blocking (the audit gate exits 1/2 on them — §7a).
+5. Development warnings stay visible; nothing is suppressed and no allow-list exists.
+6. The risk is reviewed early when a compatible fix appears.
 
-## 8. Reconciliation matrix
+Limits of the acceptance: it is **not** acceptance of any future development vulnerability; at expiry (2026-11-04) a renewal or remediation decision is required — **there is no automatic extension**; if the exposure conditions change, the owner must be told so the exception can be re-assessed. The optional mitigation (a unit test asserting `rootDir` is unset) was **not** implemented (no code changes were authorised). Next review date: **2026-11-04**.
+
+## 8. Reconciliation matrix — snapshot taken before the 2026-10-05 owner decisions (current statuses: §8a)
 
 Common to every row: the OWNER evidence is a **transcription** (§2). "—" = nothing beyond the phase-level gap. `bbab3c8`=#3, `2ddef67`=#4, `1e7c823`=#5, `46178de`=#6, `02b6b05`=#7, `da90ce2`=#10; "WT" = the dirty working tree of §4 (not CI).
 
@@ -254,27 +298,49 @@ Common to every row: the OWNER evidence is a **transcription** (§2). "—" = no
 | CORS derived from OpenAPI operations (extra, requested as "future-safe") | tests for every operation; e2e covers DELETE; WT Compose preflight returned the expected method list | **explicit owner decision not recorded** | explicit owner decision required |
 | GitHub Actions run #7 green (six jobs) | #7 (historical) and #10 (current committed baseline) | — | — |
 
-## 9. Unresolved gaps (summary)
+## 8a. Status after the owner decisions of 2026-10-05 (what changed in the checklists)
 
-1. No owner record for the Phase 2.5 follow-ups (blocks Phase 3 per T7).
-2. Phase 0 has no explicit acceptance and one criterion that is superseded by design.
-3. The new boundary tests and all documentation edits are **uncommitted**; none of it is CI-verified.
-4. Guard hardened (§6) but source-text-only by nature; CI audit gate rewritten (§7a) — its first CI run is not yet recorded here; gitleaks CI-form image could not be pulled (§4a); fresh-clone Compose start from the new commit is reported in the hand-over message, not here.
-5. ADR-0014 Proposed; D8 open; Phase 5 region gate and Earth Engine eligibility unchanged.
+| Phase | Criterion | Before | Now | Basis |
+|---|---|---|---|---|
+| 0 | all files exist and are internally consistent | open | **open** | D-2 explicitly does not claim consistency |
+| 0 | constraints documented and referenced | open | ticked | `grep` evidence (2/2/1 references) + D-2 acceptance within historical scope |
+| 0 | open questions listed | open | ticked | `TASKS.md` section + D-2 |
+| 0 | no application code | open | ticked (as of `ca2d4e4`) | D-2 |
+| 0 | user review completed | open | ticked | D-2 |
+| 1 | forbidden-term scan runs in CI | open | ticked | D-3; CI #3 … #11 step "Scientific guards"; guard limits documented (§6, D-5) |
+| 1 | schema pipeline/drift | open | ticked | D-3; CI frontend step; run #2 failed on drift |
+| 1 | CI runs lint/type/tests/secret scan | open | ticked | D-3; CI #3 … #11 |
+| 1 | `TASKS.md` "CI workflow executed green" | open | ticked | D-3 |
+| 2 | composite CRS/limits box | open | ticked | D-4 (upload/archive gap) + each other aspect tied to existing evidence (`acceptance-criteria.md` Phase 2 note); other-CRS reprojection explicitly not claimed |
+| 2 | `TASKS.md` "Actions green on the Phase 2 commits" | open | **open** | evidence exists (#4, #5) but no explicit decision covers this box |
+| 2.5 | `phase-2.5.md` §4 items 1–10 | open | ticked | D-1 (gate closed); verification in §2/§6 of that report, CI #7 (historical), #10, #11 |
+| 2.5 | `acceptance-criteria.md` Phase 2.5 items | ticked | ticked | unchanged |
+| 3+ | all | open | **open** | not in scope of any decision; Phase 3 not started |
 
-## 10. Is verification of the current code baseline needed before acceptance?
+## 9. Remaining gaps and open items (after the 2026-10-05 decisions)
 
-- **CI-level:** the committed baseline `da90ce2` has green CI (#10) and is code-identical to `02b6b05`. Re-verification of the *committed* code adds nothing.
-- **Working tree:** the local run in §4 passed on the dirty tree; once the new tests and edits are committed, **a fresh CI run on the new SHA is required** to turn this into CI evidence (this round produced none).
-- **Runtime:** Compose startup was verified on the dirty tree only; if the owner wants the Phase 1 criterion read literally ("from a clean clone"), a fresh-clone run at the final commit is needed.
+1. `acceptance-criteria.md` Phase 0: *all files exist and are internally consistent* — open by the owner's own limitation (D-2).
+2. `TASKS.md` Phase 2: "GitHub Actions run green on the Phase 2 commits" — open; evidence exists, no explicit decision.
+3. Phase 3: blocked — needs an independent explicit start instruction, an explicit owner decision on ADR-0014 (Proposed, non-binding) and decision D8 (OPEN: live-verification route).
+4. D-6 exception expires **2026-11-04**; renewal or remediation decision required; notify the owner if exposure conditions change.
+5. Limits that remain true: the terminology guard is a source-text scan (§6); other-CRS reprojection untested (risk P-10); ADR-0008 limits unmeasured; no live provider verification; Phase 5 region gate and Earth Engine eligibility unchanged.
+6. The CI result of the documentation-only commit that records these decisions is not (and cannot be) recorded inside that commit.
 
-## 11. Owner decision checklist (all unticked; for the owner to tick or reject)
+## 10. Verification of the code baseline
 
-- [ ] D-1 Record an explicit owner decision (accept or reject) on the two Phase 2.5 follow-ups and the CORS addition.
-- [ ] D-2 Phase 0: decide whether "no application code" counts as satisfied at `ca2d4e4`, and give an explicit acceptance statement (or state what is missing).
-- [ ] D-3 Phase 1: decide whether the CI evidence in §3 is enough to tick the three open boxes and the `TASKS.md` CI box, or whether a fresh-clone Compose run is also required.
-- [ ] D-4 Phase 2: decide whether the new boundary tests (once committed and green in CI) satisfy the open CRS/limits box.
-- [ ] D-5 Review the guard hardening (§6), the audit gate (§7a) and the CI trigger change `docs/**` (§7a); say whether the trigger change stays.
-- [ ] D-6 Decide on the proposed time-limited exception for the dev-only `braces` chain (§7b; review date 2026-11-04) — pending your decision.
-- [ ] D-7 Commit and push were authorised for this bounded work only on `docs/status-refresh-adr-0013`; **merge is not authorised**.
-- [ ] D-8 Phase 3 stays blocked until D-1…D-4 are decided, an explicit start instruction is given, ADR-0014 is explicitly marked Approved, and D8 is decided.
+The owner accepted the reported evidence (D-3) and requested no further general verification round. For the record: commit `5ac5a27` has CI run #11 (§3) and a clean-checkout Compose run (§4b, local). The commit recording the owner decisions changes documentation only.
+
+## 11. Owner decision record
+
+| Item | Decision | Date | Where |
+|---|---|---|---|
+| D-1 Phase 2.5 follow-ups + derived CORS | accepted with limits | 2026-10-05 | §2a |
+| D-2 Phase 0 / "no application code" | accepted within the historical scope | 2026-10-05 | §2a |
+| D-3 Phase 1 open boxes + TASKS CI box | accepted | 2026-10-05 | §2a |
+| D-4 Phase 2 upload/archive boundary tests | accepted (specific) | 2026-10-05 | §2a |
+| D-5 guard + audit gate + `docs/**` trigger | accepted | 2026-10-05 | §2a |
+| D-6 dev-only `braces` exception | accepted, temporary, until 2026-11-04 | 2026-10-05 | §7b |
+| Commit and push of the bounded work | authorised for `docs/status-refresh-adr-0013` only; **merge not authorised** | 2026-10-05 | owner messages |
+| ADR-0014 | **undecided** — Proposed, non-binding | — | `docs/adr/0014-…` |
+| D8 live-verification route | **OPEN** | — | `docs/phase-3-plan.md` |
+| Phase 3 start | **not authorised** | — | independent start instruction required |
