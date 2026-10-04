@@ -258,6 +258,7 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | @nodelib/fs.walk | 1.2.8 | MIT |
 | @nolyfill/is-core-module | 1.0.39 | MIT |
 | @oxc-project/types | 0.152.0 | MIT |
+| @playwright/test | 1.63.0 | Apache-2.0 |
 | @rolldown/binding-android-arm-eabi | 1.2.12 | MIT |
 | @rolldown/binding-android-arm64 | 1.2.12 | MIT |
 | @rolldown/binding-darwin-arm64 | 1.2.12 | MIT |
@@ -563,6 +564,8 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | path-parse | 1.0.7 | MIT |
 | picomatch | 2.3.2 | MIT |
 | picomatch | 4.0.7 | MIT |
+| playwright | 1.63.0 | Apache-2.0 |
+| playwright-core | 1.63.0 | Apache-2.0 |
 | possible-typed-array-names | 1.1.0 | MIT |
 | postcss | 8.5.28 | MIT |
 | prelude-ls | 1.2.1 | MIT |

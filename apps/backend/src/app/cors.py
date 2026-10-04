@@ -5,9 +5,9 @@ refused while curl and mocked-fetch tests worked). Deriving the list from the de
 every verb an endpoint uses is allowed in the browser, and no verb without an endpoint ever is.
 
 The source is the app's OpenAPI document, not `app.routes`: FastAPI includes routers lazily, so
-`app.routes` is not a flat list of routes. Consequence: an endpoint declared with
-hidden from the schema (include_in_schema disabled) would not be covered, so the API must not hide endpoints from its schema
-(a test enforces that the schema lists every operation the tests reach).
+`app.routes` is not a flat list of routes. Consequence: an endpoint hidden from the schema
+(include_in_schema disabled) would not be covered, so the API must not hide endpoints from its
+schema (a test enforces this).
 """
 
 from __future__ import annotations

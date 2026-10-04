@@ -33,11 +33,19 @@ down:
 migrate:
 	uv run python -m geo_common.migrate
 
-.PHONY: licences frontend-check ci
+.PHONY: licences frontend-check e2e ci ci-full
 licences:
 	uv run python scripts/licences.py
 
 frontend-check:
 	cd apps/frontend && npm run lint && npm run typecheck && npm run format:check && npm test && npm run build
 
+# Browser smoke test. Needs PostGIS and a database named $$E2E_POSTGRES_DB (default geo_e2e), plus either
+# `npx playwright install chromium` or E2E_CHROMIUM_PATH=/path/to/chrome.
+e2e:
+	cd apps/frontend && npm run e2e
+
 ci: lint typecheck test test-integration guard licences frontend-check schemas-check
+
+# everything CI runs, including the browser smoke test
+ci-full: ci e2e

@@ -57,7 +57,7 @@ OpenStreetMap-derived tiles (respect tile usage policy; prefer self-hosted or pe
 | Microsoft Planetary Computer / AWS Open Data / CDSE | Hosted open data | Verify rate limits/terms. |
 
 ## 6a. Map basemap (Phase 2, ADR-0012)
-Default: OpenStreetMap standard raster tiles (`NEXT_PUBLIC_BASEMAP_TILE_URL`), for **low-volume development only** (OSM's tile usage policy discourages heavy use; not re-verified here). Tile requests reveal the viewed map area, not the AOI geometry, to the provider. Empty URL = no basemap. A production basemap needs a provider choice and a terms check (open question).
+Default: **no basemap** (`NEXT_PUBLIC_BASEMAP_PROVIDER=none`). OpenStreetMap standard raster tiles are **opt-in (`osm`), local development only, refused in production builds**, and `xyz` needs an explicit provider, https URL and attribution. OSM tile use is for **low-volume development only** (OSM's tile usage policy discourages heavy use; not re-verified here). Tile requests reveal the viewed map area, not the AOI geometry, to the provider. Empty URL = no basemap. A production basemap needs a provider choice and a terms check (open question).
 
 ## 7a. Orogenic-gold data needs (ADR-0003)
 Phase 5 needs, per target region: bedrock geology (lithology, metamorphic context), fault/shear-zone mapping, known orogenic occurrences (validation and bias assessment), and optionally regional geochemistry and airborne magnetics/radiometrics. Availability varies strongly by country; **the target region(s) are not yet fixed** and determine which geological-survey sources are usable (open question in `TASKS.md`). Each connector must state what AOI information it sends to the provider.

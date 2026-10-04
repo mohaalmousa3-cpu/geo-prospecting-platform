@@ -55,7 +55,10 @@ Evidence and the owner checklist: `docs/phase-reports/phase-2.5.md`. Owner accep
 - [x] Project/AOI/future-jobs/outputs relationships documented (`docs/data-model.md`, ADR-0013).
 - [x] AOI validation and upload hardening unchanged (suites intact; hostile and over-limit input still rejected with a valid project).
 - [x] No analysis, scoring, Earth Engine, 3D or auth expansion.
-- [ ] GitHub Actions green on the final Phase 2.5 commit *(pending check at hand-over)*.
+- [x] *(follow-up)* Browser smoke test (connectivity, create/delete project and AOI, cascade confirmation) in CI; passes locally and against the Compose stack.
+- [x] *(follow-up)* Basemap default `none`; `osm` opt-in, development-only, refused in production builds; `xyz` explicit with attribution; invalid config warns and falls back.
+- [x] *(follow-up)* CORS methods derived from declared operations; every operation passes a preflight in tests.
+- [ ] GitHub Actions green on the final Phase 2.5 commit, including the `e2e` job *(pending check at hand-over)*.
 
 ## Phase 3 — Remote sensing connectors
 - [ ] Connector interface implemented with at least STAC (imagery metadata/assets) and one open DEM source.

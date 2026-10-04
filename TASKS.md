@@ -3,7 +3,7 @@
 Legend: `[ ]` todo · `[x]` done and verified · Only the **current phase** may be worked on (see `CLAUDE.md`).
 Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 
-**Current phase: 2.5 — implemented, awaiting owner acceptance (`docs/phase-reports/phase-2.5.md`). Phases 1 and 2 accepted with follow-ups.** Owner decisions are recorded as ADRs (`docs/adr/`, 0001…0012). Not started and not allowed yet: Earth Engine, thermal/gold/void scoring, remote-sensing analysis, 3D rendering, any scientific inference layer.
+**Current phase: 2.5 follow-ups done; Phase 3 PLAN proposed (`docs/phase-3-plan.md`), implementation not started and awaiting owner approval.** Owner decisions are recorded as ADRs (`docs/adr/`, 0001…0012). Not started and not allowed yet: Earth Engine, thermal/gold/void scoring, remote-sensing analysis, 3D rendering, any scientific inference layer.
 
 ---
 
@@ -51,8 +51,10 @@ Implemented 2026-10-04 (ADR-0013, `docs/data-model.md`, report + acceptance chec
 - [x] Basemap provider abstraction (`osm` | `xyz` | `none`)
 - [x] Document project ↔ AOI ↔ future jobs ↔ outputs
 - [x] Fix: CORS now allows `DELETE` (found by browser check; affected Phase 2 UI deletes)
-- [ ] GitHub Actions green on the final commit
-- [ ] Deferred recommendation: committed browser smoke test in CI
+- [x] Follow-up 1: browser smoke test in CI (`e2e` job, `make e2e`)
+- [x] Follow-up 2: default basemap `none`; `osm` opt-in/dev-only; `xyz` explicit
+- [x] Extra: CORS methods derived from declared operations
+- [ ] GitHub Actions green on the final commit, including the new `e2e` job
 
 ## Phase 3 — Remote Sensing Connectors
 - [ ] Connector interface (inputs, outputs, quotas, caching, provenance)

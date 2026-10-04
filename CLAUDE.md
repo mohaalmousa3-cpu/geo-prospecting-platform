@@ -87,6 +87,7 @@ Do not contradict these without a superseding ADR approved by the owner:
 - Every code change ships with tests proportionate to risk: unit tests for logic, integration tests for API/DB/queue boundaries.
 - **Scientific tests** (`tests/scientific/`): deterministic fixtures with documented expected behaviour; tests asserting that results always include confidence, uncertainty, explanation and sources; tests asserting forbidden claims cannot be emitted.
 - Tests must be deterministic and runnable offline (mock external data sources; no live Earth Engine in CI).
+- **UI and API-contract changes must keep the browser smoke test (`make e2e`, CI job `e2e`) passing**; mocked-fetch unit tests alone have missed real browser defects (MapLibre worker, CORS `DELETE`).
 - Never disable, skip, or weaken a test to get green. Fix the cause or report it.
 - Report exactly what was run and the result. If tests were not run, say so.
 

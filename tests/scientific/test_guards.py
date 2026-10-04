@@ -166,3 +166,26 @@ def test_compose_build_secret_default_is_tracked_and_empty() -> None:
     assert f.exists() and f.stat().st_size == 0
     tracked = subprocess.run(["git", "ls-files", "--error-unmatch", str(f)], cwd=ROOT, capture_output=True)
     assert tracked.returncode == 0, "infrastructure/docker/no-ca.crt must be committed (check .gitignore)"
+
+
+def test_ci_keeps_the_browser_smoke_test_job() -> None:
+    """Two defects (MapLibre worker, CORS DELETE) only showed in a real browser; keep the job."""
+    ci = (ROOT / ".github/workflows/ci.yml").read_text()
+    assert re.search(r"^  e2e:\n", ci, re.M), "ci.yml must define an `e2e` job"
+    assert "npm run e2e" in ci and "playwright install" in ci
+    spec = (ROOT / "apps/frontend/e2e/smoke.e2e.ts").read_text()
+    for step in ("create project", "create AOI", "delete AOI", "cascade", "connectivity"):
+        assert step in spec, step
+    assert "retries: 0" in (ROOT / "apps/frontend/playwright.config.ts").read_text()
+
+
+def test_basemap_defaults_to_none_everywhere() -> None:
+    s = Settings(_env_file=None)
+    assert s.NEXT_PUBLIC_BASEMAP_PROVIDER == "none"
+    assert re.search(r"^NEXT_PUBLIC_BASEMAP_PROVIDER=none$", (ROOT / ".env.example").read_text(), re.M)
+    compose = (ROOT / "infrastructure/docker/docker-compose.yml").read_text()
+    assert "NEXT_PUBLIC_BASEMAP_PROVIDER:-none}" in compose
+    assert (
+        "NEXT_PUBLIC_BASEMAP_PROVIDER=none"
+        in (ROOT / "infrastructure/docker/frontend.Dockerfile").read_text()
+    )

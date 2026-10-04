@@ -76,10 +76,12 @@ Local checks (all of CI): `make sync && make ci`. Integration tests need PostGIS
 | `make schemas` / `make schemas-check` | regenerate / verify generated types from `packages/schemas` |
 | `make licences` | verify the third-party licence register |
 | `make frontend-check` | lint, typecheck, format, tests, build |
+| `make e2e` | browser smoke test (Playwright → Next.js → FastAPI → PostGIS); needs a database `$E2E_POSTGRES_DB` and Chromium (`npx playwright install chromium` or `E2E_CHROMIUM_PATH`) |
+| `make ci-full` | everything CI runs, including the browser smoke test |
 
 The app contains **no scientific engine and no scientific output**: health checks, a `noop` job, the queue/worker, shared contracts, AOI input/validation/storage with a 2D map, and guard tests. Data model: [`docs/data-model.md`](docs/data-model.md) (project ↔ AOI ↔ future jobs ↔ outputs). Evidence: [`phase-2.5.md`](docs/phase-reports/phase-2.5.md), [`phase-1.md`](docs/phase-reports/phase-1.md), [`phase-1-closeout.md`](docs/phase-reports/phase-1-closeout.md), [`phase-2.md`](docs/phase-reports/phase-2.md). Job states and queue capacity assumptions: [`docs/job-lifecycle.md`](docs/job-lifecycle.md).
 
-The map basemap is chosen with `NEXT_PUBLIC_BASEMAP_PROVIDER` = `osm` (default; low-volume development only) | `xyz` (your own https tile URL + attribution) | `none`. Tile requests reveal the viewed map area to the provider (never the AOI geometry); `none` makes no third-party requests (ADR-0012/0013).
+The map basemap is chosen with `NEXT_PUBLIC_BASEMAP_PROVIDER` = `none` (default; no basemap, no third-party requests) | `osm` (opt-in, local development only, refused in production builds) | `xyz` (explicit; your own https tile URL + attribution). Tile requests reveal the viewed map area to the provider (never the AOI geometry); `none` makes no third-party requests (ADR-0012/0013).
 
 ## Key documents
 
