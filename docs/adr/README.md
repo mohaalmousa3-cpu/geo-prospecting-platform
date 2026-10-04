@@ -2,6 +2,8 @@
 
 One file per decision: `NNNN-title.md` with Status, Context, Decision, Consequences. Changes to an accepted ADR require a new ADR that supersedes it.
 
+**Status vocabulary (canonical):** `Proposed` → `Accepted` (or `Rejected` / `Superseded`). "Approved" is **not** an ADR status; where an owner message or an older document says an ADR is "approved" or "marked Approved", it means `Accepted`. Qualified forms exist for ADR-0012/0013 ("Accepted within the … scope approved by the owner") and ADR-0004 ("with conditions").
+
 | ADR | Decision | Status |
 |---|---|---|
 | [0001](0001-private-repository.md) | Repository stays private | Accepted |
@@ -17,7 +19,7 @@ One file per decision: `NNNN-title.md` with Status, Context, Decision, Consequen
 | [0011](0011-shared-python-package-pycommon.md) | Shared package `packages/pycommon` (contracts/abstractions/utilities only) | Accepted |
 | [0012](0012-aoi-input-and-validation.md) | AOI input, validation and basemap handling (Phase 2) | Accepted within approved Phase 2 scope (design by Claude; the ADR records that the owner may veto any point) |
 | [0013](0013-project-entity-and-basemap-provider.md) | Minimal `project` entity; basemap provider abstraction (Phase 2.5) | Accepted within approved Phase 2.5 scope (owner scope, Claude design) |
-| [0014](0014-connectors-package-and-data-assets.md) | Connectors package, `data_asset`, job↔project/AOI linkage (Phase 3) | **Proposed — non-binding** (plan approved with constraints 2026-10-04; ADR not approved; Phase 3 blocked pending an explicit start instruction and owner decisions on this ADR and D8) |
+| [0014](0014-connectors-package-and-data-assets.md) | Connectors package, `data_asset`, job↔project/AOI linkage (Phase 3) | **Accepted** (owner decision 2026-10-05, with conditions; **not implemented**; acceptance is not a start instruction for Phase 3 or 3a; see the ADR's *Owner decision record*) |
 
 ## Still undecided (no ADR yet)
 Deployment target, target region(s)/pilot area (required before Phase 5 design — ADR-0003 amendment), reference hardware.

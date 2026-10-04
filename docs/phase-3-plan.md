@@ -1,8 +1,8 @@
 # Phase 3 Plan — Remote-Sensing Data Connectors (FINAL PLAN — NOT STARTED, BLOCKED)
 
-Status: **planning finalised after the owner's "approved with constraints" (2026-10-04). Nothing in this plan has been implemented or started. Implementation needs a separate explicit start approval that also marks ADR-0014 Approved.** ADR-0014 is, and stays, **Proposed**.
-**Current status (2026-10-04): Planned — blocked pending an explicit start instruction, an explicit owner decision on ADR-0014 (Proposed) and decision D8 (OPEN); prerequisite-phase acceptance decisions recorded 2026-10-05; plan approved with constraints; implementation not started.** Approval of this plan is not authorization to start implementation.
-Prerequisite status (updated 2026-10-05; authoritative source: `MASTER_SPEC.md` → Current Project Status): the owner's decisions D-1…D-4 of 2026-10-05 record acceptance of the Phase 2.5 follow-ups and the derived-CORS addition, of Phase 0 within its historical scope, of the Phase 1 open checks, and of the Phase 2 upload/archive boundary-test gap; one record remains open (the `TASKS.md` Phase 2 CI box). *Historical wording (2026-10-04), superseded:* "a separate owner sign-off on those follow-ups is not recorded; acceptance reconciliation is pending." Acceptance of earlier phases is not authorization to start Phase 3.
+Status: **planning finalised after the owner's "approved with constraints" (2026-10-04). Nothing in this plan has been implemented or started. Implementation needs a separate, explicit, bounded start instruction.** ADR-0014 was explicitly **Accepted** by the owner on 2026-10-05 (not implemented).
+**Current status (2026-10-04): Planned — not started; ADR-0014 Accepted 2026-10-05 (not implemented); the fixtures-only Phase 3a scope accepted 2026-10-05 (scope acceptance only, not a start instruction); blocked pending a separate, explicit, bounded start instruction; D8 strategy resolved (option D), live-verification readiness pending; Phase 0 follow-up F-1 open and non-blocking only for fixtures-only 3a; no live host or network control approved.** Approval of this plan is not authorization to start implementation.
+Prerequisite status (updated 2026-10-05; authoritative source: `MASTER_SPEC.md` → Current Project Status): the owner's decisions D-1…D-4 of 2026-10-05 record acceptance of the Phase 2.5 follow-ups and the derived-CORS addition, of Phase 0 within its historical scope, of the Phase 1 open checks, and of the Phase 2 upload/archive boundary-test gap; the `TASKS.md` Phase 2 "Actions green" item was ticked on 2026-10-05 with clarified wording (runs #4/#5; no independent run for `46596b4`); Phase 0's documentation-consistency item stays open as follow-up F-1, and by the owner's narrow exception of 2026-10-05 it is non-blocking for the fixtures-only Phase 3a slice only and must be closed before any live connector slice is authorised (see `MASTER_SPEC.md`). *Historical wording (2026-10-04), superseded:* "a separate owner sign-off on those follow-ups is not recorded; acceptance reconciliation is pending." Acceptance of earlier phases is not authorization to start Phase 3.
 *Historical wording, superseded:* "Prerequisites met: Phases 1, 2, 2.5 accepted" — written before the acceptance records were reconciled; it overstated the Phase 2.5 record.
 
 ## Scope summary (one page, for review)
@@ -11,12 +11,12 @@ Prerequisite status (updated 2026-10-05; authoritative source: `MASTER_SPEC.md` 
 |---|---|
 | Purpose | Stage **data inputs** for later phases: *ingest → normalise (format only) → clip → validate → store*, with provenance. Nothing is interpreted. |
 | Connectors | (1) `stac_catalog` — metadata search of public imagery catalogues; (2) `dem_cop30` — clipped elevation raster; (3) `user_vector` — user-supplied geology/fault/occurrence vector files. |
-| Tentative defaults | Catalogue: **Earth Search**; DEM: **Copernicus DEM GLO-30**. Both **TENTATIVE, unverified** (the build sandbox cannot reach providers); they become defaults only after live verification (D4, D5, D8). |
+| Tentative defaults | Catalogue: **Earth Search**; DEM: **Copernicus DEM GLO-30**. Both **TENTATIVE, unverified** (the build sandbox cannot reach providers); they become defaults only after live verification (D4, D5, D8; see §8a). |
 | Outputs | `data_asset` rows + files: `scene_catalog` (JSON), `dem_clip` (COG), `user_vector` (GeoJSON), each with a provenance record. They are inputs, **not results**; no confidence/score fields. |
 | Safety | `CONNECTOR_MODE=disabled` by default; `fixture` for tests/CI; `live` explicit opt-in. Budgets on requests, bytes, time, items, window. Same-host-only egress. Cache with TTL and size cap. |
 | Tests | Fixture-first, **no live network in tests or CI**; hostile-response tests; extended browser smoke test (fixture mode) in CI. |
 | Slices & gates | 3a foundations → 3b STAC → 3c DEM → 3d user vectors → 3f closeout; **3e Earth Engine blocked** (not executed, not implemented). Owner review after each slice. |
-| Needs from the owner before code | Explicit start approval; ADR-0014 marked Approved; live-verification route (D8). |
+| Needs from the owner before code | Explicit start approval (Phase 3a only is intended); ADR-0014 Accepted 2026-10-05 (not implemented); D8 strategy is resolved (§8a) — live-verification readiness is needed before accepting live slices. |
 | Unchanged | Phase 5 gate (target region + pilot area), ADR-0003/0004/0005/0008/0009/0010/0011/0013. |
 
 ## 0. What Phase 3 is
@@ -60,7 +60,7 @@ The cloud sandbox this project is built in **cannot reach the candidate EO provi
 1. Every provider statement in this plan (collection names, URL layouts, licences, rate limits) is **unverified**. They are listed as assumptions and each connector starts with a verification task.
 2. Connectors are developed **fixture-first**: recorded/synthetic responses and synthetic rasters, no live calls in tests (already a project rule).
 3. **Tentative defaults.** Earth Search (catalogue) and Copernicus DEM GLO-30 (DEM) are **tentative defaults pending live verification**: they may be named in documentation and in fixtures-based code paths, but a provider is not enabled by default, advertised as working, or hard-coded as the only option until (a) `connectors-live-check` shows its endpoints, collections, URL layout, licence/attribution text and rate behaviour match this plan, and (b) the owner confirms. If verification fails, the connector falls back to the alternates (Planetary Computer / Copernicus Data Space for catalogues; an alternate open DEM) via a new ADR-sized decision, not a silent switch.
-4. Real-world verification needs a machine with internet access: a read-only `make connectors-live-check` (a few tiny requests, prints a report, writes nothing to the database) which **the owner runs**, or the owner allowlists the provider hosts in the cloud environment's network settings so I can run it (decision D8). Until then, "works against the real provider" must not be claimed.
+4. Real-world verification needs a machine with internet access: a read-only `make connectors-live-check` (a few tiny requests, prints a report, writes nothing to the database) which **the owner runs**, or the owner allowlists the provider hosts in the cloud environment's network settings so I can run it (decision D8: strategy resolved 2026-10-05, see §8a). Until a live-verification report exists, "works against the real provider" must not be claimed.
 
 ## 2. Inherited constraints (binding)
 ADR-0004 (EE optional/replaceable/off, owner must validate commercial eligibility first) · ADR-0005 (no auth; loopback only) · ADR-0006 (local storage via `StorageBackend`) · ADR-0007 (Postgres queue; handlers idempotent, at-least-once) · ADR-0008 (limits are provisional safeguards; `MAX_SCENES_PER_JOB=20`, `MAX_TIME_WINDOW_DAYS=365`, 1800 s timeout) · ADR-0009/0010 (naming, envelope, no "confirmed") · ADR-0011 (`geo_common` holds no analysis logic) · ADR-0013 (projects, derived CORS, smoke test in CI) · `docs/data-model.md` (job↔project/AOI attachment, deletion rules) · `docs/job-lifecycle.md`.
@@ -81,7 +81,7 @@ Connector.estimate(req) -> requests, max_bytes     # computed before any network
 Connector.fetch(req, ctx) -> assets[], sources[] (envelope `Source` shape), insufficient_data_reason | None
 ctx = FetchContext(http: BudgetedClient, cache, storage, clock)     # injected; tests substitute fakes
 ```
-Outcomes: assets staged → job `succeeded`; nothing found for the AOI/window → job **`insufficient_data`** with an explanation (never silent defaults); budget exceeded / provider error after retries → `failed` with reason.
+Outcomes: assets staged → job `succeeded`; nothing found for the AOI/window → job **`insufficient_data`** (queue terminal status, `docs/architecture.md` §4) with an explanation — an ingestion status only: no `result` row, no `data_asset`, no confidence or interpretation (never silent defaults); budget exceeded / provider error after retries → `failed` with reason.
 
 ### 3.3 Safety, privacy, cost
 - **Modes:** `CONNECTOR_MODE ∈ {disabled (default), fixture, live}`. `disabled` makes no outbound requests; `fixture` serves recorded responses (tests, demos, CI); `live` requires explicit opt-in plus `ENABLED_CONNECTORS=…`. EE is not a mode; it is a separate flag (ADR-0004).
@@ -110,7 +110,7 @@ Outcomes: assets staged → job `succeeded`; nothing found for the AOI/window �
 - Hostile-response tests: oversize body, endless pagination, redirect to a non-allow-listed host, wrong content type, truncated/invalid JSON, deeply nested JSON, 429/5xx with and without `Retry-After`, slow responses.
 - Idempotency/at-least-once: running a handler twice yields one logical asset (keyed by request hash) and consistent provenance.
 - Browser smoke test (CI `e2e`) extended: worker added to the stack, `CONNECTOR_MODE=fixture`, flow = select AOI → run catalogue search → see results → delete asset; plus `insufficient_data` path. Guard tests: `disabled` default, no connector module imported by the backend, no EE import, no analysis vocabulary in connector outputs (extends the forbidden-term scan).
-- Live verification only through the manual `connectors-live-check` (§1, D8).
+- Live verification only through the read-only check defined in §8a (route B under an owner-approved allowlist, otherwise route A) (§1, D8).
 
 ## 4. Dependencies (to be approved, licences verified from package metadata at install)
 `httpx` (BSD-3; already a dev dependency → becomes runtime for the worker) · `rasterio` (BSD-3; wheels bundle GDAL — larger image, to be measured) · `numpy` (already present). **No `pystac-client`**: the STAC search surface we need is small; a minimal `httpx` client keeps SSRF/budget control and avoids a second HTTP stack. All connector dependencies live in `geo_connectors`, not in `geo_common`. No copyleft expected; the licence check script gates it.
@@ -123,21 +123,40 @@ Provider API drift or outages · unverified provider terms/rate limits · licenc
 
 Each slice ends with: `make ci-full` green locally, GitHub Actions green (including `e2e`), a short report, and **owner review before the next slice**.
 
-### 3a — Foundations (no provider code)
+### 3a — Foundations (fixtures-only; proposed exact scope, **not started, not authorised**)
+Scope **accepted by the owner on 2026-10-05 as scope — not a start instruction** (with the clarifications of ADR-0014 r4 and the tests below). 3a adds **no** HTTP client, **no** `rasterio`, **no** live network code and **no** provider configuration (no provider URLs, hosts or budgets). The live-facing parts of the earlier 3a list moved to 3b (below). Boundary table: `docs/adr/0014-…` §11.
+
 | ID | Task | Done when |
 |---|---|---|
-| P3-01 | ADR-0014 accepted (package, `data_asset`, job linkage, modes) | owner approval recorded |
-| P3-02 | Migration 0004 (`job.project_id/aoi_id`, CHECK) + migration test incl. existing `noop` jobs | up/down/up passes; noop unaffected |
-| P3-03 | Jobs API: `catalog_search`/`dem_fetch` payload models, AOI lookup, derived project, queue-full & limits unchanged; deletion blocked while a job is queued/running | API + integration tests |
-| P3-04 | Settings + `.env.example` for modes and budgets (defaults `disabled`); config-drift test updated | tests pass |
-| P3-05 | `geo_connectors` skeleton: `Connector` ABC, registry, `BudgetedClient` (timeouts, retries/backoff, rate limit, size caps, same-host redirects), `FetchContext` | unit tests incl. every hostile-response case above |
-| P3-06 | Cache (key, TTL, size cap, eviction) and provenance helper | cache-hit-makes-zero-requests test; provenance completeness test |
-| P3-07 | Migration 0005 `data_asset` + repository + asset endpoints (list/get/content/delete) + deletion rules | API tests; file removed with asset; path-traversal tests |
-| P3-08 | Fixture harness (`CONNECTOR_MODE=fixture`) and connector contract test suite | suite runs against a fake connector |
+| P3-01 | ADR-0014 **Accepted** by the owner | **done 2026-10-05** (owner decision recorded) |
+| P3-02 | Migration 0004 per ADR §7.1–§7.3: `aoi UNIQUE(id, project_id)`; `job.aoi_id/project_id`, composite FK, both-or-neither and non-`noop` CHECKs; abort-on-non-`noop` backfill rule | tests T1, T2 |
+| P3-03 | Jobs API: job type `catalog_search` only; project derived from the AOI; `disabled` → explicit "connectors disabled"; `live` → explicit "not available"; deletion rules and lock order per ADR §7.4–§7.6 | tests T3, T7 |
+| P3-04 | Settings: `CONNECTOR_MODE` only (`disabled` default, `fixture`), `.env.example`, config-drift test | tests pass |
+| P3-05a | `geo_connectors` skeleton: `Connector` ABC, registry, `FetchContext`, **fixture connector** over committed synthetic fixtures; **no HTTP client, no cache** | tests T4, T5, T8 |
+| P3-06a | Provenance helper | provenance-completeness test |
+| P3-07 | Migration 0005 `data_asset` (+`storage_tombstone`), repository, asset endpoints (list/get/content/delete), cascade deletion with tombstones, drain, `make reconcile-assets` (drain + report only; no destructive orphan cleanup) | tests T6, T7 |
+| P3-08 | Fixture harness and connector contract tests | tests T4 |
 | P3-09 | Docs: `docs/connectors.md`, data-model + job-lifecycle updates | reviewed |
 
+**3a acceptance tests (all offline; none exists yet):**
+- **T1** migration 0004: up/down/up on an empty table; with `noop` rows only; with a seeded non-`noop` row (aborts atomically, lists ids); constraints present by introspection.
+- **T2** database integrity (direct SQL): job with a `project_id` that differs from its AOI's fails; half-NULL pair fails; non-`noop` job without AOI fails; `noop` with NULLs succeeds; asset with NULL `project_id`/`aoi_id` fails; asset whose `job_id` belongs to another AOI/project fails; asset with `job_id` NULL succeeds; changing `aoi.project_id` while referenced fails; the same change on an unreferenced AOI is *not* blocked by the database (documents the actual protection).
+- **T3** API: client-supplied `project_id` for a job is rejected; unknown AOI → 404; queue limits unchanged; `disabled` and `live` behave as specified.
+- **T4** fixture connector end to end: job → handler → `scene_catalog` asset + provenance (all required fields) from a synthetic committed fixture; re-run does not duplicate the asset. **Zero results (clarified 2026-10-05):** the job ends in the **existing queue terminal status `insufficient_data`** (`JobStatus`, job-lifecycle contract in `docs/architecture.md` §4: "a normal terminal state with an explanation"; handler result `HandlerResult("insufficient_data", reason)`). In this context it means only **"the catalogue search completed and matched no items for the request"** — an ingestion/queue status, **not a scientific result**. It writes **no `result` row, no envelope, no `data_asset`**, and carries **no confidence, score or interpretation**; the explanation text (e.g. "no catalogue items matched the request") is stored in the job's `error` field as for any explained terminal status, and the UI/API wording says "no catalogue items matched". Test: empty fixture → status `insufficient_data` + explanation, and `result`/`data_asset` row counts unchanged. The same status name used by future analysis engines (CLAUDE.md §4.9) is a separate concept and is not implied here.
+- **T5** no external network from the connector (clarified 2026-10-05): the guard is **scoped to connector execution** and does not forbid the worker's or the test infrastructure's PostgreSQL connections. (a) *Connector-execution guard:* a context manager active only around `Connector.fetch()` (and the fixture reader it calls) patches `socket.socket.connect/connect_ex`, `socket.create_connection` and `socket.getaddrinfo` to raise `NetworkAccessError`; it is keyed to a `contextvars` flag, so other threads (queue heartbeat, test fixtures) and code outside the window are unaffected. The connector contract is *pure*: `fetch()` receives its inputs through `FetchContext` and returns records; **all database and storage I/O happens in the handler outside the guarded window** (a connector that needs the database inside `fetch()` fails the test, which is the intended signal). (b) *Whole-path audit:* an end-to-end worker test in a **subprocess** installs a `sys.addaudithook` that records every `socket.connect`/`socket.getaddrinfo` event with its originating frames; the test passes only if every destination is the test PostgreSQL endpoint (host/port or Unix-socket path taken from `GEO_TEST_DATABASE_URL`) and **no recorded event has a `geo_connectors` frame on its stack**. (c) *Static:* `geo_connectors` imports no HTTP client, `socket`, `ssl`, `urllib*` or `rasterio` (T8). Both dynamic checks run in `disabled` and `fixture` modes.
+- **T6** deletion and files: tombstones written in the deleting transaction with `INSERT … ON CONFLICT (storage_key) DO NOTHING`; files removed after commit; simulated failure after commit → success with `files_pending_cleanup: n`, drain completes it; double and concurrent drains are safe; a replacement asset (new key) is never removed; `storage_key` uniqueness and immutability enforced; path-traversal keys rejected; **`make reconcile-assets` drains tombstones and only *reports* orphan files and rows with missing files — no destructive orphan deletion exists in 3a (test: the command has no delete mode and removes nothing unreferenced)**.
+- **T7** concurrency and errors (PostGIS): insert-vs-delete both orders; claim-vs-delete; project-delete-vs-AOI-create; the **level-by-level lock order** of ADR-0014 §7.5 (barrier-controlled interleavings); injected deadlock/serialization/lock-timeout errors → the **whole transaction is rolled back and restarted**, nothing is issued on an aborted transaction, then 503 after 3 attempts; every row of the ADR §7.6 translation table, including that an **unexpected** integrity failure surfaces as 500 `integrity_error` (logged, not hidden, not mapped to 404).
+- **T8** architecture: backend does not import `geo_connectors`; `geo_connectors` imports no HTTP client, `socket`, `rasterio`; no third-party dependency added (lockfile changes limited to the new workspace member).
+- **T9** guards: forbidden-term scan covers the new code; assets carry no confidence/score; output-schema allow-list (plan §7.12–§7.13 applicable parts).
+- **T10** `make ci-full` green locally and GitHub Actions green including `e2e`; **T11** licence register check passes with no new third-party package.
+
+**Gates before 3a may start:** (1) ADR-0014 **Accepted** — **met 2026-10-05**; (2) the owner's acceptance of this 3a scope — **met 2026-10-05 (scope only)**; (3) the owner's explicit, bounded **start instruction** for Phase 3a only — **outstanding**, and it should state the implementation branch/base (this documentation branch is unmerged). F-1 is **not** a gate for 3a (owner exception, 2026-10-05). **Additional gates before any live connector slice:** F-1 closed; D8 readiness R1–R8 (§8a); exact host/port allowlist and application/network controls approved; start instruction for that slice.
+
 ### 3b — STAC catalogue search
-| P3-10 | Verify assumptions: write `connectors-live-check` (read-only, tiny) | script exists; **owner runs it** (D8) |
+| P3-05b | HTTP client selected per ADR-0014 §9 (evaluation note) and wrapped; offline tests R-a–R-f; budgets/timeouts/size caps (moved from 3a) | tests pass; no live request |
+| P3-06b | Cache (key, TTL, size cap, eviction) (moved from 3a) | cache-hit-makes-zero-requests test |
+| P3-04b | Provider definitions with approved hosts, budget settings, `ENABLED_CONNECTORS` (moved from 3a) | owner-approved allowlist only |
+| P3-10 | Verify assumptions: write `connectors-live-check` (read-only, tiny) | script exists; run under the §8a route (B if approved, otherwise **owner runs it**) |
 | P3-11 | `stac_catalog` connector (fixtures from the live-check output once available; synthetic until then) | contract suite + pagination/limits/dates tests; zero results → `insufficient_data` |
 | P3-12 | `catalog_search` handler in the runner; idempotent asset keyed by request hash | at-least-once test |
 | P3-13 | UI Data panel (catalogue only) + e2e extension (worker in CI, fixture mode) | `make e2e` passes incl. `insufficient_data` path |
@@ -162,7 +181,7 @@ Each slice ends with: `make ci-full` green locally, GitHub Actions green (includ
 2. Every connector implements the contract; budgets (requests, bytes, time, items, window) are enforced and tested at, below and above the limit.
 3. A cache hit performs zero network calls; stale catalogue entries expire by TTL; the cache size cap evicts.
 4. Every asset has a provenance record with licence, attribution, request, host, counts, checksum; `Source` entries match the envelope schema.
-5. Empty results yield `insufficient_data` with an explanation; provider errors yield `failed` with a reason; no silent defaults.
+5. Empty results end the job in the existing queue status `insufficient_data` with an explanation (an ingestion/queue status, not a scientific result: no `result` row, no confidence or interpretation — see T4); provider errors yield `failed` with a reason; no silent defaults.
 6. Hostile responses and files (list in §3.6) are rejected without crashing the worker or leaking paths.
 7. Job↔project/AOI linkage and deletion rules (§3.1) are enforced and tested; running jobs block deletion.
 8. UI shows what is sent to the provider before submission, labels provider-reported values as such, and shows no analysis.
@@ -179,19 +198,44 @@ Basis: the owner replied **"Approved with constraints"** to the plan and its rec
 | # | Decision | Outcome | Condition / constraint | Status |
 |---|---|---|---|---|
 | D1 | Slice order and review gates (3a→3b→3c→3d→3f; 3e blocked) | Approved as planned | Owner review after every slice; no slice starts without release | **Approved** |
-| D2 | ADR-0014: `workers/connectors` package, `data_asset` entity, job↔project/AOI columns | Direction accepted at plan level | **ADR-0014 stays Proposed** until explicitly marked Approved after this final doc pass; no code before | **Plan accepted; ADR Proposed** |
+| D2 | ADR-0014: `workers/connectors` package, `data_asset` entity, job↔project/AOI columns | Direction accepted at plan level | ADR-0014 was to stay Proposed until explicitly marked Accepted (2026-10-04 constraint); **explicitly Accepted by the owner on 2026-10-05** (revision 4, not implemented); no code before a start instruction | **Plan accepted; ADR Accepted (2026-10-05); not implemented** |
 | D3 | `rasterio` (BSD-3, bundles GDAL) as a worker dependency | Approved in principle | Image-size impact measured in slice 3a and reported; licence verified from metadata at install | **Approved (conditional)** |
 | D4 | Default catalogue provider | **Earth Search = TENTATIVE default** | Unverified; not enabled/advertised until live verification (§1) and owner confirmation; alternates: Planetary Computer, Copernicus Data Space | **Tentative** |
 | D5 | DEM source | **Copernicus DEM GLO-30 = TENTATIVE default** | Unverified; licence/attribution, vertical datum and tile layout to be confirmed live | **Tentative** |
 | D6 | `CONNECTOR_MODE` default `disabled`; `live` explicit opt-in | Approved | Tested default; `live` needs `ENABLED_CONNECTORS` | **Approved** |
 | D7 | Budget defaults in §3.3 | Approved as provisional safeguards | Not measured; same status as ADR-0008 limits | **Approved (provisional)** |
-| D8 | Live verification route (owner runs `make connectors-live-check`, or allowlists provider hosts in the cloud environment) | **Not decided** | Without one of them, Phase 3 can be accepted at most as "fixture-verified, live-unverified" | **OPEN — owner action** |
+| D8 | Live verification: **strategy** (resolved) and **readiness** (pending) | **Strategy resolved 2026-10-05: option D** — Phase 3a is fixtures-only; live verification is mandatory before accepting the live connector slices 3b and DEM (and any other live slice). Route B (cloud-environment host allowlist) preferred if the environment supports it, **subject to separate owner approval of the exact allowlist**; otherwise route A (owner runs the read-only check) | Not acceptance of live connector functionality; no host approved; no network access expanded; see §8a | **Strategy RESOLVED; readiness PENDING** |
 | D9 | Earth Engine | Remains **blocked**; **no execution** | Needs the owner's written eligibility validation (ADR-0004), then a separate approval; not part of Phase 3 acceptance | **Blocked** |
 | D10 | Geology/occurrence data in Phase 3 = user-supplied vector layers only | Approved | National-survey connectors wait for the Phase 5 region decision | **Approved** |
 | D11 | CI `e2e` gains a worker process and fixture mode | Approved | No live network in CI | **Approved** |
 | D12 | Phase 5 region/pilot-area gate and the "no analysis" rule unchanged | Confirmed | See §0b | **Confirmed** |
 
-Still required before any implementation: (0) *[recorded 2026-10-05, owner decisions D-1…D-4]* reconciliation of the prerequisite phases' acceptance records, including the owner decision on the Phase 2.5 follow-ups; (1) an explicit instruction to start Phase 3; (2) ADR-0014 marked Approved by the owner; (3) a decision on D8 (or acceptance of "live-unverified").
+## 8a. D8 — live verification: strategy and readiness (2026-10-05)
+
+**Strategy (decided by the owner, 2026-10-05): option D.**
+- **Phase 3a is fixtures-only:** `CONNECTOR_MODE` is `disabled` or `fixture`; no live code path is enabled; no provider is contacted.
+- **Live verification is mandatory before accepting** each live connector slice — 3b (STAC) and DEM (3c), and any other slice that talks to a provider.
+- **Route:** B (host allowlist in the cloud environment's network settings, so the check can be run in-session) is preferred *if the environment supports it*, and only **after the owner separately approves the exact `(host, port)` allowlist**; otherwise route A (the owner runs the read-only check on a machine with internet access and returns the report).
+- **Not decided / not implied:** network access is **not** expanded now; **no host name is approved** (names that appeared in this repository or in conversation are unverified); selecting the strategy is **not** acceptance of live connector functionality and **not** authorization to start Phase 3 or Phase 3a.
+
+**Readiness (pending) — prerequisites before any live verification:**
+
+| # | Prerequisite | Status |
+|---|---|---|
+| R1 | Exact endpoints and every required host (including redirect, CDN and object-store hosts) and ports, **confirmed from official provider documentation**, with source URL and retrieval date | PENDING |
+| R2 | Terms of service, data and API licences, and attribution requirements, from official sources | PENDING |
+| R3 | Request limits and any applicable costs (quotas, rate limits, accounts/keys, egress or requester-pays charges); any non-zero cost needs the owner's approval first (`CLAUDE.md` §5) | PENDING |
+| R4 | Owner approval of the exact host/port allowlist (route B) **or** owner review of the check script and the owner running it (route A) | PENDING |
+| R5 | Concrete application **and** network controls for the specific approved hosts approved by the owner (ADR-0014 §9 is accepted as design only; the live path must not exist before this) | PENDING |
+| R6 | An explicit start instruction covering the slice that will be verified | NOT GIVEN |
+| R7 | Follow-up F-1 (Phase 0 documentation consistency) closed | OPEN |
+| R8 | HTTP-client selection note and offline tests R-a–R-f of ADR-0014 §9 passing; licence review of ADR-0014 §10 recorded | PENDING |
+
+**Constraints on every verification run:** read-only requests; **no private AOI geometry is sent** — only small fixed queries or public example data; no load testing and no deliberate probing of rate limits (stop and report on the first throttle or error); no credentials; the report records time, endpoints, responses' relevant fields, licence/attribution text found and observed limits; a mismatch with this plan is handled by an ADR-sized decision, not a silent switch (§1.3).
+
+**Acceptance consequence:** a live connector slice cannot be accepted without a recorded live-verification report; Phase 3a can be accepted at most as "fixture-verified".
+
+Still required before any implementation: (0) *[recorded 2026-10-05, owner decisions D-1…D-4]* reconciliation of the prerequisite phases' acceptance records; (1) an explicit, bounded instruction to start Phase 3a — **outstanding**; (2) ADR-0014 **Accepted** — **met 2026-10-05**; (3) D8 — strategy resolved 2026-10-05; live-verification readiness (§8a) is required before accepting live slices, not before the fixtures-only 3a. Also: Phase 0 follow-up F-1 is non-blocking for fixtures-only 3a by the owner's narrow exception and must be closed before any live connector slice. None of this authorises Phase 3a to start.
 
 ## 9. Out of scope
 
@@ -200,5 +244,8 @@ Canonical, strict list: **§0b**. Permitted operations: **§0c**. (Not repeated 
 ## 10. Change log of this document
 - 2026-10-04 (proposal): first full plan.
 - 2026-10-04 (final planning pass, after "approved with constraints"): added scope summary, strict out-of-scope (§0b) and permitted operations (§0c); marked Earth Search and Copernicus GLO-30 **tentative**; added acceptance criteria 12–13; replaced the questions with the final D1–D12 decision table; ADR-0014 kept **Proposed**; no implementation.
+- 2026-10-05 (fourth owner message, documentation only): ADR-0014 **Accepted** (revision 4, not implemented); 3a scope accepted as scope (not a start instruction); T4 empty-catalogue contract, T5 connector-scoped no-network test, T6/T7 corrections; orphan cleanup report-only; licence acknowledgements moved to `docs/licence-acknowledgements.toml`; no code, dependency, generator or network change.
+- 2026-10-05 (third owner message, documentation only): ADR-0014 revision 3; 3a re-scoped to fixtures-only with acceptance tests T1–T11 and start gates (§6); R7 (F-1 closed) and R8 (client selection, ADR §9/§10) added to §8a readiness; F-1 designated non-blocking for fixtures-only 3a only; canonical ADR status vocabulary; no code, dependency or network change.
+- 2026-10-05 (second owner message, documentation only): D8 strategy resolved (option D) and readiness split out (§8a); ADR-0014 revision 2 drafted for review (not accepted); Phase 2 "Actions green" item clarified and ticked in `TASKS.md`; Phase 0 follow-up F-1 recorded; no code, dependency or network change.
 - 2026-10-05 (owner decisions recorded): prerequisite-phase acceptance decisions D-1…D-4 recorded; the block now rests on an explicit start instruction, an owner decision on ADR-0014 and decision D8 (OPEN); design unchanged.
 - 2026-10-04 (status-wording reconciliation): status set to blocked pending prerequisite acceptance reconciliation; corrected the prerequisite statement (see the top of this document); D8 remains **OPEN**; design unchanged.

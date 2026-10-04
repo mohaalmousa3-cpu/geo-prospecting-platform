@@ -1,27 +1,152 @@
 # ADR-0014: Connectors package, `data_asset` entity and job↔project/AOI linkage (Phase 3)
 
-- **Status:** **PROPOSED — NOT APPROVED, NOT IMPLEMENTED.** The owner's "approved with constraints" (2026-10-04) accepted the Phase 3 *plan* and asked that this ADR stay Proposed until the owner explicitly marks it Approved after the final documentation pass. Do not treat the decisions below as binding yet, and write no code for them. (Status wording, updated 2026-10-05: Phase 3 is blocked pending an explicit start instruction, an owner decision on this ADR and decision D8; this ADR's design is unchanged.)
-- **Date:** 2026-10-04
-- **Proposed by:** Claude, per `docs/phase-3-plan.md`
+- **Status:** **Accepted** (explicitly by the owner, 2026-10-05, with the conditions in *Owner decision record* below) — **not implemented**. Acceptance of this ADR is **not** a start instruction for Phase 3 or Phase 3a; implementation needs a separate, explicit, bounded start instruction. Canonical ADR status vocabulary: `Proposed → Accepted` ("Approved" is not used — `docs/adr/README.md`).
+- **Date:** 2026-10-04 (r1), 2026-10-05 (r2–r4)   **Proposed by:** Claude, per `docs/phase-3-plan.md`   **Decided by:** the owner (acceptance, 2026-10-05)
+- **Revision history:** r1 first proposal · r2 deletion consistency, concurrency, outbound protection, licence gate, alternatives · r3 explicit constraints and NULL behaviour, isolation/lock order/error handling, tombstone rules, requirement-level network protection, slice boundaries · **r4 (accepted text)** — bounded corrections requested by the owner: targeted conflict handling and whole-transaction retries, one consistent level-by-level lock order, constraint-specific error translation (§7.5–§7.6), a durable licence-acknowledgement source (§10), a connector-scoped no-network test (plan T5), the empty-catalogue status contract (plan T4), and report-only orphan handling (§8). No change of architectural direction.
+- **Labels used below:** *Design obligation* = a requirement the implementation must meet and prove with tests in the authorised implementation slice; **nothing here has been implemented or proved**.
 
 ## Context
-Phase 3 stages data inputs (catalogue metadata, clipped DEM, user-supplied vectors). That needs somewhere for connector code to live that respects ADR-0011 (`geo_common` stays free of domain logic and the backend never imports worker code), a place to record staged data that is *not* a scientific result, and the job↔project/AOI attachment already described in `docs/data-model.md`.
+Phase 3 stages data inputs (catalogue metadata, clipped DEM, user-supplied vectors). That needs somewhere for connector code to live that respects ADR-0011 (`geo_common` stays free of domain logic and the backend never imports worker code), a place to record staged data that is *not* a scientific result, and the job↔project/AOI attachment described in `docs/data-model.md`.
 
-## Decision (proposed)
-1. **`workers/connectors/` (`geo_connectors`)** holds connector implementations, the budgeted HTTP client, the cache and the provenance helper. It imports `geo_common`; `apps/backend` must not import it (a test enforces this); `workers/runner` registers its handlers by import path. Connectors perform data access only — no interpretation, scoring or analysis.
-2. **`data_asset`** (migration 0005): `id, project_id, aoi_id, job_id NULL, kind ∈ {scene_catalog, dem_clip, user_vector}, storage_key, media_type, size_bytes, sha256, provenance_id, created_at`. Assets are **inputs**, not `result`s: they carry no confidence/score/interpretation and are never described as findings.
-3. **`job.project_id` / `job.aoi_id`** (migration 0004): nullable FKs `ON DELETE RESTRICT`, with a `CHECK` that every non-`noop` job has both. `project_id` is derived from the AOI on the server.
-4. **Deletion:** removing an AOI/project that has assets needs the explicit cascade flag and also deletes the stored files; a project/AOI with a `queued` or `running` job cannot be deleted (409).
-5. **Modes:** `CONNECTOR_MODE ∈ {disabled (default), fixture, live}`; `live` needs explicit opt-in and `ENABLED_CONNECTORS`. Earth Engine is gated separately by ADR-0004 and its owner-validation condition; it is not a mode.
-6. **Egress safety:** connector URLs are built from fixed provider bases only; redirects/pagination links must stay on the allow-listed host; responses are size-capped and content-type-checked.
+## Decision
+1. **`workers/connectors/` (`geo_connectors`)**: connector implementations, HTTP client wrapper, cache, provenance helper. Imports `geo_common`; `apps/backend` must not import it (test-enforced); `workers/runner` registers handlers by import path. Data access only — no interpretation, scoring or analysis.
+2. **`data_asset`**: inputs, not `result`s — no confidence/score/interpretation, never described as findings. Columns in §7.
+3. **Job linkage and integrity** — §7. 4. **Concurrency and deletion** — §7.4–§7.6, §8. 5. **Modes:** `CONNECTOR_MODE ∈ {disabled (default), fixture, live}`; `disabled` and `fixture` open no network connection (tested); `live` needs explicit opt-in and `ENABLED_CONNECTORS`. Earth Engine is gated by ADR-0004 and is not a mode. 6. **Outbound protection** — §9. 7. **Licence gate** — §10. 8. **Slice boundaries** — §11.
 
-## Scope guard (applies if approved)
-Connectors perform only ingestion, format-level normalisation, clipping, validation and storage — exactly the operations in `docs/phase-3-plan.md` §0c — and none of the exclusions in §0b (no scoring, prospectivity inference, thermal analysis, Earth Engine execution, 3D, or scientific interpretation). Provider defaults named in the plan (Earth Search, Copernicus DEM GLO-30) are **tentative until live verification** and are not part of this decision.
+## 7. Database integrity, concurrency and deletion
+### 7.1 Tables and constraints (migration 0004 for `job`/`aoi`, 0005 for assets)
+- `aoi`: add `UNIQUE (id, project_id)` (a foreign-key target; trivially satisfied because `id` is the primary key).
+- `job`: add `aoi_id uuid NULL`, `project_id uuid NULL`, and
+  - composite FK `(aoi_id, project_id) → aoi (id, project_id) ON DELETE RESTRICT ON UPDATE RESTRICT` (default `MATCH SIMPLE`);
+  - `CHECK ((aoi_id IS NULL) = (project_id IS NULL))` — both or neither;
+  - `CHECK (type = 'noop' OR (aoi_id IS NOT NULL AND project_id IS NOT NULL))` — every non-`noop` job has both;
+  - `UNIQUE (id, aoi_id, project_id)` — the target for asset→job consistency.
+- `data_asset`: `id`, **`project_id NOT NULL`**, **`aoi_id NOT NULL`**, `job_id NULL` (optional), `kind ∈ {scene_catalog, dem_clip, user_vector}`, `storage_key` (unique, immutable — §8), `media_type`, `size_bytes`, `sha256`, `provenance_id`, `created_at`, and
+  - FK-A `(aoi_id, project_id) → aoi (id, project_id) ON DELETE RESTRICT ON UPDATE RESTRICT`;
+  - FK-B `(job_id, aoi_id, project_id) → job (id, aoi_id, project_id) ON DELETE RESTRICT ON UPDATE RESTRICT`.
+
+### 7.2 Intended NULL behaviour (PostgreSQL `MATCH SIMPLE`; `MATCH FULL` is deliberately not used)
+| Constraint | When a referencing column is NULL | Intended effect |
+|---|---|---|
+| `job` composite FK `(aoi_id, project_id)` | the FK is **not checked**; the two CHECKs make a half-NULL pair impossible | `noop` jobs carry `NULL, NULL` and need no AOI; every other job has both and the FK then forces `project_id` = that AOI's project |
+| `data_asset` FK-A | never NULL (both columns `NOT NULL`) | an asset always belongs to an existing AOI **and** that AOI's project |
+| `data_asset` FK-B | when `job_id IS NULL` the FK is **not checked** | an asset without a job (e.g. a user-supplied vector layer) is allowed and is still bound by FK-A |
+| | when `job_id IS NOT NULL` it is checked with non-NULL `aoi_id`/`project_id` | the asset's AOI and project must be exactly the job's; a `noop` job (NULL AOI) can never own an asset |
+`MATCH FULL` would reject a row with `job_id NULL` and non-NULL `aoi_id`, which would make `job_id` mandatory; that is why `MATCH SIMPLE` is intended.
+
+### 7.3 Job types, migration and backfill
+- **Existing job types:** the only type in the API contract (`JobType`) and registered in the runner (`DEFAULT_HANDLERS`) is **`noop`**, which is exempt from the rule. **No existing job type must satisfy the non-`noop` rule.** The rule applies to types introduced by Phase 3: `catalog_search` in slice 3a (fixtures only), `dem_fetch` in the DEM slice.
+- **But the table is not assumed to contain only `noop` rows:** `job.type` is plain `text` and the queue API accepts any string, so rows of other types could exist (direct SQL, tests). Migration 0004 therefore: (1) adds the nullable columns; (2) counts and lists `job` rows with `type <> 'noop'`; (3) if any exist, **aborts** with the list — no automatic AOI assignment, deletion or guessing (a pre-existing job has no trustworthy AOI); the owner decides (explicit deletion or another remedy) before re-running; (4) otherwise adds the CHECKs with `NOT VALID`, runs `VALIDATE CONSTRAINT`, then adds the FK. Alembic runs this in one transaction, so a failed run leaves nothing half-applied.
+- **Tests (implementation slice):** up/down/up on an empty table; with `noop` rows only; with a seeded non-`noop` row (aborts atomically, message lists ids); the downgrade removes the columns and constraints (and states that linkage data is lost).
+
+### 7.4 AOI movement: application policy versus database protection (kept separate)
+- *Application policy:* an AOI belongs to one project for its lifetime; no API operation changes `aoi.project_id` (none exists, ADR-0013), and Phase 3 must not add one.
+- *Database protection:* `ON UPDATE RESTRICT` makes the database refuse a change of `aoi.id` or `aoi.project_id` **while any job or asset references that AOI**. It does **not** prohibit such a change for an unreferenced AOI; that case is blocked only by the policy above. A future "move AOI" feature needs its own ADR and must define what happens to referenced rows.
+- *Derivation:* the API never accepts a `project_id` for a job; it uses `INSERT … SELECT :aoi_id, project_id FROM aoi WHERE id = :aoi_id` (no row → 404). The database guarantee holds even for direct SQL.
+
+### 7.5 Isolation level and lock ordering (design obligations)
+- **Isolation:** these transactions run at PostgreSQL's default **READ COMMITTED**. Correctness relies on explicit row locks and constraints, not on `SERIALIZABLE`. If a deployment sets `SERIALIZABLE`, the same retry rules apply to serialization failures.
+- **One global lock order, level by level:** **(1) the project row → (2) all affected AOI rows in ascending `id` → (3) all affected terminal job rows in ascending `(aoi_id, id)` → (4) all affected asset rows in ascending `(aoi_id, id)`.** A multi-AOI operation completes a level for *all* its AOIs before it starts the next level; there is no per-AOI traversal that takes an AOI's assets before another AOI's jobs. A single-AOI operation is the same procedure with one AOI. A transaction never requests a lock that precedes one it already holds. Tombstone rows (§8) are locked only by cleanup, never together with these.
+- **Create AOI:** `INSERT INTO aoi …`; the FK check takes a key-share lock on the project row. If the project is being deleted, the insert waits for the deleter and then fails the FK (§7.6).
+- **Create job:** one statement `INSERT … SELECT … FROM aoi WHERE id = :aoi_id`; the FK check takes a key-share lock on the AOI row; if the AOI is being deleted it waits and then fails (§7.6).
+- **Create asset (worker):** its own short transaction that does **not** also update the `job` row.
+- **Delete AOI** (one transaction, order of §7.5): (1) `SELECT … FROM aoi WHERE id = :id FOR UPDATE`; (2) a *non-locking* read of the AOI's jobs' statuses — if any job is non-terminal (`queued`/`running`) → rollback, 409 `has_active_jobs`; the deleter never waits on a non-terminal job row, which removes the cycle "asset insert holds a job key-share lock and waits for the AOI; deleter holds the AOI and waits for the job"; (3) lock the terminal jobs `ORDER BY id FOR UPDATE`; (4) if assets or terminal jobs exist and the explicit cascade flag is absent → rollback, 409 `needs_cascade`; (5) lock the assets `ORDER BY id FOR UPDATE`; (6) `INSERT INTO storage_tombstone … ON CONFLICT (storage_key) DO NOTHING` for their keys; (7) delete assets, terminal jobs, the AOI; commit. Cleanup follows the commit (§8).
+- **Delete project** (one transaction, same order): (1) `SELECT … FROM project WHERE id = :pid FOR UPDATE`; (2) a **new statement** `SELECT id FROM aoi WHERE project_id = :pid ORDER BY id FOR UPDATE` (under READ COMMITTED it sees every AOI committed before step 1 completed; a concurrent AOI insert is blocked by the lock of step 1 and then fails its FK); (3) a non-locking read of the statuses of **all** those AOIs' jobs — any non-terminal → rollback, 409 `has_active_jobs`; (4) lock **all** terminal jobs of those AOIs `ORDER BY aoi_id, id FOR UPDATE`; (5) cascade-flag check (existing `delete_aois=true` semantics, ADR-0013); (6) lock **all** their assets `ORDER BY aoi_id, id FOR UPDATE`; (7) tombstones (`ON CONFLICT (storage_key) DO NOTHING`); (8) delete assets, terminal jobs, AOIs, the project; commit. **Project deletion versus concurrent AOI creation** is decided by the project-row lock: either the AOI commits first and is handled by this algorithm, or its insert fails and is translated (§7.6).
+- **Worker claim** (ADR-0007, `FOR UPDATE SKIP LOCKED` on queued job rows) takes only a job lock and never then locks an AOI or project. A claim either happened first (the deleter sees a `running` job → 409) or is skipped while the job row is locked (the job is still `queued` → 409). A job re-queued after a lease expiry still blocks deletion; the owner cancels it first.
+- **Cleanup/drain** (§8) locks tombstone rows only (`FOR UPDATE SKIP LOCKED`).
+- The correctness of this ordering is a **design obligation** subject to the implementation concurrency tests (plan T7); a deadlock between a deleter and a worker's asset insert remains *possible in principle* and is handled by §7.6, not assumed away.
+
+### 7.6 Errors and retries (design obligations)
+- **Retry rule:** every operation is a function that opens a **fresh transaction**. On a retryable error the whole transaction is **rolled back and the whole function is restarted**; no statement is ever issued on a connection whose transaction is aborted, and no partial effect is carried over.
+- **Targeted conflict handling instead of catching errors:** tombstone insertion is `INSERT INTO storage_tombstone … ON CONFLICT (storage_key) DO NOTHING` (or an equivalent that does not abort the transaction). Other idempotent inserts name their conflict target the same way.
+- **Translation is by SQLSTATE *and* constraint name** (taken from the driver's error fields), never by SQLSTATE alone. Constraints are named explicitly in the migrations (existing `aoi_project_id_fkey`; new `job_aoi_project_fk`, `data_asset_aoi_project_fk`, `data_asset_job_fk`, `job_aoi_project_both_or_neither`, `job_non_noop_requires_aoi`, `data_asset_storage_key_key`, `storage_tombstone_pkey`).
+| Condition | Handling |
+|---|---|
+| `40P01` deadlock, `40001` serialization failure, `55P03` lock timeout (`lock_timeout` set on these transactions, default 5 s) | roll back and restart the whole operation, up to 3 times with jittered back-off, then 503 `retry_later` |
+| `23503` on `aoi_project_id_fkey` while inserting an AOI | re-read the project in a fresh transaction: absent → 404 `project_not_found`; present → unexpected, 500 `integrity_error` |
+| `23503` on `job_aoi_project_fk` while inserting a job | AOI absent → 404 `aoi_not_found`; AOI present (so a project mismatch, impossible with derivation) → 500 `integrity_error` |
+| `23503` on `data_asset_aoi_project_fk` / `data_asset_job_fk` while inserting an asset | target AOI/job vanished → the job fails with reason `target_deleted` (logged); a mismatch → 500 `integrity_error` |
+| `23503` on a delete (a RESTRICT reference appeared that the checks did not see) | restart once; if it persists → 409 `still_referenced` naming the referencing relation, logged at WARNING |
+| `23505` on an asset's request-hash idempotency constraint (if used) | idempotent success: return the existing asset |
+| `23505` on `data_asset_storage_key_key` | 500 `integrity_error` (a key collision is impossible by construction, so it indicates a defect) |
+| `23514` CHECK violation | 500 `integrity_error` (indicates a defect) |
+| anything else | propagate as 500 with a correlation id; **never** swallowed, remapped to 404 or hidden |
+`integrity_error` responses carry no SQL detail to the client; the SQLSTATE, constraint name and correlation id are logged.
+**Tests (implementation slice, PostGIS):** insert-vs-delete in both orders, claim-vs-delete, project-delete-vs-AOI-create, the level-by-level lock order (barriers), injected deadlock/serialization errors (the whole transaction restarts; nothing is issued on an aborted transaction), every row of the table above (including that an unexpected violation is surfaced, not hidden), direct-SQL violations of every constraint in §7.1–§7.2. Until those tests exist and pass, §7.4–§7.6 remain design obligations.
+
+## 8. Stored files versus database rows
+- **Keys:** `storage_key` is derived from the asset's UUID, is **unique** (unique constraint; also the tombstone primary key), **immutable** (a trigger rejects any `UPDATE` of the column) and **never reused**: a replacement asset gets a new id and therefore a new key.
+- **Creating an asset (normal sequence):** (1) allocate the id; (2) write the file to a temporary name (`*.part`), flush it and its directory entry, rename atomically; (3) insert the `data_asset` and provenance rows in one transaction. If (3) fails the writer deletes the file (best effort). **Guarantee, narrowed:** the normal sequence writes the file *before* committing its row. It is **not** a guarantee that a committed row always has its file (see limitations).
+- **Deleting (explicit cascade):** one transaction as in §7.5 writes tombstones and deletes the rows; **after the commit** each tombstone is processed: the drain locks it (`FOR UPDATE SKIP LOCKED`), re-checks that **no `data_asset` row references the key**, deletes the file (a missing file counts as success), then deletes the tombstone. Because keys are never reused, cleanup cannot remove a newly referenced or replacement asset; because tombstones are claimed with `SKIP LOCKED` and file deletion is idempotent, concurrent cleanup attempts are safe.
+- **Response semantics:** if the database transaction commits, the API reports **success** with `{"deleted": true, "files_pending_cleanup": n}` (n may be 0); a failure of post-commit cleanup is **never** reported as a failed deletion. If the transaction fails, the call returns the error of §7.6 and nothing changed. A repeated delete of the same resource returns 404 while the drain continues.
+- **Cleanup triggers:** right after the commit, at backend/worker start-up, and on demand with `make reconcile-assets`; errors increment `attempts` and record `last_error`. No background daemon in V1.
+- **Reconciliation** (`make reconcile-assets`): drains tombstones and **reports** unreferenced files and rows whose file is missing; it never repairs missing files. **Orphan cleanup is report-only.** No destructive orphan deletion exists in Phase 3a, and none may be enabled — by a flag, an age rule or an idle queue — until safe exclusion of concurrent publication has been **implemented and tested** and the owner separately authorises it. The conditions for any future destructive mode are *prerequisites*, not a permission: the file is at least 24 h old (**a minimum eligibility threshold, not proof of safety**); no `data_asset` row or tombstone references the key (re-checked immediately before deletion); it is not a `*.part` file; no job is `queued`/`running`; and no asset publication can run concurrently (mechanism — e.g. a shared/exclusive advisory lock around "write file → commit row" — chosen and demonstrated by a test). File age or the absence of active jobs alone is never sufficient.
+- **Limitations retained:** external removal of a file (a committed row can lose its file); filesystem failure (disk full, permissions, corruption); **crash durability** (a file or directory entry not yet durable at a crash — flushing is intended, to be validated, not assumed); local single-host filesystem (ADR-0006); not a distributed transaction; an orphan-file window after a crash; reconciliation is manual/at start-up; no retention policy yet.
+
+## 9. Outbound-request protection (`CONNECTOR_MODE=live` only)
+**Requirements (application controls)** — to be satisfied by whatever HTTP client is selected:
+- *R-a Scheme, hosts, ports:* `https` only; each connector has a fixed provider definition with explicit permitted `(host, port)` pairs; no wildcards; no URL part from users or the AOI; hosts compared after lower-casing, IDNA normalisation and trailing-dot removal; user-info, IP literals and non-permitted ports rejected.
+- *R-b Internal and metadata destinations:* every resolved address must be public — loopback, RFC 1918, link-local (including `169.254.169.254`), `fe80::/10`, unique-local `fc00::/7` (including `fd00:ec2::254`), CGNAT `100.64.0.0/10`, multicast, unspecified, reserved and IPv4-mapped forms are refused; known metadata host names refused.
+- *R-c Address pinning and TLS:* the connection goes to the validated address, with SNI and certificate verification against the original host name, so a second DNS answer cannot redirect it. **This is a requirement to validate, not an established capability of any library.**
+- *R-d Redirects and pagination:* no automatic redirect following; manual, at most 3, each `Location` re-validated from scratch under R-a–R-c; pagination and asset links are untrusted data under the same checks and (pagination) stay on the provider API base (host, port, path prefix); `https→http` refused.
+- *R-e Bounds:* timeouts, maximum bytes/pages/redirects, content-type check, decompression guard, no cookies, no credentials, per-job request budgets (plan §3.3). `disabled`/`fixture` create no sockets (tested).
+- *R-f Tests (offline, fake resolver/transport):* each blocked address class incl. decimal/octal/hex/IPv6/mapped spellings, `localhost`, the user-info trick, wrong port, downgrade, redirect to a metadata address and to a non-permitted host, pagination to another host, DNS rebinding, oversized response.
+
+**Client selection (before the first live slice, recorded in a short note):** evaluate maintained options against R-a–R-f — e.g. `httpx` with a custom transport/resolver hook, `urllib3`/`requests` with a pinned-address adapter, `aiohttp` with a custom resolver, or an egress proxy/sidecar that enforces the policy — and choose by test results. A thin wrapper is written only if no option meets the requirements. No bespoke transport is mandated by this ADR.
+
+**Network controls (owner-controlled; NOT implemented by this ADR):** egress for the worker limited to the approved `(host, port)` pairs **plus the worker's explicitly required internal connections** (the PostgreSQL service and the storage volume — the worker is not isolated from the network as a whole); no route from worker containers to link-local/metadata addresses; the backend needs no *internet* egress (it keeps its database connection); a separately approved allowlist for sandbox verification (D8 route B).
+
+**Limitations:** application controls depend on the selected client and can contain bugs; behind an HTTP(S) proxy the resolved address is the proxy's, so connectors run without a proxy unless it enforces the same rules; exotic address spellings may slip a parser; permitted providers may redirect to CDN/object-store hosts that must then be listed explicitly; a compromised permitted provider can still return hostile data (only size/type checked); **Compose in V1 has no egress firewall, so without owner-added network controls only the application controls protect the worker**; V1 is local single-user (ADR-0005), so realistic threats are misconfiguration and hostile catalogue/redirect content.
+
+**Authorisation rule:** no live connector execution is authorised without the owner's separate approval of the **exact hosts and ports** and of the proposed application and network controls. No host name in this repository or in conversation is approved.
+
+## 10. Licence review and acknowledgements (gate before adding any package)
+- No dependency introduced by this ADR (`httpx` or an alternative, `rasterio`, or any other) is added until a licence review is recorded in `docs/third-party-licences.md` and `docs/dependency-strategy.md`.
+- **Owner acknowledgements — durable source of truth:** the owner acknowledges weak-copyleft or unusual licence cases. Evaluation of the existing structure (2026-10-05): `scripts/licences.py` generates `docs/third-party-licences.md` from `uv.lock`, `package-lock.json` and installed metadata; its only approval input is the in-code dictionary `APPROVED_COPYLEFT`, which is **empty**; the generated register therefore still says "nothing here has been approved", although the owner acknowledged the Phase 1 weak-copyleft list on 2026-10-04. The register is generated and must not be hand-edited. Decision: acknowledgements are recorded in a version-controlled file, **`docs/licence-acknowledgements.toml`** (TOML because the generator already uses `tomllib`), one record per owner decision with: component(s), ecosystem, **version**, SPDX licence, **artifact class** (runtime dependency / development tool / bundled binary / image layer / data), owner decision identifier, **date**, **source message** (reference and where it is transcribed), **conditions** and status. Making the generator and its check read this file and render it into the register is **code** and is left to a **separately authorised task**; until then the register and `APPROVED_COPYLEFT` are unchanged and the file is a documented record, not an enforced input. **Only decisions supported by actual owner messages are recorded; cases without such support are listed in the file for the owner's decision; nothing is inferred retroactively.** Strong-copyleft and unknown cases remain blocked under the existing rules.
+- **Bundled binary components** are listed **only after inspecting the selected distribution artifacts** (the exact wheel files or image layers chosen, their licence files and shared-library lists). Any component list written before that — including the examples in this ADR (GDAL, PROJ, GEOS, libtiff, curl/OpenSSL, zlib, codecs for `rasterio` wheels; BLAS/Fortran runtimes for `numpy` wheels) — is **illustrative, not a verified inventory**.
+- Record per component: name, version, SPDX licence, source of the information, class (permissive / weak copyleft / strong copyleft / unknown). A system-GDAL image is evaluated as an alternative. Slice 3a must not need `rasterio` (§11).
+
+## 11. Slice boundaries
+| Aspect | Implemented in 3a (fixtures-only) | Deferred to the live slices (3b STAC, 3c DEM) | Must pass before any live request |
+|---|---|---|---|
+| Schema | migrations 0004/0005, constraints, `storage_tombstone`, repository, cascade deletion, `make reconcile-assets` (drain + report only) | no new tables expected | — |
+| Job types | `catalog_search`, served only by the fixture connector | live paths of `catalog_search`; `dem_fetch` | — |
+| Connector code | `Connector` ABC, registry, fixture connector over committed synthetic fixtures, provenance helper, mode setting | provider connectors, HTTP client (selected per §9), cache, budgets enforced on real requests | client-selection note; R-a–R-f tests pass offline |
+| Dependencies | **none added** (no HTTP client, no `rasterio`); the new package is a workspace member only | HTTP client; `rasterio` for DEM only | §10 review recorded; weak-copyleft acknowledgements in the register; strong/unknown blocked |
+| Configuration | `CONNECTOR_MODE` (`disabled` default, `fixture`; `live` returns an explicit "not available" state) | provider definitions with exact hosts, budgets, `ENABLED_CONNECTORS` | exact host/port allowlist approved by the owner |
+| Network | none (tests assert no socket is opened) | only approved `(host, port)` pairs under approved controls | owner approves application **and** network controls |
+| UI | no change | Data panel and e2e extension (3b) | — |
+| Governance | ADR-0014 **Accepted** + bounded 3a start instruction | explicit start instruction per live slice; F-1 closed; D8 readiness R1–R6 (`docs/phase-3-plan.md` §8a); live-verification report | all of the left cells for the slice, plus a recorded live-verification report before the slice is *accepted* |
+
+## Scope guard
+Ingestion, format-level normalisation, clipping, validation and storage only (plan §0c); none of §0b's exclusions. Earth Search and Copernicus GLO-30 are **tentative until live verification**.
+
+## Alternatives considered
+| Topic | Alternative | Why not selected |
+|---|---|---|
+| Code placement | in `geo_common` / in `apps/backend` | breaks ADR-0011 / gives the API network access and breaks the worker↔API boundary |
+| | **`workers/connectors/` (selected)** | network access stays in the worker |
+| Staged data | rows in `result` | the envelope demands confidence/uncertainty; inputs would look like findings |
+| | **`data_asset` (selected)** | inputs without scientific meaning |
+| Job↔project/AOI | `project_id` in the payload only; single-column FKs + API checks | no integrity / the database could hold a mismatching job |
+| | **composite FKs with explicit NULL rules (selected)** | the database guarantees the match |
+| Concurrency | `SERIALIZABLE` everywhere; advisory locks around every delete | broad retry surface / bypasses row-level semantics |
+| | **READ COMMITTED + ordered row locks + constraints (selected)** | smallest mechanism using existing FK locking |
+| File/row consistency | files first then rows; `deleting` states; content-addressed refcount store; deletion as queue jobs | dangling rows / partial states everywhere / a storage subsystem without need / more job types and failure modes |
+| | **one transaction + tombstones + reconcile (selected)** | one tiny table + one idempotent function |
+| Outbound | any https host; host-name allowlist only; network controls only | no protection / DNS can point inward / not available in V1 Compose |
+| | **allowlist + address validation + pinning + manual redirects, implemented with a client chosen by evaluation (selected), network controls added by the owner when available** | defence in depth with stated limits; no bespoke transport fixed in advance |
+| DEM access | `rasterio` (tentative, §10 gate); system-GDAL subprocess; pure-Python COG reader; postpone DEM | evaluated at the DEM slice; 3a does not need it |
 
 ## Consequences
-- New dependencies in `geo_connectors` only (`httpx`, `rasterio`), recorded in the licence register; no `pystac-client`.
-- The `Job` contract and Compose gain a worker that needs outbound network access when `live`; the backend still needs none.
-- If rejected or amended, Phase 3 slice 3a is re-planned before any code is written.
+New package `geo_connectors` (workspace member; no new third-party dependency in 3a); new tables `data_asset` and `storage_tombstone`; composite FKs on `job` and `data_asset`; `make reconcile-assets` (drain + report only); deletion of AOIs/projects becomes a multi-step operation with a reported cleanup state; an HTTP client selection step and a licence review before any live slice; network controls remain the owner's decision. If rejected or amended, slice 3a is re-planned before any code.
+
+## Owner decision record (2026-10-05)
+Transcribed by Claude from the owner's message of 2026-10-05; not an independent signed record (full text: `docs/phase-reports/acceptance-reconciliation.md` §2d).
+- **Accepted:** this ADR, with the five bounded corrections of r4 included, as a decision that **does not change the architectural direction** (otherwise it would have stayed Proposed). Status: **Accepted, not Implemented.**
+- **Accepted specifically:** the transaction-plus-tombstone approach; the `files_pending_cleanup` response; the 24-hour minimum orphan-age rule *with its additional safety conditions* — and orphan cleanup is **report-only** until safe exclusion of concurrent publication is implemented and tested.
+- **Accepted:** the fixtures-only Phase 3a scope (`docs/phase-3-plan.md` §6) as scope — **not a start instruction**.
+- **Conditions and limits:** no live host and no network control is approved by this decision; D8 strategy stays resolved (option D) and live-verification readiness stays pending; F-1 stays open and is non-blocking only for fixtures-only Phase 3a; no code, dependency, licence-generator or network change is authorised by it; a separate, explicit, bounded implementation start instruction is required; any change that would alter the architectural direction needs a new decision.
 
 ## Revisit when
-A second worker image is needed for heavy tools (MintPy, pyGIMLi), connectors need credentials (new ADR for secret handling), or assets need retention/purge policies.
+A second worker image is needed (MintPy, pyGIMLi), connectors need credentials (new ADR), assets need retention/purge, destructive orphan cleanup is wanted (needs a tested exclusion of concurrent publication), or an AOI-move feature is wanted.

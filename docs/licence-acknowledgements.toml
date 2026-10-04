@@ -1,0 +1,258 @@
+# Owner acknowledgements of weak-copyleft / unusual licences — version-controlled source of truth.
+#
+# STATUS: documented record. It is NOT yet read by scripts/licences.py: making the generator and its check
+# consume this file and render it into docs/third-party-licences.md is code and is left to a separately
+# authorised task (ADR-0014 §10). Until then the generated register is unchanged (it still says "nothing here
+# has been approved") and APPROVED_COPYLEFT in the script is still empty. This file does not weaken any check.
+#
+# RULES (ADR-0014 §10): only decisions supported by actual owner messages are recorded here; nothing is inferred
+# retroactively; strong-copyleft and unknown cases remain blocked; a new version or a new component needs a new
+# record. "source_message" points to where the owner's message is TRANSCRIBED in the repository (the transcriptions
+# are by Claude and are not independently signed records).
+#
+# Fields: id, status, decision_date, owner_decision, source_message, scope, conditions, [[acknowledgement.components]]
+# (name, ecosystem, version, licence, artifact_class).
+
+[[acknowledgement]]
+id = "OA-0001"
+status = "recorded"
+decision_date = "2026-10-04"
+owner_decision = "Phase 1 acceptance with follow-up checks, decision 3: weak-copyleft packages acknowledged; strong copyleft stays blocked"
+source_message = "Owner message 'Phase 1 is accepted with follow-up checks, not fully closed yet' (decision 3); transcribed in docs/phase-reports/phase-1-closeout.md section 1, item 3"
+scope = "exactly the packages listed under 'Pending owner acknowledgement' in docs/third-party-licences.md when Phase 1 was accepted (Phase 1 report section 7, item 1); versions below are those listed in the register at that time and still listed on 2026-10-05"
+conditions = [
+  "used unmodified as dependencies; no vendored or modified source",
+  "does not block Phase 2 (as stated in the closeout)",
+  "strong copyleft (GPL/AGPL/EUPL/SSPL) remains blocked by scripts/licences.py",
+  "applies to these versions only; a new version or a new component needs a new record",
+]
+
+[[acknowledgement.components]]
+name = "certifi"
+ecosystem = "pypi"
+version = "2026.7.22"
+licence = "MPL-2.0"
+artifact_class = "runtime dependency (Python, transitive; used unmodified)"
+
+[[acknowledgement.components]]
+name = "pathspec"
+ecosystem = "pypi"
+version = "1.1.1"
+licence = "Mozilla Public License 2.0 (MPL 2.0)"
+artifact_class = "development tool (Python; not shipped)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-darwin-arm64"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-darwin-x64"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-linux-arm"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-linux-arm64"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-linux-ppc64"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-linux-riscv64"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-linux-s390x"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-linux-x64"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-linuxmusl-arm64"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-libvips-linuxmusl-x64"
+ecosystem = "npm"
+version = "1.3.4"
+licence = "LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-wasm32"
+ecosystem = "npm"
+version = "0.35.5"
+licence = "Apache-2.0 AND LGPL-3.0-or-later AND MIT"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-win32-arm64"
+ecosystem = "npm"
+version = "0.35.5"
+licence = "Apache-2.0 AND LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-win32-ia32"
+ecosystem = "npm"
+version = "0.35.5"
+licence = "Apache-2.0 AND LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "@img/sharp-win32-x64"
+ecosystem = "npm"
+version = "0.35.5"
+licence = "Apache-2.0 AND LGPL-3.0-or-later"
+artifact_class = "optional platform-specific native package pulled by Next.js (npm; frontend image/tooling)"
+
+[[acknowledgement.components]]
+name = "axe-core"
+ecosystem = "npm"
+version = "4.13.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-android-arm64"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-darwin-arm64"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-darwin-x64"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-freebsd-x64"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-linux-arm-gnueabihf"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-linux-arm64-gnu"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-linux-arm64-musl"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-linux-x64-gnu"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-linux-x64-musl"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-win32-arm64-msvc"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+[[acknowledgement.components]]
+name = "lightningcss-win32-x64-msvc"
+ecosystem = "npm"
+version = "1.33.0"
+licence = "MPL-2.0"
+artifact_class = "development tool (npm; frontend; not shipped)"
+
+# ---------------------------------------------------------------------------------------------------------
+# CASES WITHOUT A SUPPORTING OWNER MESSAGE — listed for the owner's decision (not acknowledged, not inferred)
+# ---------------------------------------------------------------------------------------------------------
+[[unsupported]]
+id = "U-0001"
+subject = "Bundled binary components of wheels/images for Phase 3 (e.g. rasterio and its native libraries; numpy BLAS/Fortran runtimes)"
+reason = "none selected yet; ADR-0014 section 10 requires inspecting the selected distribution artifacts first; any list now would be illustrative, not an inventory"
+needed = "owner decision after the artifact inspection, one record per component and version"
+
+[[unsupported]]
+id = "U-0002"
+subject = "colorama 0.4.6 (Python; Windows-only dependency) — register entry 'NOT INSTALLED (platform-specific dependency; licence not verified here)'"
+reason = "licence not verified from metadata; unknown cases remain blocked under the existing rules"
+needed = "verification of the licence from the distribution artifact, then an owner decision if it is weak copyleft or unusual"
+
+[[unsupported]]
+id = "U-0003"
+subject = "Any version of the OA-0001 components other than the versions listed, and any weak-copyleft component added after 2026-10-04"
+reason = "the owner's acknowledgement named the list as registered on that date"
+needed = "a new record per component and version when such a case arises"
+
+[[unsupported]]
+id = "U-0004"
+subject = "Whether OA-0001 should also be rendered as 'approved' in the generated register and in APPROVED_COPYLEFT"
+reason = "that is a generator change (code); no such change is authorised"
+needed = "separately authorised implementation task; until then the register header ('nothing here has been approved') is known to disagree with OA-0001 (documented as F-1 item F1-8)"
