@@ -46,6 +46,17 @@ Evidence: `docs/phase-reports/phase-2.md`. Owner acceptance still required.
 - [x] Antimeridian/polar edge cases handled or explicitly rejected.
 - [x] No analysis results shown in this phase.
 
+## Phase 2.5 — Structural hardening (projects, basemap abstraction)
+Evidence and the owner checklist: `docs/phase-reports/phase-2.5.md`. Owner acceptance still required.
+- [x] `project` entity with bounded count; every AOI belongs to one project; migration preserves existing AOIs (tested).
+- [x] Contracts, persistence and API updated; saving requires `project_id`, preview does not; deletion of a non-empty project needs explicit `delete_aois=true`.
+- [x] Smallest project-aware UI flow verified in unit tests and in a real browser.
+- [x] Basemap provider abstraction (`osm`/`xyz`/`none`) with validation, fallback warning and privacy note.
+- [x] Project/AOI/future-jobs/outputs relationships documented (`docs/data-model.md`, ADR-0013).
+- [x] AOI validation and upload hardening unchanged (suites intact; hostile and over-limit input still rejected with a valid project).
+- [x] No analysis, scoring, Earth Engine, 3D or auth expansion.
+- [ ] GitHub Actions green on the final Phase 2.5 commit *(pending check at hand-over)*.
+
 ## Phase 3 — Remote sensing connectors
 - [ ] Connector interface implemented with at least STAC (imagery metadata/assets) and one open DEM source.
 - [ ] Each fetch records provenance (dataset, version, date, licence, URL, checksum).

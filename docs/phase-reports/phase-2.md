@@ -1,6 +1,6 @@
 # Phase 2 Report — AOI Input and Map Basics
 
-Status: **implemented; awaiting owner acceptance** (CLAUDE.md §2). Branch `claude/geo-prospecting-foundation-hmcma4`.
+Status: **accepted by the owner with follow-ups (2026-10-04)**. **Amendment:** the Phase 2.5 browser check found that deleting an AOI failed in a real browser (CORS did not allow `DELETE`); fixed in Phase 2.5, see `docs/phase-reports/phase-2.5.md` §2. The statement below that delete was verified applies to API/tests only, not to the UI. Branch `claude/geo-prospecting-foundation-hmcma4`.
 Plan: `docs/phase-2-plan.md` · Design decisions: ADR-0012.
 
 **Scope statement.** Phase 2 only lets a user define, validate, store and display an Area of Interest. **No analysis, scoring, remote-sensing, Earth Engine, 3D or scientific inference exists.** AOI responses contain geometry and bookkeeping only; a test asserts no analysis-flavoured keys appear, and another asserts the backend imports no analysis/raster/ML libraries.

@@ -3,7 +3,7 @@
 Legend: `[ ]` todo · `[x]` done and verified · Only the **current phase** may be worked on (see `CLAUDE.md`).
 Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 
-**Current phase: 2 — implemented, awaiting owner acceptance (`docs/phase-reports/phase-2.md`). Phase 1 accepted with follow-ups (`docs/phase-reports/phase-1-closeout.md`).** Owner decisions are recorded as ADRs (`docs/adr/`, 0001…0012). Not started and not allowed yet: Earth Engine, thermal/gold/void scoring, remote-sensing analysis, 3D rendering, any scientific inference layer.
+**Current phase: 2.5 — implemented, awaiting owner acceptance (`docs/phase-reports/phase-2.5.md`). Phases 1 and 2 accepted with follow-ups.** Owner decisions are recorded as ADRs (`docs/adr/`, 0001…0012). Not started and not allowed yet: Earth Engine, thermal/gold/void scoring, remote-sensing analysis, 3D rendering, any scientific inference layer.
 
 ---
 
@@ -42,6 +42,17 @@ Implemented 2026-10-04 (plan: `docs/phase-2-plan.md`, ADR-0012, evidence: `docs/
 - [x] Coordinate/radius input form (and rectangle/polygon numeric forms)
 - [x] AOI persistence and reload
 - [x] Tests: malformed/hostile uploads, antimeridian, self-intersections, huge AOIs
+
+## Phase 2.5 — Structural Hardening (owner-approved insert before Phase 3)
+Implemented 2026-10-04 (ADR-0013, `docs/data-model.md`, report + acceptance checklist: `docs/phase-reports/phase-2.5.md`). **Awaiting owner acceptance; Phase 3 must not start before it.**
+- [x] Minimal `project` entity; AOIs belong to projects; migration `0003`
+- [x] Backend contracts, persistence, API (`/projects`, `project_id` on AOIs)
+- [x] Smallest project-aware frontend flow
+- [x] Basemap provider abstraction (`osm` | `xyz` | `none`)
+- [x] Document project ↔ AOI ↔ future jobs ↔ outputs
+- [x] Fix: CORS now allows `DELETE` (found by browser check; affected Phase 2 UI deletes)
+- [ ] GitHub Actions green on the final commit
+- [ ] Deferred recommendation: committed browser smoke test in CI
 
 ## Phase 3 — Remote Sensing Connectors
 - [ ] Connector interface (inputs, outputs, quotas, caching, provenance)

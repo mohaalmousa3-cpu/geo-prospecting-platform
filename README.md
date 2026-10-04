@@ -2,7 +2,7 @@
 
 A scientific web platform for **prospectivity and anomaly screening** from remote-sensing, geological, terrain and thermal data — for gold-related targets, cavity/void-related targets and thermal anomalies — with explicit confidence and uncertainty.
 
-> **Status: Phase 1 accepted (with follow-ups); Phase 2 (AOI input and 2D map) implemented, awaiting acceptance.** The platform can define, validate, store and display an Area of Interest. **No analysis, scoring, remote-sensing, Earth Engine or scientific output exists yet.**
+> **Status: Phases 1–2 accepted (with follow-ups); Phase 2.5 (projects, basemap abstraction) implemented, awaiting acceptance; Phase 3 not started.** The platform can define, validate, store and display Areas of Interest inside projects. **No analysis, scoring, remote-sensing, Earth Engine or scientific output exists yet.**
 
 ## ⚠️ Scientific disclaimer
 
@@ -77,9 +77,9 @@ Local checks (all of CI): `make sync && make ci`. Integration tests need PostGIS
 | `make licences` | verify the third-party licence register |
 | `make frontend-check` | lint, typecheck, format, tests, build |
 
-The app contains **no scientific engine and no scientific output**: health checks, a `noop` job, the queue/worker, shared contracts, AOI input/validation/storage with a 2D map, and guard tests. Evidence: [`phase-1.md`](docs/phase-reports/phase-1.md), [`phase-1-closeout.md`](docs/phase-reports/phase-1-closeout.md), [`phase-2.md`](docs/phase-reports/phase-2.md). Job states and queue capacity assumptions: [`docs/job-lifecycle.md`](docs/job-lifecycle.md).
+The app contains **no scientific engine and no scientific output**: health checks, a `noop` job, the queue/worker, shared contracts, AOI input/validation/storage with a 2D map, and guard tests. Data model: [`docs/data-model.md`](docs/data-model.md) (project ↔ AOI ↔ future jobs ↔ outputs). Evidence: [`phase-2.5.md`](docs/phase-reports/phase-2.5.md), [`phase-1.md`](docs/phase-reports/phase-1.md), [`phase-1-closeout.md`](docs/phase-reports/phase-1-closeout.md), [`phase-2.md`](docs/phase-reports/phase-2.md). Job states and queue capacity assumptions: [`docs/job-lifecycle.md`](docs/job-lifecycle.md).
 
-The map basemap defaults to OpenStreetMap tiles for low-volume development; tile requests reveal the viewed map area to the tile provider (never the AOI geometry). Set `NEXT_PUBLIC_BASEMAP_TILE_URL=` (empty) for no basemap (ADR-0012).
+The map basemap is chosen with `NEXT_PUBLIC_BASEMAP_PROVIDER` = `osm` (default; low-volume development only) | `xyz` (your own https tile URL + attribution) | `none`. Tile requests reveal the viewed map area to the provider (never the AOI geometry); `none` makes no third-party requests (ADR-0012/0013).
 
 ## Key documents
 
@@ -94,7 +94,7 @@ The map basemap defaults to OpenStreetMap tiles for low-volume development; tile
 | [docs/data-sources.md](docs/data-sources.md) | Candidate data sources |
 | [docs/acceptance-criteria.md](docs/acceptance-criteria.md) | Per-phase acceptance |
 | [docs/risk-register.md](docs/risk-register.md) | Risks and mitigations |
-| [docs/adr/](docs/adr/README.md) | Accepted decisions (ADR-0001…0012) |
+| [docs/adr/](docs/adr/README.md) | Accepted decisions (ADR-0001…0013) |
 | [docs/phase-1-plan.md](docs/phase-1-plan.md) | Phase 1 plan |
 | [docs/phase-reports/phase-1.md](docs/phase-reports/phase-1.md) | Phase 1 evidence and deviations |
 | [docs/phase-reports/phase-1-closeout.md](docs/phase-reports/phase-1-closeout.md) | Phase 1 closeout: accepted, open risks, deferred |
