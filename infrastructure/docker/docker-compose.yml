@@ -88,7 +88,7 @@ services:
 secrets:
   # Build-time only. Defaults to an empty file; set PROXY_CA_BUNDLE for TLS-intercepting proxies.
   proxy_ca:
-    file: ${PROXY_CA_BUNDLE:-./no-ca.pem}
+    file: ${PROXY_CA_BUNDLE:-./no-ca.crt}
 
 volumes:
   pgdata:

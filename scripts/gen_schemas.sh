@@ -10,6 +10,8 @@ uv run datamodel-codegen --input "$SRC" --input-file-type jsonschema \
   --target-python-version 3.12 --use-standard-collections --use-union-operator \
   --disable-timestamp --use-double-quotes --field-constraints \
   --use-annotated --custom-file-header '# Generated from packages/schemas by scripts/gen_schemas.sh. DO NOT EDIT.'
+# Normalise with the repo's locked ruff so output is identical locally, in pre-commit and in CI.
+uv run ruff format -q "$MODELS/_generated.py"
 if [ -d apps/frontend/node_modules/json-schema-to-typescript ]; then
   mkdir -p apps/frontend/src/types
   (cd apps/frontend && npx --no-install json2ts -i ../../"$SRC" -o src/types/contracts.ts \

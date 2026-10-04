@@ -18,12 +18,12 @@ repos:
       # local hooks use the locked ruff version, so pre-commit and CI cannot drift apart
       - id: ruff
         name: ruff check
-        entry: uv run ruff check --fix
+        entry: uv run ruff check --fix --force-exclude
         language: system
         types: [python]
       - id: ruff-format
         name: ruff format
-        entry: uv run ruff format
+        entry: uv run ruff format --force-exclude
         language: system
         types: [python]
       - id: prettier-frontend

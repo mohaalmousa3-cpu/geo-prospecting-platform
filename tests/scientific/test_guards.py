@@ -159,3 +159,11 @@ def test_no_authentication_code_in_backend() -> None:
         text = f.read_text().lower()
         for bad in ("oauth", "jwt", "bearer", "password_hash", "login"):
             assert bad not in text, (f, bad)
+
+
+def test_compose_build_secret_default_is_tracked_and_empty() -> None:
+    """CI failed once because `*.pem` is git-ignored and the empty default CA file was never committed."""
+    f = ROOT / "infrastructure/docker/no-ca.crt"
+    assert f.exists() and f.stat().st_size == 0
+    tracked = subprocess.run(["git", "ls-files", "--error-unmatch", str(f)], cwd=ROOT, capture_output=True)
+    assert tracked.returncode == 0, "infrastructure/docker/no-ca.crt must be committed (check .gitignore)"
