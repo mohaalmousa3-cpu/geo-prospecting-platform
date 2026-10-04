@@ -44,6 +44,74 @@ def test_scanner_detects_violations(line: str) -> None:
     assert scan_text(line), line
 
 
+# Regression: gaps found when the guard's coverage was analysed (reverse word order, other verbs, American
+# spelling, "ore body", "present", phrases split across lines or comment markers).
+@pytest.mark.parametrize(
+    "text",
+    [
+        "found gold",
+        "Found Gold at the site",
+        "Cave identified",
+        "void located",
+        "cavity identified",
+        "Mineralization confirmed",
+        "mineralization detected",
+        "mineralisation confirmed",
+        "confirmed mineralization",
+        "gold present",
+        "ore body detected",
+        "ore-body confirmed",
+        "ore present",
+        "identified deposit",
+        "located void",
+        "Gold\nfound",
+        "cave\n    detected",
+        "Confirmed\nvoid",
+        "# gold\n# found",
+        "// ore body\n// confirmed",
+        "**Gold** found",
+    ],
+)
+def test_scanner_regressions_are_detected(text: str) -> None:
+    assert scan_text(text), text
+
+
+def test_multiline_match_is_reported_at_its_first_line() -> None:
+    assert [n for n, _ in scan_text("ok line\nGold\nfound here")] == [2]
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "gold = 1  # forbidden-term-ok gold_found",
+        "gold\nfound  # forbidden-term-ok",  # marker on any touched line
+        "mineralization potential",
+        "mineral_occurrence",
+        "Possible gold prospectivity",
+        "unidentified deposit model",
+        "ore model description",
+        "cave and void features are not claims",
+        "return void",
+        "present_value",
+        "not_located",
+    ],
+)
+def test_scanner_regressions_have_no_false_positives(text: str) -> None:
+    assert scan_text(text) == [], text
+
+
+def test_scan_repo_honours_the_documentation_allowlist_and_scans_everything_else(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "note.md").write_text("The word 'gold found' is discussed here.\n")
+    (tmp_path / "TASKS.md").write_text("never write: gold found\n")
+    (tmp_path / "ui.tsx").write_text(
+        "export const x = 'Mineralization\\nconfirmed';\n// ore body\n// detected\n"
+    )
+    files = [tmp_path / "docs" / "note.md", tmp_path / "TASKS.md", tmp_path / "ui.tsx"]
+    problems = scan_repo(tmp_path, files)
+    assert len(problems) == 1 and problems[0].startswith("ui.tsx:2"), problems
+
+
 @pytest.mark.parametrize(
     "line",
     [
