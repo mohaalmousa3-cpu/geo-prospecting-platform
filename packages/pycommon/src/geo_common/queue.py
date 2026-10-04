@@ -91,7 +91,7 @@ class JobQueue(ABC):
         status: JobStatus = JobStatus.SUCCEEDED,
         message: str | None = None,
     ) -> bool:
-        """Finish a job as SUCCEEDED or INSUFFICIENT_DATA. False if the lease was lost."""
+        """Finish a job as SUCCEEDED, INSUFFICIENT_DATA or CANCELLED. False if the lease was lost."""
 
     @abstractmethod
     def fail(self, job_id: UUID, worker_id: str, error: str, *, retryable: bool = False) -> bool:

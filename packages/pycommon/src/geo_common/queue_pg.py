@@ -132,8 +132,8 @@ class PostgresJobQueue(JobQueue):
         status: JobStatus = JobStatus.SUCCEEDED,
         message: str | None = None,
     ) -> bool:
-        if status not in (JobStatus.SUCCEEDED, JobStatus.INSUFFICIENT_DATA):
-            raise ValueError("complete() accepts only SUCCEEDED or INSUFFICIENT_DATA")
+        if status not in (JobStatus.SUCCEEDED, JobStatus.INSUFFICIENT_DATA, JobStatus.CANCELLED):
+            raise ValueError("complete() accepts only SUCCEEDED, INSUFFICIENT_DATA or CANCELLED")
         return self._finish(job_id, worker_id, status, _trim(message))
 
     def fail(self, job_id: UUID, worker_id: str, error: str, *, retryable: bool = False) -> bool:

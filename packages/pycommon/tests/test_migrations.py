@@ -5,7 +5,11 @@ from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
 
 from geo_common.db import downgrade_base, upgrade_head
-from tests_helpers import TEST_URL
+import os
+
+TEST_URL = os.environ.get(
+    "GEO_TEST_DATABASE_URL", "postgresql+psycopg://geo:geo@localhost:5432/geo_test"
+)
 
 pytestmark = pytest.mark.integration
 

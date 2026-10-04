@@ -179,7 +179,7 @@ def test_complete_insufficient_data(queue: PostgresJobQueue) -> None:
     d = queue.get(j.id)
     assert d.status is JobStatus.INSUFFICIENT_DATA and d.error == "no scenes"
     with pytest.raises(ValueError):
-        queue.complete(j.id, "w", JobStatus.CANCELLED)
+        queue.complete(j.id, "w", JobStatus.FAILED)
 
 
 def test_cancel_queued_is_immediate(queue: PostgresJobQueue) -> None:
