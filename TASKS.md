@@ -3,7 +3,9 @@
 Legend: `[ ]` todo · `[x]` done and verified · Only the **current phase** may be worked on (see `CLAUDE.md`).
 Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 
-**Current phase: 2.5 follow-ups done; Phase 3 PLAN proposed (`docs/phase-3-plan.md`), implementation not started and awaiting owner approval.** Owner decisions are recorded as ADRs (`docs/adr/`, 0001…0012). Not started and not allowed yet: Earth Engine, thermal/gold/void scoring, remote-sensing analysis, 3D rendering, any scientific inference layer.
+**Current status (2026-10-04; authoritative source: `MASTER_SPEC.md` → Current Project Status).** Phases 0–2.5 are *implemented*; verification evidence and owner-acceptance records are listed per phase below and are different things (matrix: `docs/phase-reports/acceptance-reconciliation.md`). **Phase 3: Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started.** ADR-0014 remains Proposed (non-binding); decision D8 remains OPEN. ADRs are 0001…0014 (0014 Proposed). Not started and not allowed yet: Earth Engine, thermal/gold/void scoring, remote-sensing analysis, 3D rendering, any scientific inference layer. No checkbox in this file was changed by the status reconciliation.
+
+> *Historical banner (superseded; as written at the Phase 3 plan proposal):* "Current phase: 2.5 follow-ups done; Phase 3 PLAN proposed (`docs/phase-3-plan.md`), implementation not started and awaiting owner approval. Owner decisions are recorded as ADRs (`docs/adr/`, 0001…0012)."
 
 ---
 
@@ -17,8 +19,10 @@ Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 - [x] Owner approval of Phase 1 plan and technical choices; T8 recorded as ADR-0011
 - [x] Owner confirmation of field-validation definitions (ADR-0010, stricter wording)
 
+> Status note (2026-10-04): the items above are recorded as done; the Phase 0 boxes in `docs/acceptance-criteria.md` are unticked and need a reconciliation decision (see the dated note there).
+
 ## Phase 1 — Repo/App Foundation
-Implemented 2026-10-04; evidence and deviations in `docs/phase-reports/phase-1.md`. **Awaiting owner acceptance** before Phase 2. Detailed, ordered tasks with verification commands: **`docs/phase-1-plan.md`** (P1-01 … P1-18). Summary:
+Implemented 2026-10-04; evidence and deviations in `docs/phase-reports/phase-1.md`. *[historical, superseded by the status note below]* **Awaiting owner acceptance** before Phase 2. Detailed, ordered tasks with verification commands: **`docs/phase-1-plan.md`** (P1-01 … P1-18). Summary:
 - [x] Tooling baseline (lint, type-check, tests, secret scan, forbidden-term scan)
 - [ ] CI workflow executed green on GitHub Actions (written; passes locally via `make ci`)
 - [x] Docker Compose: postgis, backend, worker, frontend — loopback ports, no Redis, no MinIO
@@ -31,8 +35,10 @@ Implemented 2026-10-04; evidence and deviations in `docs/phase-reports/phase-1.m
 - [x] Scientific-guard tests; `docs/third-party-licences.md`
 - [x] `LICENSE` stays rights-reserved placeholder (ADR-0002)
 
+> Status note (2026-10-04): the *Awaiting owner acceptance* sentence above is historical. Owner acceptance **with follow-up checks** is recorded in `docs/phase-reports/phase-1-closeout.md`. Verification evidence for the unticked CI box: GitHub Actions run #3 on `bbab3c8` concluded `success` (python, frontend incl. schema drift, gitleaks, dependency audit [report-only], docker build); runs #1 (`823fa87`) and #2 (`eda2681`) failed. The box stays unticked pending a reconciliation decision.
+
 ## Phase 2 — AOI Input and Map Basics
-Implemented 2026-10-04 (plan: `docs/phase-2-plan.md`, ADR-0012, evidence: `docs/phase-reports/phase-2.md`). **Awaiting owner acceptance.** Still no analysis of any kind.
+Implemented 2026-10-04 (plan: `docs/phase-2-plan.md`, ADR-0012, evidence: `docs/phase-reports/phase-2.md`). *[historical, superseded by the status note below]* **Awaiting owner acceptance.** Still no analysis of any kind.
 - [ ] GitHub Actions run green on the Phase 2 commits (check after push)
 - [x] AOI model + API: preview/create/upload/list/get/delete/limits
 - [x] Coordinates + radius → polygon (geodesically correct)
@@ -43,8 +49,10 @@ Implemented 2026-10-04 (plan: `docs/phase-2-plan.md`, ADR-0012, evidence: `docs/
 - [x] AOI persistence and reload
 - [x] Tests: malformed/hostile uploads, antimeridian, self-intersections, huge AOIs
 
+> Status note (2026-10-04): the *Awaiting owner acceptance* sentence above is historical. Owner approval **with follow-up items** is recorded in `docs/phase-reports/phase-2.md`. Verification evidence for the unticked CI box: runs #4 (`2ddef67`) and #5 (`1e7c823`) concluded `success`; commit `46596b4` has no run of its own. The box stays unticked pending a reconciliation decision. The Phase 2 UI delete claim was amended by the Phase 2.5 CORS finding (`phase-2.5.md` §2).
+
 ## Phase 2.5 — Structural Hardening (owner-approved insert before Phase 3)
-Implemented 2026-10-04 (ADR-0013, `docs/data-model.md`, report + acceptance checklist: `docs/phase-reports/phase-2.5.md`). **Awaiting owner acceptance; Phase 3 must not start before it.**
+Implemented 2026-10-04 (ADR-0013, `docs/data-model.md`, report + acceptance checklist: `docs/phase-reports/phase-2.5.md`). *[historical, superseded by the status note below]* **Awaiting owner acceptance; Phase 3 must not start before it.**
 - [x] Minimal `project` entity; AOIs belong to projects; migration `0003`
 - [x] Backend contracts, persistence, API (`/projects`, `project_id` on AOIs)
 - [x] Smallest project-aware frontend flow
@@ -56,8 +64,12 @@ Implemented 2026-10-04 (ADR-0013, `docs/data-model.md`, report + acceptance chec
 - [x] Extra: CORS methods derived from declared operations
 - [x] GitHub Actions green incl. the new `e2e` job (run #7, `02b6b05`)
 
+> Status note (2026-10-04): conditional owner approval is recorded (two required follow-ups). The follow-ups are *reported implemented and tested*; run #7 on `02b6b05` is **historical evidence**; run #10 on `da90ce2` (current committed HEAD, documentation-only delta from #7) concluded `success` on six jobs incl. `e2e`. A **separate owner sign-off on the follow-ups is not recorded**; approval of the Phase 3 plan is not that sign-off. The *"Phase 3 must not start before it"* constraint above remains in force.
+
 ## Phase 3 — Remote Sensing Connectors
 **FINAL PLAN, NOT STARTED: `docs/phase-3-plan.md` (scope summary, strict out-of-scope §0b, permitted operations §0c, slices 3a–3f, tasks P3-01…P3-20, decision table D1–D12). The owner approved the plan with constraints; implementation still needs an explicit start instruction and ADR-0014 marked Approved (it is Proposed). D8 (live-verification route) is OPEN. Earth Search and Copernicus GLO-30 are TENTATIVE defaults.** Phase 3 stages data inputs only — no scoring, prospectivity inference, thermal analysis, Earth Engine execution, 3D or scientific interpretation. Phase 5 region gate unchanged.
+
+> Status note (2026-10-04): Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started. Approval of the plan is not authorization to start implementation. The boxes below are not scheduled until the block is lifted.
 - [ ] Connector interface (inputs, outputs, quotas, caching, provenance)
 - [ ] STAC connector (open catalogues) — Landsat, Sentinel-2, Sentinel-1 metadata/assets
 - [ ] DEM connector (open DEM, e.g. Copernicus/SRTM — final choice via ADR)

@@ -1,6 +1,26 @@
-# MASTER SPECIFICATION — geo-prospecting-platform
+# MASTER SPECIFICATION — geo-prospecting-platform (v0.2)
 
-Status: **Draft v0.1 (foundation)** · Governs all phases · Changes require an ADR (`docs/adr/`).
+Version: **v0.2** (2026-10-04) · Status: **Living specification — Phases 0, 1, 2 and 2.5: implementation, verification and owner-acceptance records are listed separately in Current Project Status (acceptance reconciliation pending); Phase 3 planned but blocked pending prerequisite acceptance reconciliation, not started** · Governs all phases · Changes require an ADR (`docs/adr/`).
+
+---
+
+## Current Project Status
+
+Updated 2026-10-04. **This is the single authoritative current-status record.** The Status column in §10 and the status banners in `README.md` and `TASKS.md` mirror it; on any difference this section governs, and superseded wording elsewhere is kept only as labelled historical notes. Detail and evidence: `TASKS.md`, `docs/phase-reports/` and the per-criterion matrix in `docs/phase-reports/acceptance-reconciliation.md`.
+
+| Phase | Status |
+|---|---|
+| 0 Planning and scaffolding | Planning/scaffolding tasks recorded as done (`TASKS.md`); formal acceptance checklist reconciliation remains pending |
+| 1 Repo/app foundation | Implemented — owner acceptance with follow-up checks recorded; checks reported complete (`docs/phase-reports/phase-1-closeout.md`); acceptance checklist reconciliation pending |
+| 2 AOI input and map basics | Implemented — owner approval with follow-up items recorded (`docs/phase-reports/phase-2.md`); outstanding acceptance items remain open |
+| 2.5 Structural hardening (projects, basemap provider abstraction, browser smoke test in CI) | Implemented — conditional owner approval recorded (two required follow-ups: browser smoke test in CI; default basemap `none`); required follow-ups reported implemented and tested (`docs/phase-reports/phase-2.5.md`); separate owner sign-off on the follow-ups is not recorded |
+| 3 Remote-sensing data connectors | Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started. |
+
+**Reconciliation note (2026-10-04).** Three things are kept separate throughout: *implementation reported*, *verification evidence recorded*, and *explicit owner acceptance recorded*. Verification: CI run #7 on `02b6b05` (six jobs, including `e2e`) is **historical evidence** for the Phase 2.5 follow-ups. CI run #10 on `da90ce2`, the current committed HEAD, concluded `success` on all six jobs (read from GitHub on 2026-10-04); `02b6b05..da90ce2` changed documentation only. That is CI-level evidence for the committed baseline: it does not cover the uncommitted edits of this refresh, and it is not owner acceptance. A separate local verification of the *dirty working tree* on base `da90ce2` (lint, types, unit, integration, guards, schema drift, browser smoke test, Docker Compose startup, migrations, health, `noop` job, browser smoke test against the Compose stack) is recorded in `docs/phase-reports/acceptance-reconciliation.md`; it is **not** CI evidence for any committed SHA. Status records and checklists (`TASKS.md`, `README.md`, `docs/acceptance-criteria.md`, `docs/phase-reports/phase-2.5.md`) carry dated status notes mapping each item to its evidence; their checkboxes were **not** changed, and this documentation refresh does not close any outstanding acceptance gate. Approval of the Phase 3 plan is not acceptance of any earlier phase or of the Phase 2.5 follow-ups.
+
+**Phase 3 — remote-sensing data connectors: blocked.** Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started. The plan (`docs/phase-3-plan.md`) was approved by the owner with constraints; that approval is **not** authorization to start implementation. Beyond reconciliation and recorded acceptance of the prerequisite phases (including the Phase 2.5 follow-ups), implementation also needs an explicit start instruction. ADR-0014 is still **Proposed** (non-binding), and decision D8 (live-verification route) remains **open**.
+
+Not implemented yet: any analysis, scoring, prospectivity, thermal, void, Earth Engine or 3D functionality. Phase 5 remains blocked until the owner defines the target country/region and pilot area (ADR-0003 amendment); Earth Engine remains blocked until the owner records commercial eligibility in writing (ADR-0004 amendment).
 
 ---
 
@@ -38,6 +58,11 @@ The platform is a **decision-support and target-prioritisation tool**. It narrow
 
 ### Accepted scope decisions (2026-10-04)
 Binding; see `docs/adr/`. Private repository (0001) with rights reserved (0002); **orogenic gold is the only gold model** (0003); Earth Engine optional and experimental/non-commercial only (0004); no authentication in V1 (0005); local storage (0006); PostgreSQL-backed queue (0007); conservative AOI/compute limits — 25 km² AOI, 20 scenes, 1800 s jobs (0008); strict naming with mandatory confidence/uncertainty (0009); no "confirmed" gold/cavity wording without field validation (0010).
+
+ADR authority, by recorded status:
+- **Decided by the owner, Accepted:** ADR-0001–0011 (ADR-0011: shared package `geo_common` — contracts, abstractions and generic utilities only, never analysis logic — recorded on the owner's approval of T8).
+- **Design decisions recorded within an owner-approved phase scope:** ADR-0012 (AOI input and validation; Phase 2; the ADR records that the owner may veto any point) and ADR-0013 (projects, basemap provider, derived CORS, browser smoke test in CI; Phase 2.5; owner scope, Claude design). They are in force as recorded; approval of the phase scope is not a separate explicit owner approval of every provision.
+- **Proposed, non-binding:** ADR-0014 (connectors package, data assets).
 
 ## 3. Scientific Boundaries (normative)
 
@@ -146,20 +171,21 @@ Detail: `docs/dependency-strategy.md`.
 
 ## 10. Phased Build Plan
 
-Authoritative checklist: `TASKS.md`. Acceptance: `docs/acceptance-criteria.md`.
+Authoritative checklist: `TASKS.md`. Acceptance: `docs/acceptance-criteria.md`. The Status column below mirrors *Current Project Status* at the top of this document, which governs on any difference.
 
-| Phase | Theme |
-|---|---|
-| 0 | Planning and scaffolding (this repo state) |
-| 1 | Repo/app foundation (running skeleton, CI, DB) |
-| 2 | AOI input and map basics |
-| 3 | Remote sensing connectors |
-| 4 | Thermal pipeline |
-| 5 | Gold prospectivity pipeline |
-| 6 | Void evidence pipeline |
-| 7 | 3D visualisation |
-| 8 | Field geophysics ingestion |
-| 9 | Confidence, uncertainty and reporting refinement |
+| Phase | Theme | Status (2026-10-04) |
+|---|---|---|
+| 0 | Planning and scaffolding | Planning/scaffolding tasks recorded as done; acceptance checklist reconciliation pending |
+| 1 | Repo/app foundation (running skeleton, CI, DB) | Implemented — owner acceptance with follow-up checks recorded; checks reported complete; checklist reconciliation pending |
+| 2 | AOI input and map basics | Implemented — owner approval with follow-up items recorded; outstanding acceptance items remain open |
+| 2.5 | Structural hardening (projects, basemap provider abstraction, browser smoke test in CI) | Implemented — conditional owner approval recorded; required follow-ups reported implemented and tested; separate owner sign-off on follow-ups not recorded |
+| 3 | Remote sensing connectors | Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started. |
+| 4 | Thermal pipeline | Planned |
+| 5 | Gold prospectivity pipeline | Planned — blocked until target region and pilot area are defined |
+| 6 | Void evidence pipeline | Planned |
+| 7 | 3D visualisation | Planned |
+| 8 | Field geophysics ingestion | Planned |
+| 9 | Confidence, uncertainty and reporting refinement | Planned |
 
 Rules: one phase at a time; no phase starts until the previous phase's acceptance criteria are met and recorded; scope creep is deferred to the backlog.
 

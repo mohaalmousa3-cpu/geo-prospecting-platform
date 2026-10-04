@@ -1,7 +1,9 @@
-# Phase 3 Plan — Remote-Sensing Data Connectors (FINAL PLAN — NOT STARTED)
+# Phase 3 Plan — Remote-Sensing Data Connectors (FINAL PLAN — NOT STARTED, BLOCKED)
 
 Status: **planning finalised after the owner's "approved with constraints" (2026-10-04). Nothing in this plan has been implemented or started. Implementation needs a separate explicit start approval that also marks ADR-0014 Approved.** ADR-0014 is, and stays, **Proposed**.
-Prerequisites met: Phases 1, 2, 2.5 accepted; the two Phase 2.5 follow-ups (browser smoke test in CI, `none` basemap default) are implemented.
+**Current status (2026-10-04): Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started.** Approval of this plan is not authorization to start implementation.
+Prerequisite status (corrected 2026-10-04; authoritative source: `MASTER_SPEC.md` → Current Project Status): Phases 1 and 2 have recorded owner acceptance/approval *with follow-ups*; Phase 2.5 has *conditional* owner approval, its two follow-ups (browser smoke test in CI, `none` basemap default) are reported implemented and tested, and a **separate owner sign-off on those follow-ups is not recorded**. Acceptance reconciliation is pending (`docs/phase-reports/acceptance-reconciliation.md`).
+*Historical wording, superseded:* "Prerequisites met: Phases 1, 2, 2.5 accepted" — written before the acceptance records were reconciled; it overstated the Phase 2.5 record.
 
 ## Scope summary (one page, for review)
 
@@ -189,7 +191,7 @@ Basis: the owner replied **"Approved with constraints"** to the plan and its rec
 | D11 | CI `e2e` gains a worker process and fixture mode | Approved | No live network in CI | **Approved** |
 | D12 | Phase 5 region/pilot-area gate and the "no analysis" rule unchanged | Confirmed | See §0b | **Confirmed** |
 
-Still required before any implementation: (1) an explicit instruction to start Phase 3; (2) ADR-0014 marked Approved by the owner; (3) a decision on D8 (or acceptance of "live-unverified").
+Still required before any implementation: (0) reconciliation of the prerequisite phases' acceptance records, including a recorded owner decision on the Phase 2.5 follow-ups; (1) an explicit instruction to start Phase 3; (2) ADR-0014 marked Approved by the owner; (3) a decision on D8 (or acceptance of "live-unverified").
 
 ## 9. Out of scope
 
@@ -198,3 +200,4 @@ Canonical, strict list: **§0b**. Permitted operations: **§0c**. (Not repeated 
 ## 10. Change log of this document
 - 2026-10-04 (proposal): first full plan.
 - 2026-10-04 (final planning pass, after "approved with constraints"): added scope summary, strict out-of-scope (§0b) and permitted operations (§0c); marked Earth Search and Copernicus GLO-30 **tentative**; added acceptance criteria 12–13; replaced the questions with the final D1–D12 decision table; ADR-0014 kept **Proposed**; no implementation.
+- 2026-10-04 (status-wording reconciliation): status set to blocked pending prerequisite acceptance reconciliation; corrected the prerequisite statement (see the top of this document); D8 remains **OPEN**; design unchanged.

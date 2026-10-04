@@ -2,6 +2,8 @@
 
 A phase is **accepted** only when all criteria are met, evidence is recorded (test output, run logs, notes), and the user confirms. Scientific criteria are assessed separately from functional ones.
 
+> **Status note (2026-10-04, documentation reconciliation).** In this file `[x]` means *implementation reported and verified when recorded in the phase report*; it is **not** owner acceptance, which is tracked separately in the phase reports and in `MASTER_SPEC.md` (Current Project Status). The dated notes below annotate evidence only; **no checkbox was changed**. CI evidence is scoped to the named commit and jobs (workflow `ci`, branch `claude/geo-prospecting-foundation-hmcma4`, read from GitHub on 2026-10-04): #1 `823fa87` failed; #2 `eda2681` failed; #3 `bbab3c8` success; #4 `2ddef67` success; #5 `1e7c823` success; #6 `46178de` success; #7 `02b6b05` success (six jobs incl. `e2e`) — **historical evidence** for the Phase 2.5 follow-ups; #8 `9a7947e` cancelled (superseded); #9 `c3cf3a3` success; #10 `da90ce2` success (six jobs incl. `e2e`; documentation-only delta from #7). CI runs lint, types, unit, integration, guards, licence register, frontend, schema drift, gitleaks, a docker *build* and the browser smoke test; it does not run `docker compose up`, and its dependency-audit job is report-only.
+
 **Universal criteria (every phase):**
 - U1. All new code has tests; test suite passes in CI; no skipped/disabled tests.
 - U2. Linting/type checks pass.
@@ -14,6 +16,8 @@ A phase is **accepted** only when all criteria are met, evidence is recorded (te
 ---
 
 ## Phase 0 — Planning and scaffolding
+> Status note (2026-10-04): evidence — the Phase 0 documents exist at HEAD (listed), and `scientific-constraints.md` is referenced from README, MASTER_SPEC and CLAUDE.md. Boxes left open: (a) *internally consistent* — status inconsistencies were found during this reconciliation and are annotated, not resolved; (b) *no application code* — true at the Phase 0 commit `ca2d4e4`, superseded by design from Phase 1, so it cannot be evaluated at HEAD and needs an owner decision (satisfied-at-`ca2d4e4`); (c) *user review completed* — owner decisions are transcribed in ADR-0001…0010 and `TASKS.md`, but no explicit Phase 0 acceptance statement is recorded.
+
 - [ ] All files listed in the Phase 0 brief exist and are internally consistent.
 - [ ] Scientific constraints documented and referenced from README, MASTER_SPEC, CLAUDE.
 - [ ] Open questions listed with owner decisions pending.
@@ -22,6 +26,7 @@ A phase is **accepted** only when all criteria are met, evidence is recorded (te
 
 ## Phase 1 — Repo/app foundation
 Evidence: `docs/phase-reports/phase-1.md`. Owner acceptance still required.
+> Status note (2026-10-04): the sentence above is historical; owner acceptance **with follow-up checks** is recorded (`phase-1-closeout.md`). Evidence for the three open boxes (not ticked, per the governance decision; ticking is the owner's reconciliation call): all map to CI run #3 on `bbab3c8` (`success`) and later runs. (i) *forbidden-term scan*: CI step "Scientific guards" (`pytest tests/scientific`); the scanner config (`tests/scientific/forbidden_terms.py`) scans repo files by suffix with a docs allow-list — its coverage of user-visible strings is analysed, with gaps, in `docs/phase-reports/acceptance-reconciliation.md` §6 (a passing guard is not proof that every UI string is covered). (ii) *schema pipeline/drift*: frontend-job step "Generated schema types must match packages/schemas" passed; run #2 failed on generated-code drift, showing the check does fail on drift. (iii) *CI runs lint, type-check, tests, secret scan*: steps ruff check, ruff format, mypy, unit, integration, guards and gitleaks passed in run #3.
 - [x] `docker compose up` starts postgis, backend, worker, frontend from a clean clone (no Redis, no MinIO); ports bound to 127.0.0.1.
 - [x] `/api/v1/health` returns OK; frontend status page shows backend health.
 - [x] Alembic migrations apply cleanly; PostGIS extension enabled; initial tables created.
@@ -39,6 +44,7 @@ Evidence: `docs/phase-reports/phase-1.md`. Owner acceptance still required.
 
 ## Phase 2 — AOI input and map basics
 Evidence: `docs/phase-reports/phase-2.md`. Owner acceptance still required.
+> Status note (2026-10-04): the sentence above is historical; owner approval **with follow-up items** is recorded (`phase-2.md`). The open box stays open: boundary tests at/just-below/just-above exist for area, min area, radius and vertices; for upload size and archive size/count only above-limit rejection tests were recorded when this box was left open (`apps/backend/tests/test_aoi_api.py`). Update 2026-10-04: boundary tests for each of those three limits (just below / exactly at / just above, per the ADR-0012 §8 semantics) now exist in `apps/backend/tests/test_aoi_upload_limits.py` and pass locally on the dirty working tree on base `da90ce2`; they are **uncommitted**, so they are not CI evidence, and the box stays unticked (owner decision). CI for the Phase 2 commits: `2ddef67` (#4) and `1e7c823` (#5) `success`; `46596b4` has no run of its own. Phase 2's UI delete claim was amended by the Phase 2.5 CORS finding.
 - [x] Coordinates+radius produce a geodesically correct polygon (tested against reference values).
 - [x] Draw rectangle/polygon on map; AOI saved and reloaded.
 - [x] Upload of GeoJSON, KML, KMZ, zipped Shapefile accepted; invalid/hostile files rejected with clear errors (zip-bomb, path traversal, bad CRS, empty, self-intersecting, oversize).
@@ -48,6 +54,7 @@ Evidence: `docs/phase-reports/phase-2.md`. Owner acceptance still required.
 
 ## Phase 2.5 — Structural hardening (projects, basemap abstraction)
 Evidence and the owner checklist: `docs/phase-reports/phase-2.5.md`. Owner acceptance still required.
+> Status note (2026-10-04): conditional owner approval is recorded (two required follow-ups). The `[x]` items below are implementation + verification; the *(follow-up)* items are reported implemented and tested. Run #7 on `02b6b05` is **historical evidence**; run #10 on `da90ce2` (current committed HEAD) succeeded on six jobs incl. `e2e`. "Owner acceptance still required" remains accurate for the follow-ups: a separate owner sign-off on them is not recorded, and the owner-tick checklist in `phase-2.5.md` §4 is intentionally unticked.
 - [x] `project` entity with bounded count; every AOI belongs to one project; migration preserves existing AOIs (tested).
 - [x] Contracts, persistence and API updated; saving requires `project_id`, preview does not; deletion of a non-empty project needs explicit `delete_aois=true`.
 - [x] Smallest project-aware UI flow verified in unit tests and in a real browser.
@@ -61,6 +68,8 @@ Evidence and the owner checklist: `docs/phase-reports/phase-2.5.md`. Owner accep
 - [x] GitHub Actions run #7 (`02b6b05`) green on all six jobs including `e2e`.
 
 ## Phase 3 — Remote sensing connectors
+> Status note (2026-10-04): Phase 3 is Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started. The boxes below are not scheduled.
+
 Detailed, extended criteria (13 items) and slice gates: `docs/phase-3-plan.md` §7 *(final plan, approved with constraints, not started; supersedes this list when Phase 3 is started)*. Out-of-scope list: §0b; permitted operations: §0c. Summary of the original list:
 - [ ] Connector interface implemented with at least STAC (imagery metadata/assets) and one open DEM source.
 - [ ] Each fetch records provenance (dataset, version, date, licence, URL, checksum).

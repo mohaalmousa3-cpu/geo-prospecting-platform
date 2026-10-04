@@ -1,6 +1,8 @@
 # Phase 2.5 Report — Structural Hardening (project entity, basemap abstraction)
 
 Status: **approved by the owner with two required follow-ups, now implemented** (§6). Phase 3 has **not** been started; its plan is `docs/phase-3-plan.md` (proposal only).
+> **Status note (2026-10-04, reconciliation).** The status line above and the "proposal only" wording are preserved as written when the report was produced. Since then the Phase 3 plan was finalized and approved by the owner with constraints; Phase 3 is Planned — blocked pending prerequisite acceptance reconciliation; plan approved with constraints; implementation not started. The owner's approval of this phase is *conditional* (the two follow-ups in §6); the follow-ups are *reported implemented and tested*; a **separate owner sign-off on the follow-ups is not recorded**, and approval of the Phase 3 plan is not that sign-off.
+
 Scope statement: **no analysis, scoring, Earth Engine, 3D or auth expansion.** Only bookkeeping (projects), AOI ownership, and a configuration abstraction.
 Decisions: ADR-0013 · Relationships: `docs/data-model.md`.
 
@@ -30,6 +32,7 @@ Decisions: ADR-0013 · Relationships: `docs/data-model.md`.
 
 ## 3. Not verified / limitations
 - GitHub Actions for the Phase 2.5 commits: see the hand-over message for the last observed status.
+  - *Status note (2026-10-04):* read from GitHub — run #6 (`46178de`) `success`; run #7 (`02b6b05`) `success`, six jobs incl. `e2e` (**historical evidence** for the follow-ups); run #9 (`c3cf3a3`) `success`; run #10 (`da90ce2`, current committed HEAD) `success`, six jobs incl. `e2e`; run #8 (`9a7947e`) `cancelled` (superseded). CI-level evidence only: `docker compose up` is not run in CI.
 - The browser checks are ad-hoc scripts, **not in CI** — which is why the DELETE/CORS defect and the earlier MapLibre-worker defect escaped unit tests. A committed browser smoke test is a recommended follow-up (deferred; needs Chromium in CI).
 - OSM basemap tiles were still not exercised (checks ran with `provider=none`); `xyz` with a real server untested beyond unit tests of config validation.
 - Basemap env change: `NEXT_PUBLIC_BASEMAP_TILE_URL` alone no longer selects a provider; set `NEXT_PUBLIC_BASEMAP_PROVIDER=xyz`. Existing `.env` files with only a tile URL fall back to `osm`.
@@ -38,6 +41,8 @@ Decisions: ADR-0013 · Relationships: `docs/data-model.md`.
 - Real-world AOI files and OSM policy remain open from Phase 2 (risks P-9, P-10).
 
 ## 4. Acceptance checklist (tick when you accept)
+> Status note (2026-10-04): these boxes are the **owner's** and are intentionally unticked; none was changed in this reconciliation. Evidence is in §2, §6 and the status note under §3. Item 9 ("`make ci` green locally and the GitHub Actions run green on the final commit") has verification evidence (run #7 historical; run #10 current committed HEAD) but remains the owner's to tick. Item 10 ("owner decisions below are given") is only partly evidenced: the owner's reply set conditions (§6) and no separate sign-off on them is recorded.
+
 - [ ] 1. A `project` entity exists with name/description and a bounded count (`MAX_PROJECTS`).
 - [ ] 2. Every AOI belongs to exactly one project; existing AOIs were migrated, not lost.
 - [ ] 3. API/contracts/persistence updated; saving requires a project; preview does not.

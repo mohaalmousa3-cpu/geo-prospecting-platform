@@ -17,9 +17,9 @@ These rules are mandatory for every Claude session on this repository. If a user
 
 State in your first message which phase/task you are working on. If it is unclear, ask.
 
-## 1a. Binding Decisions (ADR-0001 … ADR-0011)
+## 1a. Binding Decisions (ADR-0001 … ADR-0013)
 
-Do not contradict these without a superseding ADR approved by the owner:
+Do not contradict these without a superseding ADR approved by the owner. Authority differs by record: ADR-0001…0011 are owner decisions; ADR-0012 and ADR-0013 are design decisions recorded as accepted within owner-approved phase scopes (scope approval is not a separate explicit owner approval of every provision; ADR-0012 records that the owner may veto any point); ADR-0014 is Proposed.
 
 - Repo is **private**, rights reserved; no licence chosen; no vendored third-party source (0001, 0002).
 - Gold model = **orogenic only**, with applicability gate; never generalise to "gold" (0003).
@@ -32,7 +32,11 @@ Do not contradict these without a superseding ADR approved by the owner:
 - **Phase 5 scientific design must not begin** until the owner defines the target country/region and pilot area (0003 amendment).
 - Geophysics can at most raise a target to *high-confidence investigation priority*, never confirmed (0010 amendment). AOI/upload limits are provisional operational safeguards, not scientific thresholds (0008).
 - EE must stay optional/replaceable; the account owner must validate commercial eligibility before operational use (0004 amendment).
+- **AOI input and validation** (ADR-0012, design decision recorded within the approved Phase 2 scope; the owner may veto any point): the stored AOI is exactly one `Polygon` in EPSG:4326 (a single-part `MultiPolygon` is accepted; other geometry types and multi-part inputs are rejected); invalid geometry is rejected, never repaired (`make_valid`/buffer(0) are not applied); AOIs crossing the antimeridian or with any vertex at |latitude| > 85° are rejected; area is geodesic and the ADR-0008 limits are enforced server-side; uploads (GeoJSON, KML, KMZ, zipped Shapefile with a required `.prj`) are read in memory with a byte cap, XML with DTDs/entities is refused, and nothing is extracted to disk; an AOI is a validated geometry plus bookkeeping, not an analysis result. ADR-0012 §11 (basemap default) is superseded by the ADR-0013 amendment. ADR-0012 §12 deferred a Project entity at that time. ADR-0013 subsequently specifies the Project entity within Phase 2.5.
+- **Projects** (ADR-0013, owner scope with Claude design, recorded as accepted within the approved Phase 2.5 scope): every AOI belongs to exactly one project (saving an AOI requires `project_id`; preview does not); deleting a project that still has AOIs is refused (409 `project_not_empty`) unless `delete_aois=true`, and deleting an AOI never deletes its project; `MAX_PROJECTS` bounds the number of projects.
+- **Basemap, CORS, browser test** (ADR-0013 including its follow-up amendment): the default basemap provider is `none`; `osm` is opt-in, for local development only, and refused in production builds; `xyz` needs explicit provider selection, an https `{z}/{x}/{y}` URL (http only for localhost) and a non-empty attribution; invalid configuration falls back to `none` with a visible warning. CORS methods are derived from the operations declared in the OpenAPI document (not hand-listed), allowed request headers are `Content-Type` and `X-Request-ID` only, and endpoints must not be hidden from the schema. The browser smoke test (CI job `e2e`) is part of CI.
 - **Naming/envelope rules** of ADR-0009 and **no "confirmed" wording** per ADR-0010; `validation_status` is always `unvalidated` in V1.
+- **ADR-0014 is Proposed and NOT binding** (`docs/adr/0014-connectors-package-and-data-assets.md`). Do not implement, enforce or rely on it until the owner explicitly marks it Approved.
 
 ## 2. Phase-by-Phase Development
 
