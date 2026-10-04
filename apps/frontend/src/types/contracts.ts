@@ -6,6 +6,22 @@
 export type JobType = "noop";
 export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled" | "insufficient_data";
 export type Uncertainty = QuantifiedUncertainty | NotQuantifiedUncertainty;
+export type AoiName = string;
+export type AoiMethod = "point_radius" | "rectangle" | "polygon" | "geojson" | "kml" | "kmz" | "shapefile";
+/**
+ * [longitude, latitude] in EPSG:4326
+ *
+ * @minItems 2
+ * @maxItems 2
+ */
+export type LonLat = [number, number];
+/**
+ * [west, south, east, north]
+ *
+ * @minItems 4
+ * @maxItems 4
+ */
+export type Bbox = [number, number, number, number];
 
 /**
  * Shared contracts (ADR-0009, ADR-0010, ADR-0011). Single source of truth; Pydantic and TypeScript types are generated from this file.
@@ -13,6 +29,13 @@ export type Uncertainty = QuantifiedUncertainty | NotQuantifiedUncertainty;
 export interface GeoContracts {
   job?: Job;
   result_envelope?: ResultEnvelope;
+  aoi?: Aoi;
+  aoi_draft?: AoiDraft;
+  aoi_list?: AoiList;
+  aoi_limits?: AoiLimits;
+  aoi_point_radius_request?: AoiPointRadiusRequest;
+  aoi_rectangle_request?: AoiRectangleRequest;
+  aoi_polygon_request?: AoiPolygonRequest;
 }
 export interface Job {
   id: string;
@@ -105,4 +128,84 @@ export interface Depth {
   method: string;
   value_m: number;
   uncertainty_m: number;
+}
+export interface Aoi {
+  id: string;
+  name: AoiName;
+  method: AoiMethod;
+  geometry: GeoJsonPolygon;
+  bbox: Bbox;
+  area_km2: number;
+  vertex_count: number;
+  working_crs: string;
+  details: {};
+  warnings: string[];
+  created_at: string;
+}
+export interface GeoJsonPolygon {
+  type: "Polygon";
+  coordinates: LonLat[][];
+}
+/**
+ * Validated, normalised AOI that has not been persisted. Geometry and bookkeeping only; no analysis.
+ */
+export interface AoiDraft {
+  method: AoiMethod;
+  geometry: GeoJsonPolygon;
+  bbox: Bbox;
+  area_km2: number;
+  vertex_count: number;
+  working_crs: string;
+  details: {};
+  warnings: string[];
+}
+export interface AoiList {
+  items: AoiSummary[];
+  total: number;
+}
+export interface AoiSummary {
+  id: string;
+  name: AoiName;
+  method: AoiMethod;
+  bbox: Bbox;
+  area_km2: number;
+  created_at: string;
+}
+/**
+ * Provisional operational safeguards (ADR-0008), not scientific thresholds.
+ */
+export interface AoiLimits {
+  max_area_km2: number;
+  min_area_km2: number;
+  max_radius_m: number;
+  max_vertices: number;
+  max_upload_mb: number;
+  max_stored_aois: number;
+  max_abs_latitude: number;
+  supported_upload_formats: string[];
+}
+export interface AoiPointRadiusRequest {
+  method: "point_radius";
+  name?: AoiName;
+  lat: number;
+  lon: number;
+  radius_m: number;
+}
+export interface AoiRectangleRequest {
+  method: "rectangle";
+  name?: AoiName;
+  west: number;
+  south: number;
+  east: number;
+  north: number;
+}
+export interface AoiPolygonRequest {
+  method: "polygon";
+  name?: AoiName;
+  /**
+   * Outer ring only; open rings are closed automatically.
+   *
+   * @minItems 3
+   */
+  coordinates: [LonLat, LonLat, LonLat, ...LonLat[]];
 }

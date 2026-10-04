@@ -1,6 +1,435 @@
 {
   "components": {
     "schemas": {
+      "Aoi": {
+        "additionalProperties": false,
+        "properties": {
+          "area_km2": {
+            "title": "Area Km2",
+            "type": "number"
+          },
+          "bbox": {
+            "$ref": "#/components/schemas/Bbox"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/GeoJsonPolygon"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "method": {
+            "$ref": "#/components/schemas/AoiMethod"
+          },
+          "name": {
+            "$ref": "#/components/schemas/AoiName"
+          },
+          "vertex_count": {
+            "minimum": 3.0,
+            "title": "Vertex Count",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "working_crs": {
+            "title": "Working Crs",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "method",
+          "geometry",
+          "bbox",
+          "area_km2",
+          "vertex_count",
+          "working_crs",
+          "details",
+          "warnings",
+          "created_at"
+        ],
+        "title": "Aoi",
+        "type": "object"
+      },
+      "AoiDraft": {
+        "additionalProperties": false,
+        "properties": {
+          "area_km2": {
+            "title": "Area Km2",
+            "type": "number"
+          },
+          "bbox": {
+            "$ref": "#/components/schemas/Bbox"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/GeoJsonPolygon"
+          },
+          "method": {
+            "$ref": "#/components/schemas/AoiMethod"
+          },
+          "vertex_count": {
+            "minimum": 3.0,
+            "title": "Vertex Count",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "working_crs": {
+            "title": "Working Crs",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "geometry",
+          "bbox",
+          "area_km2",
+          "vertex_count",
+          "working_crs",
+          "details",
+          "warnings"
+        ],
+        "title": "AoiDraft",
+        "type": "object"
+      },
+      "AoiLimits": {
+        "additionalProperties": false,
+        "properties": {
+          "max_abs_latitude": {
+            "title": "Max Abs Latitude",
+            "type": "number"
+          },
+          "max_area_km2": {
+            "title": "Max Area Km2",
+            "type": "number"
+          },
+          "max_radius_m": {
+            "title": "Max Radius M",
+            "type": "number"
+          },
+          "max_stored_aois": {
+            "title": "Max Stored Aois",
+            "type": "integer"
+          },
+          "max_upload_mb": {
+            "title": "Max Upload Mb",
+            "type": "integer"
+          },
+          "max_vertices": {
+            "title": "Max Vertices",
+            "type": "integer"
+          },
+          "min_area_km2": {
+            "title": "Min Area Km2",
+            "type": "number"
+          },
+          "supported_upload_formats": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Supported Upload Formats",
+            "type": "array"
+          }
+        },
+        "required": [
+          "max_area_km2",
+          "min_area_km2",
+          "max_radius_m",
+          "max_vertices",
+          "max_upload_mb",
+          "max_stored_aois",
+          "max_abs_latitude",
+          "supported_upload_formats"
+        ],
+        "title": "AoiLimits",
+        "type": "object"
+      },
+      "AoiList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AoiSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "AoiList",
+        "type": "object"
+      },
+      "AoiMethod": {
+        "enum": [
+          "point_radius",
+          "rectangle",
+          "polygon",
+          "geojson",
+          "kml",
+          "kmz",
+          "shapefile"
+        ],
+        "title": "AoiMethod",
+        "type": "string"
+      },
+      "AoiName": {
+        "maxLength": 120,
+        "minLength": 1,
+        "title": "AoiName",
+        "type": "string"
+      },
+      "AoiPointRadiusRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "method": {
+            "const": "point_radius",
+            "title": "Method",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AoiName"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "radius_m": {
+            "title": "Radius M",
+            "type": "number"
+          }
+        },
+        "required": [
+          "method",
+          "lat",
+          "lon",
+          "radius_m"
+        ],
+        "title": "AoiPointRadiusRequest",
+        "type": "object"
+      },
+      "AoiPolygonRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "coordinates": {
+            "description": "Outer ring only; open rings are closed automatically.",
+            "items": {
+              "$ref": "#/components/schemas/LonLat"
+            },
+            "minItems": 3,
+            "title": "Coordinates",
+            "type": "array"
+          },
+          "method": {
+            "const": "polygon",
+            "title": "Method",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AoiName"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "method",
+          "coordinates"
+        ],
+        "title": "AoiPolygonRequest",
+        "type": "object"
+      },
+      "AoiRectangleRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "east": {
+            "title": "East",
+            "type": "number"
+          },
+          "method": {
+            "const": "rectangle",
+            "title": "Method",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AoiName"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "north": {
+            "title": "North",
+            "type": "number"
+          },
+          "south": {
+            "title": "South",
+            "type": "number"
+          },
+          "west": {
+            "title": "West",
+            "type": "number"
+          }
+        },
+        "required": [
+          "method",
+          "west",
+          "south",
+          "east",
+          "north"
+        ],
+        "title": "AoiRectangleRequest",
+        "type": "object"
+      },
+      "AoiSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "area_km2": {
+            "title": "Area Km2",
+            "type": "number"
+          },
+          "bbox": {
+            "$ref": "#/components/schemas/Bbox"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "method": {
+            "$ref": "#/components/schemas/AoiMethod"
+          },
+          "name": {
+            "$ref": "#/components/schemas/AoiName"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "method",
+          "bbox",
+          "area_km2",
+          "created_at"
+        ],
+        "title": "AoiSummary",
+        "type": "object"
+      },
+      "Bbox": {
+        "description": "[west, south, east, north]",
+        "items": {
+          "type": "number"
+        },
+        "maxItems": 4,
+        "minItems": 4,
+        "title": "Bbox",
+        "type": "array"
+      },
+      "Body_upload_api_v1_aois_upload_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_api_v1_aois_upload_post",
+        "type": "object"
+      },
+      "GeoJsonPolygon": {
+        "additionalProperties": false,
+        "properties": {
+          "coordinates": {
+            "items": {
+              "items": {
+                "$ref": "#/components/schemas/LonLat"
+              },
+              "type": "array"
+            },
+            "title": "Coordinates",
+            "type": "array"
+          },
+          "type": {
+            "$ref": "#/components/schemas/Type"
+          }
+        },
+        "required": [
+          "type",
+          "coordinates"
+        ],
+        "title": "GeoJsonPolygon",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -137,6 +566,23 @@
         "title": "JobType",
         "type": "string"
       },
+      "LonLat": {
+        "description": "[longitude, latitude] in EPSG:4326",
+        "items": {
+          "type": "number"
+        },
+        "maxItems": 2,
+        "minItems": 2,
+        "title": "LonLat",
+        "type": "array"
+      },
+      "Type": {
+        "enum": [
+          "Polygon"
+        ],
+        "title": "Type",
+        "type": "string"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -180,12 +626,335 @@
     }
   },
   "info": {
-    "description": "\n**V1 has no authentication. Local/private use only \u2014 do not expose to the public internet.**\n\nOutputs of this platform are prospectivity/anomaly layers, never confirmation of gold, caves or voids.\nPhase 1 exposes only health checks and a `noop` job; no scientific results exist yet.\n",
+    "description": "\n**V1 has no authentication. Local/private use only \u2014 do not expose to the public internet.**\n\nOutputs of this platform are prospectivity/anomaly layers, never confirmation of gold, caves or voids.\nPhase 2 exposes health checks, a `noop` job and AOI input/validation/persistence.\nNo analysis, scoring, remote-sensing, Earth Engine or scientific result exists yet.\n",
     "title": "geo-prospecting-platform API",
     "version": "0.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/aois": {
+      "get": {
+        "operationId": "list_aois_api_v1_aois_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AoiList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List saved AOIs (newest first)",
+        "tags": [
+          "aois"
+        ]
+      },
+      "post": {
+        "operationId": "create_api_v1_aois_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "point_radius": "#/components/schemas/AoiPointRadiusRequest",
+                    "polygon": "#/components/schemas/AoiPolygonRequest",
+                    "rectangle": "#/components/schemas/AoiRectangleRequest"
+                  },
+                  "propertyName": "method"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AoiPointRadiusRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AoiRectangleRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AoiPolygonRequest"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Aoi"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create an AOI",
+        "tags": [
+          "aois"
+        ]
+      }
+    },
+    "/api/v1/aois/limits": {
+      "get": {
+        "operationId": "limits_api_v1_aois_limits_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AoiLimits"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Provisional AOI limits (ADR-0008)",
+        "tags": [
+          "aois"
+        ]
+      }
+    },
+    "/api/v1/aois/preview": {
+      "post": {
+        "operationId": "preview_api_v1_aois_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "point_radius": "#/components/schemas/AoiPointRadiusRequest",
+                    "polygon": "#/components/schemas/AoiPolygonRequest",
+                    "rectangle": "#/components/schemas/AoiRectangleRequest"
+                  },
+                  "propertyName": "method"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AoiPointRadiusRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AoiRectangleRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AoiPolygonRequest"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AoiDraft"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Validate and normalise an AOI without saving",
+        "tags": [
+          "aois"
+        ]
+      }
+    },
+    "/api/v1/aois/upload": {
+      "post": {
+        "operationId": "upload_api_v1_aois_upload_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "preview",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Preview",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_api_v1_aois_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create (or preview) an AOI from an uploaded file",
+        "tags": [
+          "aois"
+        ]
+      }
+    },
+    "/api/v1/aois/{aoi_id}": {
+      "delete": {
+        "operationId": "delete_aoi_api_v1_aois__aoi_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aoi_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Aoi Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete an AOI",
+        "tags": [
+          "aois"
+        ]
+      },
+      "get": {
+        "operationId": "get_aoi_api_v1_aois__aoi_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aoi_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Aoi Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Aoi"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get an AOI with geometry",
+        "tags": [
+          "aois"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "health_api_v1_health_get",

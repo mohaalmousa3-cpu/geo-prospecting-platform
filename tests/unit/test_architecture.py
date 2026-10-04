@@ -49,3 +49,11 @@ def test_no_engine_code_in_phase_1() -> None:
     for engine in ("thermal", "gold_prospectivity", "void_evidence", "geophysics", "insar"):
         files = [p for p in (ROOT / "workers" / engine).rglob("*") if p.is_file()]
         assert [p.name for p in files] == ["README.md"], engine
+
+
+def test_backend_has_no_analysis_modules_or_imports() -> None:
+    """Phase 2 scope: AOI input only. No analysis, scoring or Earth Engine code in the backend."""
+    banned_names = ("thermal", "prospectiv", "void", "geophysic", "scoring", "score", "earth_engine", "ee_")
+    for f in py_files("apps/backend/src"):
+        assert not any(w in f.stem.lower() for w in banned_names), f
+        assert not {"ee", "earthengine", "geemap", "sklearn", "rasterio", "scipy"} & imported_roots(f), f

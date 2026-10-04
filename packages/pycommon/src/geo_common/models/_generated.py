@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, RootModel
@@ -213,6 +213,156 @@ class ResultEnvelope(BaseModel):
     depth: Depth | None = None
 
 
+class AoiMethod(StrEnum):
+    point_radius = "point_radius"
+    rectangle = "rectangle"
+    polygon = "polygon"
+    geojson = "geojson"
+    kml = "kml"
+    kmz = "kmz"
+    shapefile = "shapefile"
+
+
+class LonLat(RootModel[list[float]]):
+    root: Annotated[
+        list[float],
+        Field(description="[longitude, latitude] in EPSG:4326", max_length=2, min_length=2),
+    ]
+
+
+class Type(StrEnum):
+    Polygon = "Polygon"
+
+
+class GeoJsonPolygon(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    type: Type
+    coordinates: list[list[LonLat]]
+
+
+class Bbox(RootModel[list[float]]):
+    root: Annotated[
+        list[float],
+        Field(description="[west, south, east, north]", max_length=4, min_length=4),
+    ]
+
+
+class AoiName(RootModel[str]):
+    root: Annotated[str, Field(max_length=120, min_length=1)]
+
+
+class AoiPointRadiusRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    method: Literal["point_radius"]
+    name: AoiName | None = None
+    lat: float
+    lon: float
+    radius_m: float
+
+
+class AoiRectangleRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    method: Literal["rectangle"]
+    name: AoiName | None = None
+    west: float
+    south: float
+    east: float
+    north: float
+
+
+class AoiPolygonRequest(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    method: Literal["polygon"]
+    name: AoiName | None = None
+    coordinates: Annotated[
+        list[LonLat],
+        Field(
+            description="Outer ring only; open rings are closed automatically.",
+            min_length=3,
+        ),
+    ]
+
+
+class AoiDraft(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    method: AoiMethod
+    geometry: GeoJsonPolygon
+    bbox: Bbox
+    area_km2: float
+    vertex_count: Annotated[int, Field(ge=3)]
+    working_crs: str
+    details: dict[str, Any]
+    warnings: list[str]
+
+
+class Aoi(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    id: UUID
+    name: AoiName
+    method: AoiMethod
+    geometry: GeoJsonPolygon
+    bbox: Bbox
+    area_km2: float
+    vertex_count: Annotated[int, Field(ge=3)]
+    working_crs: str
+    details: dict[str, Any]
+    warnings: list[str]
+    created_at: AwareDatetime
+
+
+class AoiSummary(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    id: UUID
+    name: AoiName
+    method: AoiMethod
+    bbox: Bbox
+    area_km2: float
+    created_at: AwareDatetime
+
+
+class AoiList(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    items: list[AoiSummary]
+    total: Annotated[int, Field(ge=0)]
+
+
+class AoiLimits(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    max_area_km2: float
+    min_area_km2: float
+    max_radius_m: float
+    max_vertices: int
+    max_upload_mb: int
+    max_stored_aois: int
+    max_abs_latitude: float
+    supported_upload_formats: list[str]
+
+
 class GeoContracts(BaseModel):
     job: Job | None = None
     result_envelope: ResultEnvelope | None = None
+    aoi: Aoi | None = None
+    aoi_draft: AoiDraft | None = None
+    aoi_list: AoiList | None = None
+    aoi_limits: AoiLimits | None = None
+    aoi_point_radius_request: AoiPointRadiusRequest | None = None
+    aoi_rectangle_request: AoiRectangleRequest | None = None
+    aoi_polygon_request: AoiPolygonRequest | None = None

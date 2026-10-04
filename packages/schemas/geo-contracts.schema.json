@@ -5,120 +5,344 @@
   "description": "Shared contracts (ADR-0009, ADR-0010, ADR-0011). Single source of truth; Pydantic and TypeScript types are generated from this file.",
   "type": "object",
   "properties": {
-    "job": { "$ref": "#/definitions/Job" },
-    "result_envelope": { "$ref": "#/definitions/ResultEnvelope" }
+    "job": {
+      "$ref": "#/definitions/Job"
+    },
+    "result_envelope": {
+      "$ref": "#/definitions/ResultEnvelope"
+    },
+    "aoi": {
+      "$ref": "#/definitions/Aoi"
+    },
+    "aoi_draft": {
+      "$ref": "#/definitions/AoiDraft"
+    },
+    "aoi_list": {
+      "$ref": "#/definitions/AoiList"
+    },
+    "aoi_limits": {
+      "$ref": "#/definitions/AoiLimits"
+    },
+    "aoi_point_radius_request": {
+      "$ref": "#/definitions/AoiPointRadiusRequest"
+    },
+    "aoi_rectangle_request": {
+      "$ref": "#/definitions/AoiRectangleRequest"
+    },
+    "aoi_polygon_request": {
+      "$ref": "#/definitions/AoiPolygonRequest"
+    }
   },
   "definitions": {
     "JobStatus": {
       "type": "string",
-      "enum": ["queued", "running", "succeeded", "failed", "cancelled", "insufficient_data"]
+      "enum": [
+        "queued",
+        "running",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "insufficient_data"
+      ]
     },
     "JobType": {
       "description": "Phase 1 allows only the noop job. Later phases extend this enum.",
       "type": "string",
-      "enum": ["noop"]
+      "enum": [
+        "noop"
+      ]
     },
     "Job": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type", "status", "priority", "attempts", "max_attempts", "cancel_requested", "created_at"],
+      "required": [
+        "id",
+        "type",
+        "status",
+        "priority",
+        "attempts",
+        "max_attempts",
+        "cancel_requested",
+        "created_at"
+      ],
       "properties": {
-        "id": { "type": "string", "format": "uuid" },
-        "type": { "$ref": "#/definitions/JobType" },
-        "status": { "$ref": "#/definitions/JobStatus" },
-        "priority": { "type": "integer" },
-        "attempts": { "type": "integer", "minimum": 0 },
-        "max_attempts": { "type": "integer", "minimum": 1 },
-        "cancel_requested": { "type": "boolean" },
-        "error": { "type": ["string", "null"] },
-        "created_at": { "type": "string", "format": "date-time" },
-        "started_at": { "type": ["string", "null"], "format": "date-time" },
-        "finished_at": { "type": ["string", "null"], "format": "date-time" }
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "type": {
+          "$ref": "#/definitions/JobType"
+        },
+        "status": {
+          "$ref": "#/definitions/JobStatus"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cancel_requested": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "started_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "finished_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
       }
     },
     "Confidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["level", "basis"],
+      "required": [
+        "level",
+        "basis"
+      ],
       "properties": {
-        "level": { "type": "string", "enum": ["low", "moderate", "high"] },
-        "basis": { "type": "string", "minLength": 1, "description": "Why this level: data quality, concordant evidence lines, validation status, coverage." }
+        "level": {
+          "type": "string",
+          "enum": [
+            "low",
+            "moderate",
+            "high"
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why this level: data quality, concordant evidence lines, validation status, coverage."
+        }
       }
     },
     "QuantifiedUncertainty": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "method", "value"],
+      "required": [
+        "status",
+        "method",
+        "value"
+      ],
       "properties": {
-        "status": { "type": "string", "enum": ["quantified"] },
-        "method": { "type": "string", "minLength": 1 },
-        "value": { "type": "number" },
-        "unit": { "type": "string" }
+        "status": {
+          "type": "string",
+          "enum": [
+            "quantified"
+          ]
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        }
       }
     },
     "NotQuantifiedUncertainty": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "reason"],
+      "required": [
+        "status",
+        "reason"
+      ],
       "properties": {
-        "status": { "type": "string", "enum": ["not_quantified"] },
-        "reason": { "type": "string", "minLength": 1 }
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_quantified"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "Uncertainty": {
       "anyOf": [
-        { "$ref": "#/definitions/QuantifiedUncertainty" },
-        { "$ref": "#/definitions/NotQuantifiedUncertainty" }
+        {
+          "$ref": "#/definitions/QuantifiedUncertainty"
+        },
+        {
+          "$ref": "#/definitions/NotQuantifiedUncertainty"
+        }
       ]
     },
     "Explanation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["summary", "supporting", "counter_evidence", "limitations"],
+      "required": [
+        "summary",
+        "supporting",
+        "counter_evidence",
+        "limitations"
+      ],
       "properties": {
-        "summary": { "type": "string", "minLength": 1 },
-        "supporting": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-        "counter_evidence": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-        "limitations": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supporting": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "counter_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "Source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["dataset", "version", "acquired", "licence"],
+      "required": [
+        "dataset",
+        "version",
+        "acquired",
+        "licence"
+      ],
       "properties": {
-        "dataset": { "type": "string", "minLength": 1 },
-        "version": { "type": "string", "minLength": 1 },
-        "acquired": { "type": "string", "minLength": 1, "description": "Acquisition date or interval (ISO 8601)." },
-        "licence": { "type": "string", "minLength": 1 },
-        "url": { "type": "string" },
-        "via": { "type": "string", "enum": ["stac", "earth_engine", "direct", "user_upload"] }
+        "dataset": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acquired": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Acquisition date or interval (ISO 8601)."
+        },
+        "licence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string"
+        },
+        "via": {
+          "type": "string",
+          "enum": [
+            "stac",
+            "earth_engine",
+            "direct",
+            "user_upload"
+          ]
+        }
       }
     },
     "Provenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["run_id", "code_version", "parameters", "created_at"],
+      "required": [
+        "run_id",
+        "code_version",
+        "parameters",
+        "created_at"
+      ],
       "properties": {
-        "run_id": { "type": "string", "minLength": 1 },
-        "code_version": { "type": "string", "minLength": 1 },
-        "parameters": { "type": "object" },
-        "created_at": { "type": "string", "format": "date-time" },
-        "aoi_hash": { "type": "string" },
-        "crs": { "type": "string" },
-        "dependency_versions": { "type": "object", "additionalProperties": { "type": "string" } }
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "code_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "aoi_hash": {
+          "type": "string"
+        },
+        "crs": {
+          "type": "string"
+        },
+        "dependency_versions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
       }
     },
     "Depth": {
       "description": "Present only with a geophysics/verification basis (docs/scientific-constraints.md rule 4). Surface-only data MUST NOT produce depth.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["basis", "method", "value_m", "uncertainty_m"],
+      "required": [
+        "basis",
+        "method",
+        "value_m",
+        "uncertainty_m"
+      ],
       "properties": {
-        "basis": { "type": "string", "enum": ["field_geophysics", "direct_verification"] },
-        "method": { "type": "string", "minLength": 1 },
-        "value_m": { "type": "number" },
-        "uncertainty_m": { "type": "number", "minimum": 0 }
+        "basis": {
+          "type": "string",
+          "enum": [
+            "field_geophysics",
+            "direct_verification"
+          ]
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_m": {
+          "type": "number"
+        },
+        "uncertainty_m": {
+          "type": "number",
+          "minimum": 0
+        }
       }
     },
     "ResultEnvelope": {
@@ -126,28 +350,457 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "kind", "value", "confidence", "uncertainty", "explanation", "sources", "provenance",
-        "disclaimer_id", "validation_status", "calibration_status", "engine_status"
+        "kind",
+        "value",
+        "confidence",
+        "uncertainty",
+        "explanation",
+        "sources",
+        "provenance",
+        "disclaimer_id",
+        "validation_status",
+        "calibration_status",
+        "engine_status"
       ],
       "properties": {
-        "kind": { "type": "string", "enum": ["prospectivity", "anomaly", "evidence", "geophysics_model"] },
-        "value": { "type": ["number", "string", "null"] },
-        "confidence": { "$ref": "#/definitions/Confidence" },
-        "uncertainty": { "$ref": "#/definitions/Uncertainty" },
-        "explanation": { "$ref": "#/definitions/Explanation" },
-        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/Source" } },
-        "provenance": { "$ref": "#/definitions/Provenance" },
-        "disclaimer_id": { "type": "string", "enum": ["D-1", "D-2"] },
-        "validation_status": { "type": "string", "enum": ["unvalidated"] },
-        "calibration_status": { "type": "string", "enum": ["uncalibrated", "calibrated"] },
-        "engine_status": { "type": "string", "enum": ["experimental", "validated"] },
-        "deposit_model": { "type": "string", "enum": ["orogenic"] },
-        "applicability": { "type": "string", "enum": ["applicable", "applicability_unknown"] },
-        "depth": { "$ref": "#/definitions/Depth" }
+        "kind": {
+          "type": "string",
+          "enum": [
+            "prospectivity",
+            "anomaly",
+            "evidence",
+            "geophysics_model"
+          ]
+        },
+        "value": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "confidence": {
+          "$ref": "#/definitions/Confidence"
+        },
+        "uncertainty": {
+          "$ref": "#/definitions/Uncertainty"
+        },
+        "explanation": {
+          "$ref": "#/definitions/Explanation"
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/Source"
+          }
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "disclaimer_id": {
+          "type": "string",
+          "enum": [
+            "D-1",
+            "D-2"
+          ]
+        },
+        "validation_status": {
+          "type": "string",
+          "enum": [
+            "unvalidated"
+          ]
+        },
+        "calibration_status": {
+          "type": "string",
+          "enum": [
+            "uncalibrated",
+            "calibrated"
+          ]
+        },
+        "engine_status": {
+          "type": "string",
+          "enum": [
+            "experimental",
+            "validated"
+          ]
+        },
+        "deposit_model": {
+          "type": "string",
+          "enum": [
+            "orogenic"
+          ]
+        },
+        "applicability": {
+          "type": "string",
+          "enum": [
+            "applicable",
+            "applicability_unknown"
+          ]
+        },
+        "depth": {
+          "$ref": "#/definitions/Depth"
+        }
       },
       "dependencies": {
-        "deposit_model": ["applicability"],
-        "depth": { "properties": { "disclaimer_id": { "enum": ["D-2"] } } }
+        "deposit_model": [
+          "applicability"
+        ],
+        "depth": {
+          "properties": {
+            "disclaimer_id": {
+              "enum": [
+                "D-2"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "AoiMethod": {
+      "type": "string",
+      "enum": [
+        "point_radius",
+        "rectangle",
+        "polygon",
+        "geojson",
+        "kml",
+        "kmz",
+        "shapefile"
+      ]
+    },
+    "LonLat": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[longitude, latitude] in EPSG:4326"
+    },
+    "GeoJsonPolygon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "Polygon"
+          ]
+        },
+        "coordinates": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/LonLat"
+            }
+          }
+        }
+      }
+    },
+    "Bbox": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 4,
+      "maxItems": 4,
+      "description": "[west, south, east, north]"
+    },
+    "AoiName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "AoiPointRadiusRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "lat",
+        "lon",
+        "radius_m"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "const": "point_radius"
+        },
+        "name": {
+          "$ref": "#/definitions/AoiName"
+        },
+        "lat": {
+          "type": "number"
+        },
+        "lon": {
+          "type": "number"
+        },
+        "radius_m": {
+          "type": "number"
+        }
+      }
+    },
+    "AoiRectangleRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "west",
+        "south",
+        "east",
+        "north"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "const": "rectangle"
+        },
+        "name": {
+          "$ref": "#/definitions/AoiName"
+        },
+        "west": {
+          "type": "number"
+        },
+        "south": {
+          "type": "number"
+        },
+        "east": {
+          "type": "number"
+        },
+        "north": {
+          "type": "number"
+        }
+      }
+    },
+    "AoiPolygonRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "coordinates"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "const": "polygon"
+        },
+        "name": {
+          "$ref": "#/definitions/AoiName"
+        },
+        "coordinates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LonLat"
+          },
+          "minItems": 3,
+          "description": "Outer ring only; open rings are closed automatically."
+        }
+      }
+    },
+    "AoiDraft": {
+      "description": "Validated, normalised AOI that has not been persisted. Geometry and bookkeeping only; no analysis.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "geometry",
+        "bbox",
+        "area_km2",
+        "vertex_count",
+        "working_crs",
+        "details",
+        "warnings"
+      ],
+      "properties": {
+        "method": {
+          "$ref": "#/definitions/AoiMethod"
+        },
+        "geometry": {
+          "$ref": "#/definitions/GeoJsonPolygon"
+        },
+        "bbox": {
+          "$ref": "#/definitions/Bbox"
+        },
+        "area_km2": {
+          "type": "number"
+        },
+        "vertex_count": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "working_crs": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Aoi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "method",
+        "geometry",
+        "bbox",
+        "area_km2",
+        "vertex_count",
+        "working_crs",
+        "details",
+        "warnings",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "$ref": "#/definitions/AoiName"
+        },
+        "method": {
+          "$ref": "#/definitions/AoiMethod"
+        },
+        "geometry": {
+          "$ref": "#/definitions/GeoJsonPolygon"
+        },
+        "bbox": {
+          "$ref": "#/definitions/Bbox"
+        },
+        "area_km2": {
+          "type": "number"
+        },
+        "vertex_count": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "working_crs": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AoiSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "method",
+        "bbox",
+        "area_km2",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "$ref": "#/definitions/AoiName"
+        },
+        "method": {
+          "$ref": "#/definitions/AoiMethod"
+        },
+        "bbox": {
+          "$ref": "#/definitions/Bbox"
+        },
+        "area_km2": {
+          "type": "number"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "AoiList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "items",
+        "total"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AoiSummary"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "AoiLimits": {
+      "description": "Provisional operational safeguards (ADR-0008), not scientific thresholds.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_area_km2",
+        "min_area_km2",
+        "max_radius_m",
+        "max_vertices",
+        "max_upload_mb",
+        "max_stored_aois",
+        "max_abs_latitude",
+        "supported_upload_formats"
+      ],
+      "properties": {
+        "max_area_km2": {
+          "type": "number"
+        },
+        "min_area_km2": {
+          "type": "number"
+        },
+        "max_radius_m": {
+          "type": "number"
+        },
+        "max_vertices": {
+          "type": "integer"
+        },
+        "max_upload_mb": {
+          "type": "integer"
+        },
+        "max_stored_aois": {
+          "type": "integer"
+        },
+        "max_abs_latitude": {
+          "type": "number"
+        },
+        "supported_upload_formats": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     }
   }

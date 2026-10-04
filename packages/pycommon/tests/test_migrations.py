@@ -23,8 +23,8 @@ def test_up_down_up_and_postgis(db_engine: Engine) -> None:
         assert c.execute(text("SELECT extname FROM pg_extension WHERE extname='postgis'")).scalar_one()
         c.execute(
             text(
-                "INSERT INTO aoi (name, geom, source) VALUES "
-                "('t', ST_GeomFromText('POLYGON((0 0,1 0,1 1,0 1,0 0))',4326), 'test')"
+                "INSERT INTO aoi (name, geom, source, area_km2, vertex_count, working_crs) VALUES "
+                "('t', ST_GeomFromText('POLYGON((0 0,1 0,1 1,0 1,0 0))',4326), 'polygon', 1, 4, 'EPSG:32631')"
             )
         )
         srid = c.execute(text("SELECT ST_SRID(geom) FROM aoi")).scalar_one()
@@ -40,5 +40,8 @@ def test_status_constraint(engine: Engine) -> None:
 def test_aoi_rejects_wrong_geometry_type(engine: Engine) -> None:
     with pytest.raises(DBAPIError), engine.begin() as c:
         c.execute(
-            text("INSERT INTO aoi (name, geom, source) VALUES ('p', ST_GeomFromText('POINT(0 0)',4326), 't')")
+            text(
+                "INSERT INTO aoi (name, geom, source, area_km2, vertex_count, working_crs) VALUES "
+                "('p', ST_GeomFromText('POINT(0 0)',4326), 'polygon', 1, 3, 'EPSG:32631')"
+            )
         )

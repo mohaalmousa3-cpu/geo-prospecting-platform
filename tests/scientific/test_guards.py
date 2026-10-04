@@ -96,8 +96,7 @@ FORBIDDEN_NPM = {
     "passport",
     "ioredis",
     "redis",
-    "cesium",
-    "maplibre-gl",
+    "cesium",  # 3D rendering is Phase 7
 }
 
 

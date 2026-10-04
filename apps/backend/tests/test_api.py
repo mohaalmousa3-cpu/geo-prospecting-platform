@@ -102,7 +102,7 @@ def test_unknown_and_malformed_ids(client: TestClient) -> None:
     assert client.get("/api/v1/jobs/not-a-uuid").status_code == 422
 
 
-def test_no_aoi_or_result_routes_in_phase_1(client: TestClient) -> None:
+def test_only_expected_routes_exist_and_no_result_routes(client: TestClient) -> None:
     paths = set(client.get("/openapi.json").json()["paths"])
     assert paths == {
         "/api/v1/health",
@@ -110,6 +110,11 @@ def test_no_aoi_or_result_routes_in_phase_1(client: TestClient) -> None:
         "/api/v1/jobs",
         "/api/v1/jobs/{job_id}",
         "/api/v1/jobs/{job_id}/cancel",
+        "/api/v1/aois",
+        "/api/v1/aois/limits",
+        "/api/v1/aois/preview",
+        "/api/v1/aois/upload",
+        "/api/v1/aois/{aoi_id}",
     }
 
 
