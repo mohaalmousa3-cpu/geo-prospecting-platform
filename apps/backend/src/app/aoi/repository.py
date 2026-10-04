@@ -51,7 +51,8 @@ class AoiRepository:
                 raise AoiLimitReachedError(self._max)
             row = conn.execute(
                 text(
-                    "INSERT INTO aoi (project_id, name, geom, source, area_km2, vertex_count, working_crs, details) "
+                    "INSERT INTO aoi (project_id, name, geom, source, area_km2, vertex_count, "
+                    "working_crs, details) "
                     "VALUES (:p, :n, ST_SetSRID(ST_GeomFromGeoJSON(:g), 4326), :s, :a, :v, :c, "
                     "CAST(:d AS jsonb)) "
                     f"RETURNING {_FULL}"

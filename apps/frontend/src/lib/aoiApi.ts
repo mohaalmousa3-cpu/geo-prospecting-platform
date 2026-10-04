@@ -53,17 +53,30 @@ const json = (body: unknown): RequestInit => ({
 export const getLimits = () => request<AoiLimits>("/aois/limits");
 export const previewAoi = (req: AoiRequest) => request<AoiDraft>("/aois/preview", json(req));
 export const createAoi = (req: AoiRequest) => request<Aoi>("/aois", json(req));
-export const listAois = (limit = 50, offset = 0) =>
-  request<AoiList>(`/aois?limit=${limit}&offset=${offset}`);
+export const listAois = (limit = 50, offset = 0, projectId?: string | null) =>
+  request<AoiList>(
+    `/aois?limit=${limit}&offset=${offset}${projectId ? `&project_id=${projectId}` : ""}`,
+  );
 export const getAoi = (id: string) => request<Aoi>(`/aois/${id}`);
 export const deleteAoi = (id: string) => request<void>(`/aois/${id}`, { method: "DELETE" });
 
 export function uploadAoi(file: File, name: string, preview: true): Promise<AoiDraft>;
-export function uploadAoi(file: File, name: string, preview: false): Promise<Aoi>;
-export function uploadAoi(file: File, name: string, preview: boolean): Promise<Aoi | AoiDraft> {
+export function uploadAoi(
+  file: File,
+  name: string,
+  preview: false,
+  projectId: string,
+): Promise<Aoi>;
+export function uploadAoi(
+  file: File,
+  name: string,
+  preview: boolean,
+  projectId?: string,
+): Promise<Aoi | AoiDraft> {
   const form = new FormData();
   form.append("file", file);
   if (name.trim()) form.append("name", name.trim());
+  if (projectId) form.append("project_id", projectId);
   return request<Aoi | AoiDraft>(`/aois/upload${preview ? "?preview=true" : ""}`, {
     method: "POST",
     body: form,

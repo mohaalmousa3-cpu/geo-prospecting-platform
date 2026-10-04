@@ -14,6 +14,8 @@ import {
   uploadAoi,
   type AoiRequest,
 } from "@/lib/aoiApi";
+import { basemapFromEnv } from "@/lib/basemap";
+import { createProject, deleteProject, listProjects } from "@/lib/projectApi";
 import {
   dedupeConsecutive,
   formatArea,
@@ -29,9 +31,11 @@ import type {
   AoiSummary,
   Bbox,
   LonLat,
+  Project,
 } from "@/types/contracts";
 
 import type { DrawMode, MapViewProps } from "./mapTypes";
+import { ProjectBar } from "./ProjectBar";
 
 const DefaultMap = dynamic(() => import("./MapView"), {
   ssr: false,
@@ -82,6 +86,8 @@ export function AoiWorkbench({
   const [mode, setMode] = useState<DrawMode>("none");
 
   const [limits, setLimits] = useState<AoiLimits | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [saved, setSaved] = useState<AoiSummary[]>([]);
   const [selected, setSelected] = useState<Aoi | null>(null);
   const [draft, setDraft] = useState<{ key: string; value: AoiDraft } | null>(null);
@@ -91,6 +97,7 @@ export function AoiWorkbench({
   const [busy, setBusy] = useState(false);
 
   const polygon = useMemo(() => parsePolygonText(polyText), [polyText]);
+  const basemap = useMemo(() => basemapFromEnv(), []);
 
   // The request implied by the current inputs (null + reason when incomplete).
   const built = useMemo((): { req: AoiRequest | null; problem: string | null } => {
@@ -129,20 +136,34 @@ export function AoiWorkbench({
 
   const refresh = useCallback(async () => {
     try {
-      setSaved((await listAois()).items);
+      const [aois, projs] = await Promise.all([listAois(50, 0, projectId), listProjects()]);
+      setSaved(aois.items);
+      setProjects(projs.items);
     } catch (e) {
       setError(toErr(e));
     }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     getLimits()
       .then(setLimits)
       .catch((e) => setError(toErr(e)));
-    listAois()
-      .then((l) => setSaved(l.items))
+    listProjects()
+      .then((l) => {
+        setProjects(l.items);
+        setProjectId(l.items[0]?.id ?? null);
+      })
       .catch((e) => setError(toErr(e)));
   }, []);
+
+  // AOIs shown are those of the selected project.
+  useEffect(() => {
+    if (!projectId) return;
+    listAois(50, 0, projectId)
+      .then((l) => setSaved(l.items))
+      .catch((e) => setError(toErr(e)));
+  }, [projectId]);
+  const visibleSaved = projectId ? saved : [];
 
   async function run<T>(fn: () => Promise<T>): Promise<T | undefined> {
     setBusy(true);
@@ -172,10 +193,12 @@ export function AoiWorkbench({
     run(async () => {
       if (!name.trim())
         throw new AoiApiError("name_required", "Give the AOI a name before saving.", 422);
+      if (!projectId)
+        throw new AoiApiError("project_required", "Create or select a project before saving.", 422);
       const aoi =
         tab === "upload" && file
-          ? await uploadAoi(file, name, false)
-          : await createAoi({ ...built.req!, name: name.trim() });
+          ? await uploadAoi(file, name, false, projectId)
+          : await createAoi({ ...built.req!, name: name.trim(), project_id: projectId });
       setDraft(null);
       setSelected(aoi);
       setFitTo(aoi.bbox as Bbox);
@@ -197,6 +220,37 @@ export function AoiWorkbench({
       await deleteAoi(a.id);
       if (selected?.id === a.id) setSelected(null);
       await refresh();
+    });
+  };
+
+  // --- projects
+  const selectProject = (id: string) => {
+    setProjectId(id);
+    setSelected(null);
+    setDraft(null);
+  };
+  const addProject = (projName: string) =>
+    run(async () => {
+      const p = await createProject({ name: projName });
+      setProjects((ps) => [...ps, p]);
+      selectProject(p.id);
+      setSaved([]);
+      setInfo(`Created project “${p.name}”.`);
+    });
+  const removeProject = (p: Project) => {
+    const msg =
+      p.aoi_count > 0
+        ? `Delete project “${p.name}” AND its ${p.aoi_count} AOI(s)? This cannot be undone.`
+        : `Delete project “${p.name}”?`;
+    if (!window.confirm(msg)) return;
+    void run(async () => {
+      await deleteProject(p.id, p.aoi_count > 0);
+      const rest = (await listProjects()).items;
+      setProjects(rest);
+      setSelected(null);
+      setDraft(null);
+      setProjectId(rest[0]?.id ?? null);
+      setSaved([]);
     });
   };
 
@@ -255,6 +309,14 @@ export function AoiWorkbench({
       className="workbench"
     >
       <section aria-label="AOI input" style={{ display: "grid", gap: 12, alignContent: "start" }}>
+        <ProjectBar
+          projects={projects}
+          selectedId={projectId}
+          busy={busy}
+          onSelect={selectProject}
+          onCreate={addProject}
+          onDelete={removeProject}
+        />
         <p style={{ margin: 0, fontSize: 14 }}>
           Define an area of interest.{" "}
           <strong>Only the outline is validated — no analysis is performed.</strong>
@@ -408,11 +470,16 @@ export function AoiWorkbench({
           <button type="button" onClick={validate} disabled={busy || !!built.problem}>
             Validate
           </button>
-          <button type="button" onClick={save} disabled={busy || !!built.problem || !currentDraft}>
+          <button
+            type="button"
+            onClick={save}
+            disabled={busy || !!built.problem || !currentDraft || !projectId}
+          >
             Save
           </button>
         </div>
         {built.problem && <small>{built.problem}</small>}
+        {!projectId && <small>Create or select a project to enable Save.</small>}
 
         {error && (
           <p role="alert" data-testid="aoi-error" style={{ color: "#b71c1c", margin: 0 }}>
@@ -443,10 +510,10 @@ export function AoiWorkbench({
         )}
 
         <div>
-          <h2 style={{ fontSize: 16 }}>Saved AOIs ({saved.length})</h2>
-          {saved.length === 0 && <p>None yet.</p>}
+          <h2 style={{ fontSize: 16 }}>Saved AOIs ({visibleSaved.length})</h2>
+          {visibleSaved.length === 0 && <p>None yet.</p>}
           <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: 4 }}>
-            {saved.map((a) => (
+            {visibleSaved.map((a) => (
               <li key={a.id} style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 <button
                   type="button"
@@ -466,9 +533,19 @@ export function AoiWorkbench({
             ))}
           </ul>
         </div>
+        <small data-testid="basemap-note" style={{ display: "block" }}>
+          Basemap: {basemap.label}.
+          {basemap.tiles
+            ? " Tile requests reveal the viewed map area (not the AOI) to the provider."
+            : ""}
+          {basemap.warning ? ` ${basemap.warning}` : ""}
+        </small>
       </section>
 
-      <section aria-label="Map" style={{ minHeight: 480, border: "1px solid #ccd" }}>
+      <section
+        aria-label="Map"
+        style={{ minHeight: 480, border: "1px solid #ccd", position: "relative" }}
+      >
         <MapComponent
           mode={mode}
           draft={currentDraft?.geometry ?? null}

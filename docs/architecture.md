@@ -57,6 +57,10 @@ V1 constraints: no authentication (ADR-0005), local storage (ADR-0006), PostgreS
 
 `apps/backend/src/app/aoi/`: `geometry.py` (construction, validation, geodesic area, UTM zone), `parsers.py` + `archive.py` (GeoJSON / KML / KMZ / zipped Shapefile, in-memory, hardened), `service.py` (request/upload → normalised draft), `repository.py` (PostGIS persistence). Endpoints under `/api/v1/aois`: `limits`, `preview` (validate without saving), `POST` (create), `upload` (multipart, `?preview=true`), `GET` list/detail, `DELETE`. Contracts (`Aoi`, `AoiDraft`, `AoiSummary`, `AoiList`, `AoiLimits`, request types) live in `packages/schemas`. An AOI is a validated outline plus bookkeeping; it is not a scientific result and carries no envelope fields. The frontend (`AoiWorkbench`, `MapView` on MapLibre) draws sketches and overlays only; numeric forms are the accessible alternative to drawing.
 
+## 2b. Projects (Phase 2.5, ADR-0013)
+
+`project` is the container that owns AOIs and, in later phases, jobs and outputs; see `docs/data-model.md` for relationships, deletion rules and the planned job/output attachment. API: `/api/v1/projects` (create, list, get, delete with explicit `delete_aois`). AOIs are saved into a project (`project_id` required to save, not to preview). The frontend has a minimal project bar (select / create / delete). The map's basemap is chosen through the provider abstraction in `apps/frontend/src/lib/basemap.ts` (`osm` | `xyz` | `none`).
+
 ## 3. Result envelope (mandatory)
 
 Every layer/target returned by the API includes:

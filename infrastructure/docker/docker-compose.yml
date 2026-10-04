@@ -78,6 +78,9 @@ services:
       dockerfile: infrastructure/docker/frontend.Dockerfile
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api/v1}
+        NEXT_PUBLIC_BASEMAP_PROVIDER: ${NEXT_PUBLIC_BASEMAP_PROVIDER:-osm}
+        NEXT_PUBLIC_BASEMAP_TILE_URL: ${NEXT_PUBLIC_BASEMAP_TILE_URL:-}
+        NEXT_PUBLIC_BASEMAP_ATTRIBUTION: ${NEXT_PUBLIC_BASEMAP_ATTRIBUTION:-}
       secrets: [proxy_ca]
     ports:
       - "${BIND_HOST:-127.0.0.1}:3000:3000"

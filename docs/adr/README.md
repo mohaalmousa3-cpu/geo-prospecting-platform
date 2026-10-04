@@ -16,6 +16,7 @@ One file per decision: `NNNN-title.md` with Status, Context, Decision, Consequen
 | [0010](0010-no-confirmed-claims-without-field-validation.md) | No "confirmed" language without field validation | Accepted (amended: geophysics ⇒ at most high-confidence investigation priority) |
 | [0011](0011-shared-python-package-pycommon.md) | Shared package `packages/pycommon` (contracts/abstractions/utilities only) | Accepted |
 | [0012](0012-aoi-input-and-validation.md) | AOI input, validation and basemap handling (Phase 2) | Accepted within approved Phase 2 scope |
+| [0013](0013-project-entity-and-basemap-provider.md) | Minimal `project` entity; basemap provider abstraction (Phase 2.5) | Accepted within approved scope |
 
 ## Still undecided (no ADR yet)
 Deployment target, target region(s)/pilot area (required before Phase 5 design — ADR-0003 amendment), reference hardware.

@@ -5,22 +5,26 @@ import type { GeoJSONSource, Map, MapMouseEvent, StyleSpecification } from "mapl
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
 
+import { basemapFromEnv, type Basemap } from "@/lib/basemap";
 import { wrapLon } from "@/lib/geometry";
 import type { LonLat } from "@/types/contracts";
 
 import type { MapViewProps } from "./mapTypes";
 
 let workerConfigured = false;
-const TILE_URL = process.env.NEXT_PUBLIC_BASEMAP_TILE_URL ?? "";
-const ATTRIBUTION = process.env.NEXT_PUBLIC_BASEMAP_ATTRIBUTION ?? "";
-
-export function buildStyle(tileUrl: string, attribution: string): StyleSpecification {
+export function buildStyle(basemap: Basemap): StyleSpecification {
   const layers: StyleSpecification["layers"] = [
     { id: "bg", type: "background", paint: { "background-color": "#e8edf1" } },
   ];
   const sources: StyleSpecification["sources"] = {};
-  if (tileUrl) {
-    sources.basemap = { type: "raster", tiles: [tileUrl], tileSize: 256, attribution, maxzoom: 19 };
+  if (basemap.tiles) {
+    sources.basemap = {
+      type: "raster",
+      tiles: [basemap.tiles],
+      tileSize: 256,
+      attribution: basemap.attribution,
+      maxzoom: basemap.maxzoom,
+    };
     layers.push({ id: "basemap", type: "raster", source: "basemap" });
   }
   return { version: 8, sources, layers };
@@ -51,7 +55,7 @@ export default function MapView(props: MapViewProps) {
     }
     const map = new maplibregl.Map({
       container: container.current,
-      style: buildStyle(TILE_URL, ATTRIBUTION),
+      style: buildStyle(basemapFromEnv()),
       center: [10, 30],
       zoom: 2,
       attributionControl: { compact: true },

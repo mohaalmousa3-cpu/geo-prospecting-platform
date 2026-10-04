@@ -1,5 +1,7 @@
 """Project persistence. A project is a named container for AOIs (and, later, jobs and outputs)."""
 
+# ruff: noqa: S608  (f-strings interpolate only the module constant _COLS; all values are bound)
+
 from __future__ import annotations
 
 from typing import Any
@@ -45,19 +47,19 @@ class ProjectRepository:
                 text("INSERT INTO project (name, description) VALUES (:n, :d) RETURNING id"),
                 {"n": name, "d": description},
             ).scalar_one()
-            row = conn.execute(text(f"SELECT {_COLS} FROM project p WHERE p.id=:i"), {"i": new_id}).one()  # noqa: S608
+            row = conn.execute(text(f"SELECT {_COLS} FROM project p WHERE p.id=:i"), {"i": new_id}).one()
         return dict(row._mapping)
 
     def get(self, project_id: UUID) -> dict[str, Any] | None:
         with self._engine.connect() as conn:
             row = conn.execute(
                 text(f"SELECT {_COLS} FROM project p WHERE p.id=:i"), {"i": project_id}
-            ).first()  # noqa: S608
+            ).first()
         return None if row is None else dict(row._mapping)
 
     def list(self) -> tuple[list[dict[str, Any]], int]:
         with self._engine.connect() as conn:
-            rows = conn.execute(text(f"SELECT {_COLS} FROM project p ORDER BY p.created_at, p.id")).all()  # noqa: S608
+            rows = conn.execute(text(f"SELECT {_COLS} FROM project p ORDER BY p.created_at, p.id")).all()
         items = [dict(r._mapping) for r in rows]
         return items, len(items)
 

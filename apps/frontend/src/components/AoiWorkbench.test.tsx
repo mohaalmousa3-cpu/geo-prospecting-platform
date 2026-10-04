@@ -37,7 +37,15 @@ const DRAFT = {
   details: {},
   warnings: ["ring was not closed; closed automatically"],
 };
+const PROJECT = {
+  id: "p-1",
+  name: "Pilot",
+  description: null,
+  aoi_count: 1,
+  created_at: "2026-01-01T00:00:00Z",
+};
 const SAVED = {
+  project_id: "p-1",
   id: "11111111-1111-1111-1111-111111111111",
   name: "Site A",
   method: "polygon",
@@ -79,6 +87,7 @@ function mockApi(routes: Record<string, Route>) {
 }
 const base = (extra: Record<string, Route> = {}) => ({
   "GET /aois/limits": () => ({ body: LIMITS }),
+  "GET /projects": () => ({ body: { items: [PROJECT], total: 1 } }),
   "GET /aois?": () => ({ body: { items: [SAVED], total: 1 } }),
   ...extra,
 });
@@ -154,6 +163,7 @@ describe("AoiWorkbench", () => {
     let created = false;
     const calls = mockApi({
       "GET /aois/limits": () => ({ body: LIMITS }),
+      "GET /projects": () => ({ body: { items: [PROJECT], total: 1 } }),
       "GET /aois?": () => ({
         body: {
           items: created ? [SAVED, { ...SAVED, id: "2", name: "New" }] : [SAVED],
@@ -251,6 +261,7 @@ describe("AoiWorkbench", () => {
     let deleted = false;
     const calls = mockApi({
       "GET /aois/limits": () => ({ body: LIMITS }),
+      "GET /projects": () => ({ body: { items: [PROJECT], total: 1 } }),
       "GET /aois?": () => ({ body: { items: deleted ? [] : [SAVED], total: deleted ? 0 : 1 } }),
       [`GET /aois/${SAVED.id}`]: () => ({ body: { ...DRAFT, ...SAVED } }),
       [`DELETE /aois/${SAVED.id}`]: () => {
@@ -283,5 +294,111 @@ describe("AoiWorkbench", () => {
     expect(container.textContent).not.toMatch(
       /prospectiv|anomal|confidence|score|target|gold|void|cave|depth/i,
     );
+  });
+
+  it("loads the first project and only its AOIs", async () => {
+    const calls = mockApi(base());
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    await screen.findByRole("button", { name: /^Site A \(/ });
+    expect(screen.getByRole("combobox", { name: "Project" })).toHaveValue("p-1");
+    expect(calls.some((c) => c.url.startsWith("/aois?") && c.url.includes("project_id=p-1"))).toBe(
+      true,
+    );
+  });
+
+  it("disables Save and explains why when there is no project", async () => {
+    mockApi(base({ "GET /projects": () => ({ body: { items: [], total: 0 } }) }));
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    expect(
+      await screen.findByText(/Create or select a project to enable Save/),
+    ).toBeInTheDocument();
+    expect(screen.getByText("No projects yet")).toBeInTheDocument();
+    expect(screen.getByText(/Saved AOIs \(0\)/)).toBeInTheDocument();
+  });
+
+  it("creates a project and selects it", async () => {
+    const created = { ...PROJECT, id: "p-2", name: "Second", aoi_count: 0 };
+    const calls = mockApi(
+      base({
+        "POST /projects": () => ({ status: 201, body: created }),
+        "GET /aois?": () => ({ body: { items: [], total: 0 } }),
+      }),
+    );
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    await screen.findByRole("combobox", { name: "Project" });
+    await userEvent.type(screen.getByLabelText("New project name"), "Second");
+    await userEvent.click(screen.getByRole("button", { name: "Create project" }));
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "Project" })).toHaveValue("p-2"),
+    );
+    expect(
+      JSON.parse(
+        calls.find((c) => c.url === "/projects" && c.init?.method === "POST")!.init!.body as string,
+      ),
+    ).toEqual({
+      name: "Second",
+    });
+    expect(screen.getByText(/Created project “Second”/)).toBeInTheDocument();
+  });
+
+  it("switching project reloads that project's AOIs", async () => {
+    const other = { ...PROJECT, id: "p-2", name: "Other", aoi_count: 0 };
+    const calls = mockApi(
+      base({
+        "GET /projects": () => ({ body: { items: [PROJECT, other], total: 2 } }),
+        "GET /aois?": (url) => ({
+          body: url.includes("project_id=p-2")
+            ? { items: [], total: 0 }
+            : { items: [SAVED], total: 1 },
+        }),
+      }),
+    );
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    await screen.findByRole("button", { name: /^Site A \(/ });
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Project" }), "p-2");
+    await waitFor(() => expect(screen.getByText(/Saved AOIs \(0\)/)).toBeInTheDocument());
+    expect(calls.some((c) => c.url.includes("project_id=p-2"))).toBe(true);
+  });
+
+  it("deleting a non-empty project asks explicitly and sends delete_aois=true", async () => {
+    let gone = false;
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const calls = mockApi(
+      base({
+        "GET /projects": () => ({
+          body: gone ? { items: [], total: 0 } : { items: [PROJECT], total: 1 },
+        }),
+        "DELETE /projects/p-1": () => {
+          gone = true;
+          return { status: 204, body: null };
+        },
+      }),
+    );
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    await screen.findByRole("button", { name: /^Site A \(/ });
+    await userEvent.click(screen.getByRole("button", { name: "Delete project" }));
+    expect(confirm.mock.calls[0][0]).toMatch(/AND its 1 AOI/);
+    await waitFor(() => expect(screen.getByText("No projects yet")).toBeInTheDocument());
+    expect(
+      calls.some((c) => c.url === "/projects/p-1?delete_aois=true" && c.init?.method === "DELETE"),
+    ).toBe(true);
+    expect(screen.getByText(/Saved AOIs \(0\)/)).toBeInTheDocument();
+  });
+
+  it("does not delete a project when the confirmation is declined", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    const calls = mockApi(base());
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    await screen.findByRole("button", { name: /^Site A \(/ });
+    await userEvent.click(screen.getByRole("button", { name: "Delete project" }));
+    expect(calls.some((c) => c.init?.method === "DELETE")).toBe(false);
+  });
+
+  it("names the basemap provider and its privacy implication", async () => {
+    mockApi(base());
+    render(<AoiWorkbench MapComponent={MapStub} />);
+    const note = await screen.findByTestId("basemap-note");
+    expect(note).toHaveTextContent(/OpenStreetMap \(development use only\)/);
+    expect(note).toHaveTextContent(/reveal the viewed map area \(not the AOI\)/);
   });
 });

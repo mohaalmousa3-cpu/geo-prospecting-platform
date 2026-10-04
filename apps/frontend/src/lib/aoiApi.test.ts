@@ -63,8 +63,10 @@ describe("aoiApi", () => {
     const form = f.mock.calls[0][1].body as FormData;
     expect(form.get("name")).toBe("My site");
     expect((form.get("file") as File).name).toBe("a.geojson");
-    await uploadAoi(file, "", false);
+    await uploadAoi(file, "", false, "proj-1");
     expect(f.mock.calls[1][0]).toMatch(/\/aois\/upload$/);
-    expect((f.mock.calls[1][1].body as FormData).has("name")).toBe(false);
+    const form2 = f.mock.calls[1][1].body as FormData;
+    expect(form2.has("name")).toBe(false);
+    expect(form2.get("project_id")).toBe("proj-1");
   });
 });
