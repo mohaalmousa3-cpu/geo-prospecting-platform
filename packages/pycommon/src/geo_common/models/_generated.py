@@ -124,9 +124,7 @@ class Source(BaseModel):
     )
     dataset: Annotated[str, Field(min_length=1)]
     version: Annotated[str, Field(min_length=1)]
-    acquired: Annotated[
-        str, Field(description="Acquisition date or interval (ISO 8601).", min_length=1)
-    ]
+    acquired: Annotated[str, Field(description="Acquisition date or interval (ISO 8601).", min_length=1)]
     licence: Annotated[str, Field(min_length=1)]
     url: str | None = None
     via: Via | None = None

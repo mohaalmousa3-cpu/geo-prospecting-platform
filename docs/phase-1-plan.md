@@ -17,7 +17,7 @@ These are proposals (confidence: *likely* suitable; versions must be verified wh
 |---|---|---|---|
 | T1 | Python version / env tool | Python 3.12, `uv` with committed lockfile | Fast, reproducible; replaces pip-tools/poetry/conda for Phase 1. Conda may be needed later for GDAL-heavy/geophysics images (revisit in Phase 2/8). |
 | T2 | Python quality tools | `ruff` (lint+format), `mypy` (strict on shared lib + backend), `pytest` | Standard, fast |
-| T3 | Backend libs | FastAPI, Pydantic v2, pydantic-settings, SQLAlchemy 2.x (Core-first for queue SQL), psycopg 3, Alembic | Mainstream, typed |
+| T3 | Backend libs | FastAPI, Pydantic v2, pydantic-settings, SQLAlchemy 2.x (Core-first for queue SQL), ~~psycopg 3~~ **pg8000** (see phase report deviation 1), Alembic | Mainstream, typed |
 | T4 | Node tooling | Node LTS, **npm** (lockfile committed), ESLint, Prettier, `tsc --noEmit`, Vitest | Fewest moving parts |
 | T5 | Schema codegen | JSON Schema → Pydantic via `datamodel-code-generator`; JSON Schema → TS via `json-schema-to-typescript` | Keeps `packages/schemas` the source of truth |
 | T6 | DB image | `postgis/postgis` (pinned tag, PostgreSQL 16 line) | Official PostGIS image |

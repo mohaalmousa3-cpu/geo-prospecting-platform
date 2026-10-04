@@ -21,19 +21,21 @@ A phase is **accepted** only when all criteria are met, evidence is recorded (te
 - [ ] User review completed.
 
 ## Phase 1 — Repo/app foundation
-- [ ] `docker compose up` starts postgis, backend, worker, frontend from a clean clone (no Redis, no MinIO); ports bound to 127.0.0.1.
-- [ ] `/api/v1/health` returns OK; frontend status page shows backend health.
-- [ ] Alembic migrations apply cleanly; PostGIS extension enabled; initial tables created.
-- [ ] A no-op job travels API → `job` table → worker → DB with correct status transitions.
-- [ ] Queue integration tests pass: concurrent claim (no double-claim), lease expiry recovery, attempt limit, hard timeout kill, cancellation, `MAX_QUEUED_JOBS` enforcement.
-- [ ] `StorageBackend` local implementation rejects path traversal and absolute keys (tested).
-- [ ] Result envelope requires `validation_status`, `calibration_status`, `engine_status`; `validation_status` accepts only `unvalidated`.
-- [ ] Forbidden-term scan (ADR-0009) runs in CI over source, fixtures and UI strings, with a documented docs allow-list.
-- [ ] No authentication code, Redis, or MinIO present; README states local/private-only.
-- [ ] Schema pipeline generates Pydantic and TS types from `packages/schemas`; CI fails on drift.
-- [ ] Result envelope schema rejects objects missing confidence/uncertainty/explanation/sources (tested).
-- [ ] CI runs lint, type-check, tests, secret scan.
-- [ ] `LICENSE` remains the rights-reserved placeholder (ADR-0002); `docs/third-party-licences.md` exists and lists all Phase 1 dependencies.
+Evidence: `docs/phase-reports/phase-1.md`. Owner acceptance still required.
+- [x] `docker compose up` starts postgis, backend, worker, frontend from a clean clone (no Redis, no MinIO); ports bound to 127.0.0.1.
+- [x] `/api/v1/health` returns OK; frontend status page shows backend health.
+- [x] Alembic migrations apply cleanly; PostGIS extension enabled; initial tables created.
+- [x] A no-op job travels API → `job` table → worker → DB with correct status transitions.
+- [x] Queue integration tests pass: concurrent claim (no double-claim), lease expiry recovery, attempt limit, hard timeout kill, cancellation, `MAX_QUEUED_JOBS` enforcement.
+- [x] `StorageBackend` local implementation rejects path traversal and absolute keys (tested).
+- [x] Result envelope requires `validation_status`, `calibration_status`, `engine_status`; `validation_status` accepts only `unvalidated`.
+- [ ] Forbidden-term scan (ADR-0009) runs in CI over source, fixtures and UI strings, with a documented docs allow-list.  *(implemented and passing locally via `make ci`; GitHub Actions run pending — see phase report)*
+- [x] No authentication code, Redis, or MinIO present; README states local/private-only.
+- [ ] Schema pipeline generates Pydantic and TS types from `packages/schemas`; CI fails on drift.  *(implemented and passing locally via `make ci`; GitHub Actions run pending — see phase report)*
+- [x] Result envelope schema rejects objects missing confidence/uncertainty/explanation/sources (tested).
+- [ ] CI runs lint, type-check, tests, secret scan.  *(implemented and passing locally via `make ci`; GitHub Actions run pending — see phase report)*
+- [x] `LICENSE` remains the rights-reserved placeholder (ADR-0002); `docs/third-party-licences.md` exists and lists all Phase 1 dependencies.
+
 
 ## Phase 2 — AOI input and map basics
 - [ ] Coordinates+radius produce a geodesically correct polygon (tested against reference values).

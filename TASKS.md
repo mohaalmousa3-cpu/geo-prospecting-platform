@@ -3,7 +3,7 @@
 Legend: `[ ]` todo · `[x]` done and verified · Only the **current phase** may be worked on (see `CLAUDE.md`).
 Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 
-**Current phase: 1 (approved 2026-10-04, in implementation).** Owner decisions of 2026-10-04 are recorded as ADR-0001…0010 (`docs/adr/`). The detailed Phase 1 plan is `docs/phase-1-plan.md`; no application code before it is approved.
+**Current phase: 1 — implemented, awaiting owner acceptance (see `docs/phase-reports/phase-1.md`).** Owner decisions of 2026-10-04 are recorded as ADR-0001…0010 (`docs/adr/`). The detailed Phase 1 plan is `docs/phase-1-plan.md`; no application code before it is approved.
 
 ---
 
@@ -18,17 +18,18 @@ Acceptance criteria per phase: `docs/acceptance-criteria.md`.
 - [x] Owner confirmation of field-validation definitions (ADR-0010, stricter wording)
 
 ## Phase 1 — Repo/App Foundation
-Detailed, ordered tasks with verification commands: **`docs/phase-1-plan.md`** (P1-01 … P1-18). Summary:
-- [ ] Tooling and CI baseline (lint, type-check, tests, secret scan, forbidden-term scan)
-- [ ] Docker Compose: postgis, backend, worker, frontend — loopback ports, no Redis, no MinIO
-- [ ] FastAPI skeleton: `/health`, config, logging, `/api/v1`
-- [ ] Alembic + PostGIS; tables `aoi`, `job`, `result`, `provenance`
-- [ ] `StorageBackend` (local) and `JobQueue` (PostgreSQL) interfaces with tests
-- [ ] Worker with claim/lease/heartbeat/timeout/cancel and a no-op job
-- [ ] Schemas → Pydantic/TS generation; result envelope incl. `validation_status`, `calibration_status`, `engine_status`
-- [ ] Next.js skeleton + status page
-- [ ] Scientific-guard tests; `docs/third-party-licences.md`
-- [ ] `LICENSE` stays rights-reserved placeholder (ADR-0002)
+Implemented 2026-10-04; evidence and deviations in `docs/phase-reports/phase-1.md`. **Awaiting owner acceptance** before Phase 2. Detailed, ordered tasks with verification commands: **`docs/phase-1-plan.md`** (P1-01 … P1-18). Summary:
+- [x] Tooling baseline (lint, type-check, tests, secret scan, forbidden-term scan)
+- [ ] CI workflow executed green on GitHub Actions (written; passes locally via `make ci`)
+- [x] Docker Compose: postgis, backend, worker, frontend — loopback ports, no Redis, no MinIO
+- [x] FastAPI skeleton: `/health`, config, logging, `/api/v1`
+- [x] Alembic + PostGIS; tables `aoi`, `job`, `result`, `provenance`
+- [x] `StorageBackend` (local) and `JobQueue` (PostgreSQL) interfaces with tests
+- [x] Worker with claim/lease/heartbeat/timeout/cancel and a no-op job
+- [x] Schemas → Pydantic/TS generation; result envelope incl. `validation_status`, `calibration_status`, `engine_status`
+- [x] Next.js skeleton + status page
+- [x] Scientific-guard tests; `docs/third-party-licences.md`
+- [x] `LICENSE` stays rights-reserved placeholder (ADR-0002)
 
 ## Phase 2 — AOI Input and Map Basics
 - [ ] AOI model + API: create/get/list/delete
