@@ -1,22 +1,64 @@
-# Phase 3 Plan — Remote-Sensing Data Connectors (PROPOSAL)
+# Phase 3 Plan — Remote-Sensing Data Connectors (FINAL PLAN — NOT STARTED)
 
-Status: **proposal for owner review. Nothing in this plan has been implemented or started.** Date: 2026-10-04.
+Status: **planning finalised after the owner's "approved with constraints" (2026-10-04). Nothing in this plan has been implemented or started. Implementation needs a separate explicit start approval that also marks ADR-0014 Approved.** ADR-0014 is, and stays, **Proposed**.
 Prerequisites met: Phases 1, 2, 2.5 accepted; the two Phase 2.5 follow-ups (browser smoke test in CI, `none` basemap default) are implemented.
 
-## 0. What Phase 3 is, and is not
+## Scope summary (one page, for review)
+
+| Item | Final Phase 3 scope |
+|---|---|
+| Purpose | Stage **data inputs** for later phases: *ingest → normalise (format only) → clip → validate → store*, with provenance. Nothing is interpreted. |
+| Connectors | (1) `stac_catalog` — metadata search of public imagery catalogues; (2) `dem_cop30` — clipped elevation raster; (3) `user_vector` — user-supplied geology/fault/occurrence vector files. |
+| Tentative defaults | Catalogue: **Earth Search**; DEM: **Copernicus DEM GLO-30**. Both **TENTATIVE, unverified** (the build sandbox cannot reach providers); they become defaults only after live verification (D4, D5, D8). |
+| Outputs | `data_asset` rows + files: `scene_catalog` (JSON), `dem_clip` (COG), `user_vector` (GeoJSON), each with a provenance record. They are inputs, **not results**; no confidence/score fields. |
+| Safety | `CONNECTOR_MODE=disabled` by default; `fixture` for tests/CI; `live` explicit opt-in. Budgets on requests, bytes, time, items, window. Same-host-only egress. Cache with TTL and size cap. |
+| Tests | Fixture-first, **no live network in tests or CI**; hostile-response tests; extended browser smoke test (fixture mode) in CI. |
+| Slices & gates | 3a foundations → 3b STAC → 3c DEM → 3d user vectors → 3f closeout; **3e Earth Engine blocked** (not executed, not implemented). Owner review after each slice. |
+| Needs from the owner before code | Explicit start approval; ADR-0014 marked Approved; live-verification route (D8). |
+| Unchanged | Phase 5 gate (target region + pilot area), ADR-0003/0004/0005/0008/0009/0010/0011/0013. |
+
+## 0. What Phase 3 is
 
 **Is:** getting *inputs* ready — finding which public imagery exists for an AOI and time window, staging a clipped elevation model, and accepting user-supplied vector layers — with budgets, caching, provenance and tests that never touch the network.
 
-**Is not (hard exclusions, unchanged):** no thermal/LST, no band maths, no cloud masking, no indices, no prospectivity/void/anomaly logic, no scoring, no Earth Engine code (blocked, §6 slice 3e), no 3D, no authentication expansion. **Phase 5 remains blocked until the owner defines the target country/region and pilot area** (ADR-0003 amendment); Phase 3 therefore builds **no region-specific geology connector**. Phase 3 outputs are **data inputs, not scientific results**, and carry no confidence/score/interpretation.
+**Is not:** everything in §0b (strict out-of-scope list). §0c lists the only data operations allowed.
 
 Honesty rule for everything Phase 3 shows: values like scene-level cloud cover are *what the provider's metadata says*, labelled as such; they are not a statement about data quality over the AOI.
+
+## 0b. OUT OF SCOPE — strict (canonical list)
+
+Phase 3 **must not** contain, and its tests/guards must keep out:
+
+1. **No scoring** of any kind (no `*_score`, ranking, weighting, thresholds on data values).
+2. **No prospectivity inference** (gold, orogenic or otherwise) and no void/cavity evidence logic.
+3. **No thermal analysis** (no LST retrieval, no thermal bands, no anomaly detection, no temperature products).
+4. **No Earth Engine execution** — no EE import, no EE credentials, no EE calls, no EE code path enabled. Slice 3e stays blocked (ADR-0004 amendment: owner's written eligibility validation first), and even after unblocking it is a separate approval.
+5. **No 3D** — no Cesium, no terrain rendering, no depth of any kind.
+6. **No scientific interpretation beyond data ingestion, normalisation, clipping, validation and storage** (see §0c for the exact meaning of each). In particular: no band maths or indices, no cloud/shadow masking, no resampling or interpolation of pixel values, no derived terrain products (slope, aspect, curvature), no statistics beyond file/metadata bookkeeping (counts, sizes, checksums), no quality judgement about the data over the AOI.
+7. No region-specific geology connectors (waits for the Phase 5 region decision), no authentication expansion, no automatic AOI tiling, no multi-worker concurrency, no retention/purge, no band downloads for later analysis.
+8. No claim that a connector "works with provider X" before live verification (§1).
+
+Enforcement (becomes acceptance criteria 12–13 in §7): import allow-list tests for `geo_connectors` and `apps/backend` (no analysis/ML/EE libraries), output-schema allow-list (unknown keys rejected), forbidden-vocabulary scan extended to connector outputs and UI strings, `CONNECTOR_MODE=disabled` default test, and no `ENABLE_EARTH_ENGINE` code path reachable.
+
+## 0c. Permitted data operations (exhaustive)
+
+| Operation | Allowed meaning in Phase 3 | Not allowed |
+|---|---|---|
+| **Ingestion** | Fetching provider metadata/tiles within budgets; accepting user uploads | Anything beyond what the request needs |
+| **Normalisation** (structure/format only) | STAC item → fixed JSON schema; datetimes → UTC ISO-8601; vector CRS → EPSG:4326; ring orientation; COG tiling/compression | Changing pixel/attribute **values**: radiometric or unit conversion, resampling, reprojection of rasters, smoothing, gap-filling |
+| **Clipping** | Window/bbox read of the raster covering the AOI (native grid, no resampling), optional nodata mask outside the AOI polygon; vector bbox filter | Interpolation, mosaicking that blends values |
+| **Validation** | Geometry/schema/size/type/checksum checks; hostile-input rejection | Judging scientific quality or usefulness |
+| **Storage** | `StorageBackend` files + `data_asset`/`provenance` rows | Serving anything labelled as a finding |
+
+Provider-reported fields (e.g. scene-level cloud cover) are **passed through unchanged and labelled as provider-reported**; they say nothing about clarity over the AOI.
 
 ## 1. Key constraint discovered while planning (confidence: confirmed)
 
 The cloud sandbox this project is built in **cannot reach the candidate EO providers**: read-only `GET`s to the Earth Search, Planetary Computer and Copernicus Data Space STAC `/collections` endpoints returned no response (connection blocked by the environment's network policy). Consequences:
 1. Every provider statement in this plan (collection names, URL layouts, licences, rate limits) is **unverified**. They are listed as assumptions and each connector starts with a verification task.
 2. Connectors are developed **fixture-first**: recorded/synthetic responses and synthetic rasters, no live calls in tests (already a project rule).
-3. Real-world verification needs a machine with internet access: a read-only `make connectors-live-check` (a few tiny requests, prints a report, writes nothing to the database) which **the owner runs**, or the owner allowlists the provider hosts in the cloud environment's network settings so I can run it (decision D8). Until then, "works against the real provider" must not be claimed.
+3. **Tentative defaults.** Earth Search (catalogue) and Copernicus DEM GLO-30 (DEM) are **tentative defaults pending live verification**: they may be named in documentation and in fixtures-based code paths, but a provider is not enabled by default, advertised as working, or hard-coded as the only option until (a) `connectors-live-check` shows its endpoints, collections, URL layout, licence/attribution text and rate behaviour match this plan, and (b) the owner confirms. If verification fails, the connector falls back to the alternates (Planetary Computer / Copernicus Data Space for catalogues; an alternate open DEM) via a new ADR-sized decision, not a silent switch.
+4. Real-world verification needs a machine with internet access: a read-only `make connectors-live-check` (a few tiny requests, prints a report, writes nothing to the database) which **the owner runs**, or the owner allowlists the provider hosts in the cloud environment's network settings so I can run it (decision D8). Until then, "works against the real provider" must not be claimed.
 
 ## 2. Inherited constraints (binding)
 ADR-0004 (EE optional/replaceable/off, owner must validate commercial eligibility first) · ADR-0005 (no auth; loopback only) · ADR-0006 (local storage via `StorageBackend`) · ADR-0007 (Postgres queue; handlers idempotent, at-least-once) · ADR-0008 (limits are provisional safeguards; `MAX_SCENES_PER_JOB=20`, `MAX_TIME_WINDOW_DAYS=365`, 1800 s timeout) · ADR-0009/0010 (naming, envelope, no "confirmed") · ADR-0011 (`geo_common` holds no analysis logic) · ADR-0013 (projects, derived CORS, smoke test in CI) · `docs/data-model.md` (job↔project/AOI attachment, deletion rules) · `docs/job-lifecycle.md`.
@@ -50,8 +92,8 @@ Outcomes: assets staged → job `succeeded`; nothing found for the AOI/window �
 ### 3.4 What each connector produces
 | Connector | Request | Output asset | Notes |
 |---|---|---|---|
-| `stac_catalog` | AOI, date window (≤ 365 d), collections allow-list, `max_items ≤ MAX_SCENES_PER_JOB` | `scene_catalog`: GeoJSON FeatureCollection of items (id, datetime, platform, collection, footprint, provider-reported scene cloud cover, **asset keys/links — nothing downloaded**) | Candidate collections (unverified): Sentinel-2 L2A, Landsat Collection 2 Level-2, Sentinel-1. Metadata only. |
-| `dem_cop30` | AOI | `dem_clip`: clipped COG (+ nodata, CRS, resolution) | Candidate: Copernicus DEM GLO-30 COG tiles on AWS Open Data (unverified). Metadata must state it is a **surface model** (includes canopy/buildings) and its **vertical datum** (verify; believed EGM2008). AOI ≤ 25 km² ⇒ at most a few 1° tiles. |
+| `stac_catalog` | AOI, date window (≤ 365 d), collections allow-list, `max_items ≤ MAX_SCENES_PER_JOB` | `scene_catalog`: GeoJSON FeatureCollection of items (id, datetime, platform, collection, footprint, provider-reported scene cloud cover, **asset keys/links — nothing downloaded**) | **Tentative default provider: Earth Search (unverified).** Candidate collections (unverified): Sentinel-2 L2A, Landsat Collection 2 Level-2, Sentinel-1. Metadata only. |
+| `dem_cop30` | AOI | `dem_clip`: clipped COG (+ nodata, CRS, resolution), native grid, no resampling | **Tentative default source: Copernicus DEM GLO-30** COG tiles on AWS Open Data (unverified). Metadata must state it is a **surface model** (includes canopy/buildings) and its **vertical datum** (verify; believed EGM2008). AOI ≤ 25 km² ⇒ at most a few 1° tiles. |
 | `user_vector` | uploaded GeoJSON / KML / KMZ / zipped Shapefile (region-agnostic geology, faults, occurrences) | `user_vector`: normalised GeoJSON in EPSG:4326 | Reuses Phase 2 archive/XML hardening; adds feature-count and attribute-size caps; provenance flagged `user_upload`. **This is the Phase 3 path for geology/occurrence data** until the region is defined. |
 
 ### 3.5 API and UI (minimal)
@@ -124,23 +166,35 @@ Each slice ends with: `make ci-full` green locally, GitHub Actions green (includ
 8. UI shows what is sent to the provider before submission, labels provider-reported values as such, and shows no analysis.
 9. The browser smoke test (CI `e2e`) covers the catalogue flow in fixture mode; no CI job touches the network except package/browser installation.
 10. No connector, output or UI string contains analysis/scoring vocabulary (forbidden-term scan extended); backend does not import `geo_connectors`.
-11. Live behaviour is either verified by the owner's `connectors-live-check` report (attached to the phase report) or explicitly reported as **unverified**.
+11. Live behaviour is either verified by the owner's `connectors-live-check` report (attached to the phase report) or explicitly reported as **unverified**; Earth Search and Copernicus GLO-30 remain labelled **tentative** until then.
+12. Out-of-scope enforcement (§0b) is tested: import allow-lists for `geo_connectors` and the backend, output-schema allow-list, extended forbidden-vocabulary scan, `disabled` default, no EE code path reachable.
+13. Only the operations in §0c exist: a test proves raster clipping preserves values and grid (no resampling) and vector normalisation changes only CRS/orientation, never attributes.
 
-## 8. Decisions requested from the owner
-| # | Decision | My recommendation |
-|---|---|---|
-| D1 | Approve the slice order and review gates (3a→3b→3c→3d, 3e blocked) | Approve |
-| D2 | Approve ADR-0014: `workers/connectors` package, `data_asset` entity, job↔project/AOI columns | Approve |
-| D3 | Approve `rasterio` (BSD-3, bundles GDAL) as a worker dependency | Approve after measuring image size in 3a |
-| D4 | Default catalogue provider | Earth Search first (open search, no credentials — **unverified**); provider id stays configurable; Planetary Computer / CDSE as later alternates |
-| D5 | DEM source | Copernicus DEM GLO-30 (COG, AWS Open Data — **unverified**, licence/attribution to confirm) |
-| D6 | `CONNECTOR_MODE` default `disabled`, `live` opt-in | Approve |
-| D7 | Budget defaults in §3.3 | Approve as provisional safeguards (not measured) |
-| D8 | Live verification: owner runs `make connectors-live-check` on an internet-connected machine, **or** allowlists the provider hosts in the cloud environment so I can | Either; without one of them Phase 3 is accepted as "fixture-verified, live-unverified" |
-| D9 | Earth Engine stays blocked until your written eligibility validation | Keep blocked |
-| D10 | Geology/occurrence data in Phase 3 = user-supplied vector layers only; national-survey connectors wait for the Phase 5 region decision | Approve |
-| D11 | CI `e2e` grows a worker process and fixture mode | Approve |
-| D12 | Phase 5 region/pilot-area gate and "no analysis" rule unchanged | Confirm |
+## 8. Final decision table (D1–D12)
 
-## 9. Explicitly out of scope (restated)
-Band downloads for analysis, cloud masking, LST, indices, any scoring, EE code before unblock, 3D, auth, region-specific geology connectors, automatic AOI tiling, retention/purge of assets (tracked as deferred), multi-worker concurrency.
+Basis: the owner replied **"Approved with constraints"** to the plan and its recommendations, and listed six constraints (docs-only pass; scope summary; strict out-of-scope; ADR-0014 stays Proposed; Earth Search and GLO-30 tentative; no implementation). **This table records that reading; a decision marked OPEN has not been decided.** Please correct any row that misstates your intent.
+
+| # | Decision | Outcome | Condition / constraint | Status |
+|---|---|---|---|---|
+| D1 | Slice order and review gates (3a→3b→3c→3d→3f; 3e blocked) | Approved as planned | Owner review after every slice; no slice starts without release | **Approved** |
+| D2 | ADR-0014: `workers/connectors` package, `data_asset` entity, job↔project/AOI columns | Direction accepted at plan level | **ADR-0014 stays Proposed** until explicitly marked Approved after this final doc pass; no code before | **Plan accepted; ADR Proposed** |
+| D3 | `rasterio` (BSD-3, bundles GDAL) as a worker dependency | Approved in principle | Image-size impact measured in slice 3a and reported; licence verified from metadata at install | **Approved (conditional)** |
+| D4 | Default catalogue provider | **Earth Search = TENTATIVE default** | Unverified; not enabled/advertised until live verification (§1) and owner confirmation; alternates: Planetary Computer, Copernicus Data Space | **Tentative** |
+| D5 | DEM source | **Copernicus DEM GLO-30 = TENTATIVE default** | Unverified; licence/attribution, vertical datum and tile layout to be confirmed live | **Tentative** |
+| D6 | `CONNECTOR_MODE` default `disabled`; `live` explicit opt-in | Approved | Tested default; `live` needs `ENABLED_CONNECTORS` | **Approved** |
+| D7 | Budget defaults in §3.3 | Approved as provisional safeguards | Not measured; same status as ADR-0008 limits | **Approved (provisional)** |
+| D8 | Live verification route (owner runs `make connectors-live-check`, or allowlists provider hosts in the cloud environment) | **Not decided** | Without one of them, Phase 3 can be accepted at most as "fixture-verified, live-unverified" | **OPEN — owner action** |
+| D9 | Earth Engine | Remains **blocked**; **no execution** | Needs the owner's written eligibility validation (ADR-0004), then a separate approval; not part of Phase 3 acceptance | **Blocked** |
+| D10 | Geology/occurrence data in Phase 3 = user-supplied vector layers only | Approved | National-survey connectors wait for the Phase 5 region decision | **Approved** |
+| D11 | CI `e2e` gains a worker process and fixture mode | Approved | No live network in CI | **Approved** |
+| D12 | Phase 5 region/pilot-area gate and the "no analysis" rule unchanged | Confirmed | See §0b | **Confirmed** |
+
+Still required before any implementation: (1) an explicit instruction to start Phase 3; (2) ADR-0014 marked Approved by the owner; (3) a decision on D8 (or acceptance of "live-unverified").
+
+## 9. Out of scope
+
+Canonical, strict list: **§0b**. Permitted operations: **§0c**. (Not repeated here to avoid two lists drifting apart.)
+
+## 10. Change log of this document
+- 2026-10-04 (proposal): first full plan.
+- 2026-10-04 (final planning pass, after "approved with constraints"): added scope summary, strict out-of-scope (§0b) and permitted operations (§0c); marked Earth Search and Copernicus GLO-30 **tentative**; added acceptance criteria 12–13; replaced the questions with the final D1–D12 decision table; ADR-0014 kept **Proposed**; no implementation.

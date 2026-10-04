@@ -61,7 +61,7 @@ Evidence and the owner checklist: `docs/phase-reports/phase-2.5.md`. Owner accep
 - [x] GitHub Actions run #7 (`02b6b05`) green on all six jobs including `e2e`.
 
 ## Phase 3 — Remote sensing connectors
-Detailed, extended criteria (11 items) and slice gates: `docs/phase-3-plan.md` §7 *(proposal; supersedes this list once the plan is approved)*. Summary of the original list:
+Detailed, extended criteria (13 items) and slice gates: `docs/phase-3-plan.md` §7 *(final plan, approved with constraints, not started; supersedes this list when Phase 3 is started)*. Out-of-scope list: §0b; permitted operations: §0c. Summary of the original list:
 - [ ] Connector interface implemented with at least STAC (imagery metadata/assets) and one open DEM source.
 - [ ] Each fetch records provenance (dataset, version, date, licence, URL, checksum).
 - [ ] Caching works (second identical request makes no external call; tested).

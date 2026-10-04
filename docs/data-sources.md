@@ -59,6 +59,9 @@ OpenStreetMap-derived tiles (respect tile usage policy; prefer self-hosted or pe
 ## 6a. Map basemap (Phase 2, ADR-0012)
 Default: **no basemap** (`NEXT_PUBLIC_BASEMAP_PROVIDER=none`). OpenStreetMap standard raster tiles are **opt-in (`osm`), local development only, refused in production builds**, and `xyz` needs an explicit provider, https URL and attribution. OSM tile use is for **low-volume development only** (OSM's tile usage policy discourages heavy use; not re-verified here). Tile requests reveal the viewed map area, not the AOI geometry, to the provider. Empty URL = no basemap. A production basemap needs a provider choice and a terms check (open question).
 
+## 6b. Phase 3 candidate providers — TENTATIVE, UNVERIFIED
+Planned (not implemented) defaults per `docs/phase-3-plan.md`: **Earth Search** for catalogue metadata and **Copernicus DEM GLO-30** (COG tiles on AWS Open Data) for elevation. Both are **tentative pending live verification** — the build sandbox cannot reach providers, so endpoints, collection names, tile layout, licence/attribution text and rate behaviour are unconfirmed. Alternates: Planetary Computer / Copernicus Data Space (catalogues). Nothing here is enabled by default or may be described as working before the owner-run (or allowlisted) live check.
+
 ## 7a. Orogenic-gold data needs (ADR-0003)
 Phase 5 needs, per target region: bedrock geology (lithology, metamorphic context), fault/shear-zone mapping, known orogenic occurrences (validation and bias assessment), and optionally regional geochemistry and airborne magnetics/radiometrics. Availability varies strongly by country; **the target region(s) are not yet fixed** and determine which geological-survey sources are usable (open question in `TASKS.md`). Each connector must state what AOI information it sends to the provider.
 

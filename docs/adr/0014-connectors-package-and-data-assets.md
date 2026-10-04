@@ -1,6 +1,6 @@
 # ADR-0014: Connectors package, `data_asset` entity and job↔project/AOI linkage (Phase 3)
 
-- **Status:** **PROPOSED — awaiting owner approval. Not implemented.**
+- **Status:** **PROPOSED — NOT APPROVED, NOT IMPLEMENTED.** The owner's "approved with constraints" (2026-10-04) accepted the Phase 3 *plan* and asked that this ADR stay Proposed until the owner explicitly marks it Approved after the final documentation pass. Do not treat the decisions below as binding yet, and write no code for them.
 - **Date:** 2026-10-04
 - **Proposed by:** Claude, per `docs/phase-3-plan.md`
 
@@ -14,6 +14,9 @@ Phase 3 stages data inputs (catalogue metadata, clipped DEM, user-supplied vecto
 4. **Deletion:** removing an AOI/project that has assets needs the explicit cascade flag and also deletes the stored files; a project/AOI with a `queued` or `running` job cannot be deleted (409).
 5. **Modes:** `CONNECTOR_MODE ∈ {disabled (default), fixture, live}`; `live` needs explicit opt-in and `ENABLED_CONNECTORS`. Earth Engine is gated separately by ADR-0004 and its owner-validation condition; it is not a mode.
 6. **Egress safety:** connector URLs are built from fixed provider bases only; redirects/pagination links must stay on the allow-listed host; responses are size-capped and content-type-checked.
+
+## Scope guard (applies if approved)
+Connectors perform only ingestion, format-level normalisation, clipping, validation and storage — exactly the operations in `docs/phase-3-plan.md` §0c — and none of the exclusions in §0b (no scoring, prospectivity inference, thermal analysis, Earth Engine execution, 3D, or scientific interpretation). Provider defaults named in the plan (Earth Search, Copernicus DEM GLO-30) are **tentative until live verification** and are not part of this decision.
 
 ## Consequences
 - New dependencies in `geo_connectors` only (`httpx`, `rasterio`), recorded in the licence register; no `pystac-client`.
