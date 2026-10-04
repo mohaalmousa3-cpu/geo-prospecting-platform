@@ -68,10 +68,10 @@ Decisions: ADR-0013 · Relationships: `docs/data-model.md`.
 - **Mutation check:** removing `DELETE` from the CORS policy made the smoke test fail at the "delete AOI" step; restored afterwards.
 - The same smoke test also **passed against the real Docker Compose stack** (built images, `next start` standalone server), not only against dev servers.
 - Production image with `NEXT_PUBLIC_BASEMAP_PROVIDER=osm`: UI shows "No basemap" plus the development-only warning; **zero third-party requests** observed.
-- Not verified: the GitHub Actions `e2e` job itself had not run when this was written (it adds `npx playwright install --with-deps chromium`, which cannot be exercised here; locally the preinstalled Chromium is used via `E2E_CHROMIUM_PATH`). Treat its first run as a test of that job.
+- GitHub Actions: the `e2e` job ran green on run #7 (see 9d). Locally the preinstalled Chromium is used via `E2E_CHROMIUM_PATH` because Playwright's own browser is not installed in this sandbox.
 
 ### Updated acceptance items
 - [x] 9a. Browser smoke test exists in CI and passes locally and against Compose.
 - [x] 9b. Basemap default is `none`; `osm` opt-in/dev-only; `xyz` explicit with attribution; warnings preserved.
 - [x] 9c. CORS policy derived from declared operations and tested for every operation.
-- [ ] 9d. GitHub Actions green on the final commit, **including the new `e2e` job** (check after push).
+- [x] 9d. GitHub Actions run #7 (commit `02b6b05`) concluded `success` with all six jobs green, **including the new `e2e` job** (`npx playwright install --with-deps chromium` + smoke test passed on the GitHub runner, ~23 s). Later commits (`9a7947e`, docs-only) were still queued when this was written.

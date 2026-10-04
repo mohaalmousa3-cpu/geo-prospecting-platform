@@ -58,7 +58,7 @@ Evidence and the owner checklist: `docs/phase-reports/phase-2.5.md`. Owner accep
 - [x] *(follow-up)* Browser smoke test (connectivity, create/delete project and AOI, cascade confirmation) in CI; passes locally and against the Compose stack.
 - [x] *(follow-up)* Basemap default `none`; `osm` opt-in, development-only, refused in production builds; `xyz` explicit with attribution; invalid config warns and falls back.
 - [x] *(follow-up)* CORS methods derived from declared operations; every operation passes a preflight in tests.
-- [ ] GitHub Actions green on the final Phase 2.5 commit, including the `e2e` job *(pending check at hand-over)*.
+- [x] GitHub Actions run #7 (`02b6b05`) green on all six jobs including `e2e`.
 
 ## Phase 3 — Remote sensing connectors
 Detailed, extended criteria (11 items) and slice gates: `docs/phase-3-plan.md` §7 *(proposal; supersedes this list once the plan is approved)*. Summary of the original list:
