@@ -105,10 +105,12 @@ def _clean_ring(ring: Sequence[Sequence[float]], what: str, warnings: list[str])
     return ring_closed
 
 
-def build_polygon(raw: RawPolygon, limits: AoiLimitsConfig) -> AoiGeometry:
+def build_polygon(raw: RawPolygon, limits: AoiLimitsConfig, *, warn_unclosed: bool = True) -> AoiGeometry:
     warnings: list[str] = []
     shell = _clean_ring(raw.shell, "outer ring", warnings)
     holes = [_clean_ring(h, f"hole {i + 1}", warnings) for i, h in enumerate(raw.holes)]
+    if not warn_unclosed:
+        warnings = [w for w in warnings if "not closed" not in w]
     vertex_count = (len(shell) - 1) + sum(len(h) - 1 for h in holes)
     if vertex_count > limits.max_vertices:
         raise AoiValidationError(
@@ -155,7 +157,8 @@ def circle_ring(lat: float, lon: float, radius_m: float, limits: AoiLimitsConfig
     lons, lats, _ = GEOD.fwd(
         [lon] * CIRCLE_VERTICES, [lat] * CIRCLE_VERTICES, azimuths, [radius_m] * CIRCLE_VERTICES
     )
-    return list(zip(lons, lats, strict=True))
+    pts = list(zip(lons, lats, strict=True))
+    return [*pts, pts[0]]  # closed here: we generated it, so no "not closed" warning
 
 
 def rectangle_ring(west: float, south: float, east: float, north: float) -> list[Coord]:
@@ -166,4 +169,4 @@ def rectangle_ring(west: float, south: float, east: float, north: float) -> list
             "invalid_rectangle",
             "rectangle needs west < east and south < north (antimeridian-crossing is unsupported)",
         )
-    return [(west, south), (east, south), (east, north), (west, north)]
+    return [(west, south), (east, south), (east, north), (west, north), (west, south)]

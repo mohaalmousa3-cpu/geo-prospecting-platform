@@ -29,7 +29,7 @@ def code(fn, *a):  # type: ignore[no-untyped-def]
 # ------------------------------------------------------------------ reference values
 def test_circle_vertices_lie_on_the_requested_geodesic_radius() -> None:
     ring = circle_ring(45.0, 7.0, 2000.0, LIMITS)
-    assert len(ring) == CIRCLE_VERTICES
+    assert len(ring) == CIRCLE_VERTICES + 1 and ring[0] == ring[-1]  # closed
     for lon, lat in ring:
         _, _, d = GEOD.inv(7.0, 45.0, lon, lat)
         assert d == pytest.approx(2000.0, abs=0.01)

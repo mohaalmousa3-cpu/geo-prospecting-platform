@@ -49,7 +49,9 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | anyio | 4.15.1 | MIT |
 | asn1crypto | 1.5.1 | MIT |
 | attrs | 26.1.0 | MIT |
+| certifi | 2026.7.22 | MPL-2.0 |
 | click | 8.5.0 | BSD-3-Clause |
+| defusedxml | 0.7.1 | PSFL |
 | fastapi | 0.142.2 | MIT |
 | h11 | 0.16.0 | MIT |
 | idna | 3.20 | BSD-3-Clause |
@@ -57,16 +59,21 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | jsonschema-specifications | 2025.9.1 | MIT |
 | mako | 1.4.3 | MIT |
 | markupsafe | 3.0.4 | BSD-3-Clause |
+| numpy | 2.5.3 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 |
 | opentelemetry-api | 1.45.0 | Apache-2.0 |
 | pg8000 | 1.31.5 | BSD 3-Clause License |
 | pydantic | 2.13.5 | MIT |
 | pydantic-core | 2.46.5 | MIT |
 | pydantic-settings | 2.15.0 | MIT |
+| pyproj | 3.8.0 | MIT |
+| pyshp | 3.1.6 | MIT |
 | python-dateutil | 2.9.0.post0 | Dual License |
 | python-dotenv | 1.2.4 | BSD-3-Clause |
+| python-multipart | 0.0.32 | Apache-2.0 |
 | referencing | 0.37.0 | MIT |
 | rpds-py | 2026.6.3 | MIT |
 | scramp | 1.4.17 | MIT No Attribution |
+| shapely | 2.1.2 | BSD 3-Clause |
 | six | 1.17.0 | MIT |
 | sqlalchemy | 2.1.3 | MIT |
 | starlette | 1.7.0 | BSD-3-Clause |
@@ -80,7 +87,6 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | argcomplete | 3.7.2 | Apache Software License |
 | ast-serialize | 0.12.1 | MIT |
 | black | 26.5.1 | MIT |
-| certifi | 2026.7.22 | MPL-2.0 |
 | colorama | 0.4.6 | NOT INSTALLED (platform-specific dependency; licence not verified here) |
 | datamodel-code-generator | 0.83.0 | MIT |
 | genson | 1.4.0 | MIT |
@@ -137,6 +143,15 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | @img/sharp-win32-arm64 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
 | @img/sharp-win32-ia32 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
 | @img/sharp-win32-x64 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
+| @mapbox/jsonlint-lines-primitives | 2.0.3 | MIT |
+| @mapbox/point-geometry | 1.1.0 | ISC |
+| @mapbox/tiny-sdf | 2.2.0 | BSD-2-Clause |
+| @mapbox/unitbezier | 1.0.0 | BSD-2-Clause |
+| @mapbox/vector-tile | 3.0.0 | BSD-3-Clause |
+| @maplibre/geojson-vt | 6.1.1 | ISC |
+| @maplibre/maplibre-gl-style-spec | 26.4.4 | ISC |
+| @maplibre/mlt | 1.3.0 | (MIT OR Apache-2.0) |
+| @maplibre/vt-pbf | 4.3.2 | MIT |
 | @next/env | 16.3.8 | MIT |
 | @next/swc-darwin-arm64 | 16.3.8 | MIT |
 | @next/swc-darwin-x64 | 16.3.8 | MIT |
@@ -147,19 +162,35 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | @next/swc-win32-arm64-msvc | 16.3.8 | MIT |
 | @next/swc-win32-x64-msvc | 16.3.8 | MIT |
 | @swc/helpers | 0.5.23 | Apache-2.0 |
+| @types/geojson | 7946.0.16 | MIT |
 | baseline-browser-mapping | 2.11.27 | Apache-2.0 |
+| bidi-js | 1.1.0 | MIT |
 | caniuse-lite | 1.0.30001814 | CC-BY-4.0 |
 | client-only | 0.0.1 | MIT |
+| earcut | 3.2.4 | ISC |
+| gl-matrix | 3.4.4 | MIT |
+| json-stringify-pretty-compact | 4.0.0 | MIT |
+| kdbush | 4.1.0 | ISC |
+| maplibre-gl | 6.12.0 | BSD-3-Clause |
+| minimist | 1.2.8 | MIT |
+| murmurhash-js | 1.0.0 | MIT |
 | nanoid | 3.3.19 | MIT |
 | next | 16.3.8 | MIT |
+| pbf | 5.1.2 | BSD-3-Clause |
 | picocolors | 1.1.1 | ISC |
 | postcss | 8.5.23 | MIT |
+| potpack | 2.1.0 | ISC |
+| protocol-buffers-schema | 3.6.1 | MIT |
+| quickselect | 3.0.0 | ISC |
 | react | 19.3.0 | MIT |
 | react-dom | 19.3.0 | MIT |
+| require-from-string | 2.0.2 | MIT |
+| resolve-protobuf-schema | 2.1.0 | MIT |
 | scheduler | 0.28.0 | MIT |
 | sharp | 0.35.5 | Apache-2.0 |
 | source-map-js | 1.2.2 | BSD-3-Clause |
 | styled-jsx | 5.1.6 | MIT |
+| tinyqueue | 3.0.0 | ISC |
 | tslib | 2.8.1 | 0BSD |
 
 ## npm — development tooling (not shipped)
@@ -319,7 +350,6 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | axobject-query | 4.1.0 | Apache-2.0 |
 | balanced-match | 1.0.2 | MIT |
 | balanced-match | 4.0.4 | MIT |
-| bidi-js | 1.1.0 | MIT |
 | brace-expansion | 1.1.21 | MIT |
 | brace-expansion | 5.0.12 | MIT |
 | braces | 3.0.3 | MIT |
@@ -508,7 +538,6 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | min-indent | 1.0.1 | MIT |
 | minimatch | 10.2.6 | BlueOak-1.0.0 |
 | minimatch | 3.1.5 | ISC |
-| minimist | 1.2.8 | MIT |
 | ms | 2.1.3 | MIT |
 | napi-postinstall | 0.3.4 | MIT |
 | natural-compare | 1.4.0 | MIT |
@@ -547,7 +576,6 @@ here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the c
 | redent | 3.0.0 | MIT |
 | reflect.getprototypeof | 1.0.10 | MIT |
 | regexp.prototype.flags | 1.5.4 | MIT |
-| require-from-string | 2.0.2 | MIT |
 | resolve | 2.0.0-next.7 | MIT |
 | resolve-from | 4.0.0 | MIT |
 | resolve-pkg-maps | 1.0.0 | MIT |

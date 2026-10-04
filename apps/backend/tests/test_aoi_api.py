@@ -65,9 +65,14 @@ def test_point_radius_details_and_polygon_is_valid_in_postgis(client: TestClient
     assert tuple(row) == (True, 4326, "ST_Polygon")
 
 
-def test_open_ring_warning_is_returned(client: TestClient) -> None:
-    d = client.post("/api/v1/aois/preview", json=POLY).json()
-    assert any("closed automatically" in w for w in d["warnings"])
+def test_drawn_polygons_and_generated_shapes_have_no_spurious_warnings(client: TestClient) -> None:
+    for body in (POLY, PR, RECT):  # POLY is an open ring by API contract
+        assert client.post("/api/v1/aois/preview", json=body).json()["warnings"] == []
+
+
+def test_unclosed_ring_in_an_uploaded_file_is_reported(client: TestClient) -> None:
+    r = up(client, "open.geojson", geojson_polygon(SQ[:-1]), params={"preview": "true"})
+    assert r.status_code == 200 and any("closed automatically" in w for w in r.json()["warnings"])
 
 
 def test_name_rules(client: TestClient) -> None:
@@ -138,7 +143,7 @@ def test_malformed_ids(client: TestClient) -> None:
 
 
 # ------------------------------------------------------------------ uploads
-def up(client: TestClient, name: str, data: bytes, **kw: object):  # type: ignore[no-untyped-def]
+def up(client: TestClient, name: str, data: bytes, **kw):  # type: ignore[no-untyped-def]
     return client.post("/api/v1/aois/upload", files={"file": (name, data)}, **kw)
 
 

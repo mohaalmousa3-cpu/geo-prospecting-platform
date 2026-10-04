@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from app.aoi.geometry import (
+    CIRCLE_VERTICES,
     AoiGeometry,
     AoiLimitsConfig,
     RawPolygon,
@@ -61,14 +62,20 @@ def draft_from_request(req: AoiRequest, s: Settings) -> Draft:
     name = req.name.root if req.name is not None else None
     if isinstance(req, AoiPointRadiusRequest):
         ring = circle_ring(req.lat, req.lon, req.radius_m, limits)
-        details = {"lat": req.lat, "lon": req.lon, "radius_m": req.radius_m, "circle_vertices": len(ring)}
+        details = {
+            "lat": req.lat,
+            "lon": req.lon,
+            "radius_m": req.radius_m,
+            "circle_vertices": CIRCLE_VERTICES,
+        }
         return Draft("point_radius", build_polygon(RawPolygon(list(ring)), limits), details, name)
     if isinstance(req, AoiRectangleRequest):
         ring = rectangle_ring(req.west, req.south, req.east, req.north)
         details = {"west": req.west, "south": req.south, "east": req.east, "north": req.north}
         return Draft("rectangle", build_polygon(RawPolygon(list(ring)), limits), details, name)
     shell: list[Sequence[float]] = [list(p.root) for p in req.coordinates]
-    return Draft("polygon", build_polygon(RawPolygon(shell), limits), {}, name)
+    # API/UI polygons are documented as open rings (closed automatically): no warning
+    return Draft("polygon", build_polygon(RawPolygon(shell), limits, warn_unclosed=False), {}, name)
 
 
 def draft_from_upload(filename: str, data: bytes, s: Settings, name: str | None) -> Draft:
