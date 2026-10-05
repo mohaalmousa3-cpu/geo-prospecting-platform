@@ -1074,6 +1074,18 @@
               "title": "Aoi Id",
               "type": "string"
             }
+          },
+          {
+            "description": "Also delete the AOI's finished jobs (queued/running jobs always refuse)",
+            "in": "query",
+            "name": "delete_dependents",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Also delete the AOI's finished jobs (queued/running jobs always refuse)",
+              "title": "Delete Dependents",
+              "type": "boolean"
+            }
           }
         ],
         "responses": {

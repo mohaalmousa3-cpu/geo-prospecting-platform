@@ -10,6 +10,7 @@ from uuid import UUID
 
 from sqlalchemy import Engine, text
 
+from app import deletion
 from app.aoi.service import Draft
 from app.projects import ProjectNotFoundError
 
@@ -94,9 +95,12 @@ class AoiRepository:
             ).all()
         return [dict(r._mapping) for r in rows], total
 
-    def delete(self, aoi_id: UUID) -> bool:
-        with self._engine.begin() as conn:
-            return (
-                conn.execute(text("DELETE FROM aoi WHERE id=:i RETURNING id"), {"i": aoi_id}).first()
-                is not None
-            )
+    def delete(
+        self, aoi_id: UUID, *, cascade: bool = False, options: deletion.DeletionOptions | None = None
+    ) -> bool:
+        """Delete an AOI (ADR-0014 §7.5 r5, see `app.deletion`). False if it does not exist."""
+        try:
+            deletion.delete_aoi(self._engine, aoi_id, cascade=cascade, options=options)
+        except deletion.TargetNotFoundError:
+            return False
+        return True

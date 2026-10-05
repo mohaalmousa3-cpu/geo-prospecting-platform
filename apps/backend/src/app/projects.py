@@ -9,6 +9,8 @@ from uuid import UUID
 
 from sqlalchemy import Engine, text
 
+from app import deletion
+
 _ADVISORY_KEY = 7_000_003  # serialises count+insert so MAX_PROJECTS cannot be overshot
 
 _COLS = (
@@ -69,18 +71,17 @@ class ProjectRepository:
                 conn.execute(text("SELECT 1 FROM project WHERE id=:i"), {"i": project_id}).first() is not None
             )
 
-    def delete(self, project_id: UUID, *, delete_aois: bool) -> None:
-        """Delete a project. Refuses (ProjectNotEmptyError) unless `delete_aois` when AOIs remain."""
-        with self._engine.begin() as conn:
-            if (
-                conn.execute(text("SELECT 1 FROM project WHERE id=:i FOR UPDATE"), {"i": project_id}).first()
-                is None
-            ):
-                raise ProjectNotFoundError(str(project_id))
-            n = conn.execute(
-                text("SELECT count(*) FROM aoi WHERE project_id=:i"), {"i": project_id}
-            ).scalar_one()
-            if n and not delete_aois:
-                raise ProjectNotEmptyError(n)
-            conn.execute(text("DELETE FROM aoi WHERE project_id=:i"), {"i": project_id})
-            conn.execute(text("DELETE FROM project WHERE id=:i"), {"i": project_id})
+    def delete(
+        self, project_id: UUID, *, delete_aois: bool, options: deletion.DeletionOptions | None = None
+    ) -> None:
+        """Delete a project (ADR-0014 §7.5 r5, see `app.deletion`).
+
+        Refuses (ProjectNotEmptyError) unless `delete_aois` when AOIs remain. Deletion-specific errors
+        (active jobs, retry, integrity) propagate as `app.deletion` exceptions.
+        """
+        try:
+            deletion.delete_project(self._engine, project_id, delete_aois=delete_aois, options=options)
+        except deletion.TargetNotFoundError as exc:
+            raise ProjectNotFoundError(str(project_id)) from exc
+        except deletion.NotEmptyError as exc:
+            raise ProjectNotEmptyError(exc.aoi_count) from exc

@@ -9,6 +9,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Engine, text
+from sqlalchemy.exc import DBAPIError
 
 from geo_common.queue import (
     Heartbeat,
@@ -16,13 +17,16 @@ from geo_common.queue import (
     JobQueue,
     JobRecord,
     JobStatus,
+    JobTargetNotFoundError,
+    QueueBusyError,
     QueueFullError,
 )
+from geo_common.transactions import RetryBudgetExhaustedError, constraint_name, run_transaction, sqlstate
 
 # _COLS is a module constant (never user input), so f-string interpolation below is safe.
 _COLS = (
     "id, type, status, priority, payload, attempts, max_attempts, locked_by, "
-    "lease_expires_at, cancel_requested, error, created_at, started_at, finished_at"
+    "lease_expires_at, cancel_requested, error, created_at, started_at, finished_at, aoi_id, project_id"
 )
 _MAX_ERROR_CHARS = 2000
 _ENQUEUE_LOCK_KEY = 7_000_001  # advisory lock serialising enqueue count+insert
@@ -45,6 +49,8 @@ def _record(row: Any) -> JobRecord:
         created_at=m["created_at"],
         started_at=m["started_at"],
         finished_at=m["finished_at"],
+        aoi_id=m["aoi_id"],
+        project_id=m["project_id"],
     )
 
 
@@ -65,25 +71,55 @@ class PostgresJobQueue(JobQueue):
         *,
         priority: int = 0,
         max_attempts: int | None = None,
+        aoi_id: UUID | None = None,
     ) -> JobRecord:
-        with self._engine.begin() as conn:
+        if aoi_id is None and job_type != "noop":
+            raise ValueError(f"job type {job_type!r} is AOI-bound: aoi_id is required (ADR-0014)")
+        params = {
+            "t": job_type,
+            "p": priority,
+            "pl": json.dumps(payload or {}),
+            "m": max_attempts or self._default_attempts,
+            "a": aoi_id,
+        }
+
+        def op(conn: Any) -> JobRecord:
+            # Level 0 of the lock order (ADR-0014 §7.5). Deleters never take this lock.
             conn.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": _ENQUEUE_LOCK_KEY})
             queued = conn.execute(text("SELECT count(*) FROM job WHERE status='queued'")).scalar_one()
             if queued >= self._max_queued:
                 raise QueueFullError(self._max_queued)
-            row = conn.execute(
-                text(
-                    f"INSERT INTO job (type, priority, payload, max_attempts) "
-                    f"VALUES (:t, :p, CAST(:pl AS jsonb), :m) RETURNING {_COLS}"
-                ),
-                {
-                    "t": job_type,
-                    "p": priority,
-                    "pl": json.dumps(payload or {}),
-                    "m": max_attempts or self._default_attempts,
-                },
-            ).one()
-        return _record(row)
+            if aoi_id is None:
+                row = conn.execute(
+                    text(
+                        f"INSERT INTO job (type, priority, payload, max_attempts) "
+                        f"VALUES (:t, :p, CAST(:pl AS jsonb), :m) RETURNING {_COLS}"
+                    ),
+                    params,
+                ).one()
+            else:
+                # One statement: the project is derived from the AOI row (never client-supplied); the FK check
+                # takes a key-share lock on the AOI, so a concurrent deleter and this insert are ordered.
+                row = conn.execute(
+                    text(
+                        f"INSERT INTO job (type, priority, payload, max_attempts, aoi_id, project_id) "
+                        f"SELECT :t, :p, CAST(:pl AS jsonb), :m, a.id, a.project_id FROM aoi a "
+                        f"WHERE a.id = :a RETURNING {_COLS}"
+                    ),
+                    params,
+                ).first()
+                if row is None:
+                    raise JobTargetNotFoundError(str(aoi_id))
+            return _record(row)
+
+        try:
+            return run_transaction(self._engine, op)
+        except RetryBudgetExhaustedError as exc:
+            raise QueueBusyError(str(exc)) from exc
+        except DBAPIError as exc:
+            if sqlstate(exc) == "23503" and constraint_name(exc) == "job_aoi_project_fk":
+                raise JobTargetNotFoundError(str(aoi_id)) from exc  # the AOI vanished before commit
+            raise
 
     def get(self, job_id: UUID) -> JobRecord:
         with self._engine.connect() as conn:

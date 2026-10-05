@@ -33,6 +33,14 @@ class JobNotFoundError(Exception):
     pass
 
 
+class JobTargetNotFoundError(Exception):
+    """`enqueue(aoi_id=...)` named an AOI that does not exist (or vanished before the job was committed)."""
+
+
+class QueueBusyError(Exception):
+    """The enqueue transaction could not complete within its retry budget (lock waits / deadlocks)."""
+
+
 @dataclass(frozen=True)
 class JobRecord:
     id: UUID
@@ -49,6 +57,9 @@ class JobRecord:
     created_at: datetime
     started_at: datetime | None
     finished_at: datetime | None
+    # ADR-0014: both set for AOI-bound jobs (project derived from the AOI), both None otherwise (`noop` only)
+    aoi_id: UUID | None = None
+    project_id: UUID | None = None
 
 
 @dataclass(frozen=True)
@@ -68,8 +79,16 @@ class JobQueue(ABC):
         *,
         priority: int = 0,
         max_attempts: int | None = None,
+        aoi_id: UUID | None = None,
     ) -> JobRecord:
-        """Insert a queued job. Raises QueueFullError beyond MAX_QUEUED_JOBS."""
+        """Insert a queued job. Raises QueueFullError beyond MAX_QUEUED_JOBS.
+
+        Every non-`noop` job is AOI-bound (ADR-0014): `aoi_id` is required (ValueError otherwise, before
+        any SQL)
+        and the project is *derived from the AOI*, never supplied by the caller. Raises
+        JobTargetNotFoundError if
+        the AOI does not exist and QueueBusyError if the transaction could not complete (lock contention).
+        """
 
     @abstractmethod
     def get(self, job_id: UUID) -> JobRecord:

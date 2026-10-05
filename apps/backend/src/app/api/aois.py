@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, File, Form, Query, Request, Response, UploadFile, status
 from pydantic import Field
 
+from app import deletion
 from app.aoi.errors import AoiValidationError
 from app.aoi.repository import AoiLimitReachedError, AoiRepository
 from app.aoi.service import (
@@ -17,7 +18,7 @@ from app.aoi.service import (
     draft_from_upload,
     limits_view,
 )
-from app.errors import ApiError
+from app.errors import ApiError, translate_deletion_error
 from app.projects import ProjectNotFoundError
 from geo_common.config import Settings
 from geo_common.models._generated import Aoi, AoiDraft, AoiLimits, AoiList
@@ -120,7 +121,23 @@ def get_aoi(aoi_id: UUID, request: Request) -> Aoi:
 
 
 @router.delete("/{aoi_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an AOI")
-def delete_aoi(aoi_id: UUID, request: Request) -> Response:
-    if not _repo(request).delete(aoi_id):
+def delete_aoi(
+    aoi_id: UUID,
+    request: Request,
+    delete_dependents: Annotated[
+        bool, Query(description="Also delete the AOI's finished jobs (queued/running jobs always refuse)")
+    ] = False,
+) -> Response:
+    try:
+        found = _repo(request).delete(aoi_id, cascade=delete_dependents)
+    except (
+        deletion.HasActiveJobsError,
+        deletion.NeedsCascadeError,
+        deletion.StillReferencedError,
+        deletion.RetryLaterError,
+        deletion.IntegrityFailureError,
+    ) as exc:
+        raise translate_deletion_error(exc) or exc from exc
+    if not found:
         raise ApiError(404, "aoi_not_found", "AOI not found")
     return Response(status_code=204)

@@ -7,7 +7,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Request, Response, status
 
-from app.errors import ApiError
+from app import deletion
+from app.errors import ApiError, translate_deletion_error
 from app.projects import (
     ProjectLimitReachedError,
     ProjectNotEmptyError,
@@ -67,4 +68,12 @@ def delete_project(
             "project_not_empty",
             f"project contains {exc.aoi_count} AOI(s); delete them first or pass delete_aois=true",
         ) from exc
+    except (
+        deletion.HasActiveJobsError,
+        deletion.NeedsCascadeError,
+        deletion.StillReferencedError,
+        deletion.RetryLaterError,
+        deletion.IntegrityFailureError,
+    ) as exc:
+        raise translate_deletion_error(exc) or exc from exc
     return Response(status_code=204)

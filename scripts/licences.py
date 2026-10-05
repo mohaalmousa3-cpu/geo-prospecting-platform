@@ -23,7 +23,7 @@ WEAK = re.compile(r"(?<![A-Za-z])(LGPL|MPL|EPL|CDDL)|Mozilla Public", re.I)
 # "Pending owner acknowledgement" section (generated) until the owner approves it in
 # APPROVED_COPYLEFT (CLAUDE.md §6: copyleft needs owner approval). Approving is NOT done by tooling.
 APPROVED_COPYLEFT: dict[str, str] = {}
-WORKSPACE = {"geo-common", "geo-backend", "geo-runner", "geo-prospecting-platform"}
+WORKSPACE = {"geo-common", "geo-backend", "geo-runner", "geo-connectors", "geo-prospecting-platform"}
 
 
 def norm(name: str) -> str:

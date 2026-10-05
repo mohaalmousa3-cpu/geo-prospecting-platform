@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import time
+from uuid import UUID
 
 import pytest
 from sqlalchemy import Engine, text
@@ -13,6 +14,8 @@ from runner.loop import Runner
 
 pytestmark = pytest.mark.integration
 
+# Non-`noop` job types are AOI-bound (ADR-0014): every such test enqueues with the `aoi_id` fixture
+# (conftest.py creates a project and an AOI). No test-only job type is exempt from that rule.
 H = {
     **DEFAULT_HANDLERS,
     "sleep": "handlers_for_tests:sleeper",
@@ -44,30 +47,30 @@ def test_noop_rejects_bad_sleep() -> None:
         noop({"sleep_seconds": 10_000})
 
 
-def test_handler_exception_fails_job_with_message(queue: PostgresJobQueue) -> None:
-    j = queue.enqueue("boom")
+def test_handler_exception_fails_job_with_message(queue: PostgresJobQueue, aoi_id: UUID) -> None:
+    j = queue.enqueue("boom", aoi_id=aoi_id)
     make_runner(queue).run_once()
     f = queue.get(j.id)
     assert f.status is JobStatus.FAILED and "handler exploded" in (f.error or "")
     assert f.attempts == 1  # handler errors are not retried
 
 
-def test_insufficient_data_is_a_normal_terminal_state(queue: PostgresJobQueue) -> None:
-    j = queue.enqueue("insufficient")
+def test_insufficient_data_is_a_normal_terminal_state(queue: PostgresJobQueue, aoi_id: UUID) -> None:
+    j = queue.enqueue("insufficient", aoi_id=aoi_id)
     make_runner(queue).run_once()
     d = queue.get(j.id)
     assert d.status is JobStatus.INSUFFICIENT_DATA and d.error == "no usable scenes"
 
 
-def test_unknown_job_type_fails(queue: PostgresJobQueue) -> None:
-    j = queue.enqueue("does-not-exist")
+def test_unknown_job_type_fails(queue: PostgresJobQueue, aoi_id: UUID) -> None:
+    j = queue.enqueue("does-not-exist", aoi_id=aoi_id)
     make_runner(queue).run_once()
     f = queue.get(j.id)
     assert f.status is JobStatus.FAILED and "no handler" in (f.error or "")
 
 
-def test_timeout_kills_child_and_fails(queue: PostgresJobQueue) -> None:
-    j = queue.enqueue("sleep", {"s": 30})
+def test_timeout_kills_child_and_fails(queue: PostgresJobQueue, aoi_id: UUID) -> None:
+    j = queue.enqueue("sleep", {"s": 30}, aoi_id=aoi_id)
     t0 = time.monotonic()
     make_runner(queue, job_timeout=1.0).run_once()
     assert time.monotonic() - t0 < 10
@@ -75,8 +78,8 @@ def test_timeout_kills_child_and_fails(queue: PostgresJobQueue) -> None:
     assert f.status is JobStatus.FAILED and "timeout" in (f.error or "")
 
 
-def test_hard_crash_is_retried_then_failed(queue: PostgresJobQueue) -> None:
-    j = queue.enqueue("crash", max_attempts=2)
+def test_hard_crash_is_retried_then_failed(queue: PostgresJobQueue, aoi_id: UUID) -> None:
+    j = queue.enqueue("crash", max_attempts=2, aoi_id=aoi_id)
     r = make_runner(queue)
     r.run_once()
     assert queue.get(j.id).status is JobStatus.QUEUED  # attempt 1 died → retry
@@ -85,8 +88,8 @@ def test_hard_crash_is_retried_then_failed(queue: PostgresJobQueue) -> None:
     assert f.status is JobStatus.FAILED and f.attempts == 2 and "died" in (f.error or "")
 
 
-def test_cancel_while_running_is_honoured(queue: PostgresJobQueue) -> None:
-    j = queue.enqueue("sleep", {"s": 30})
+def test_cancel_while_running_is_honoured(queue: PostgresJobQueue, aoi_id: UUID) -> None:
+    j = queue.enqueue("sleep", {"s": 30}, aoi_id=aoi_id)
     r = make_runner(queue)
     t = threading.Thread(target=r.run_once)
     t.start()
@@ -100,9 +103,9 @@ def test_cancel_while_running_is_honoured(queue: PostgresJobQueue) -> None:
     assert c.status is JobStatus.CANCELLED and c.locked_by is None
 
 
-def test_lease_is_renewed_for_long_jobs(queue: PostgresJobQueue, engine: Engine) -> None:
+def test_lease_is_renewed_for_long_jobs(queue: PostgresJobQueue, engine: Engine, aoi_id: UUID) -> None:
     """Job outlives its 1s lease; heartbeats must keep it ours, and a rival sweep must not steal it."""
-    j = queue.enqueue("sleep", {"s": 2.5})
+    j = queue.enqueue("sleep", {"s": 2.5}, aoi_id=aoi_id)
     r = make_runner(queue, lease_seconds=1, heartbeat_interval=0.25)
     steals: list[int] = []
     t = threading.Thread(target=r.run_once)
@@ -124,9 +127,11 @@ def test_worker_crash_is_recovered_by_another_worker(queue: PostgresJobQueue, en
     assert done.status is JobStatus.SUCCEEDED and done.attempts == 2
 
 
-def test_lease_loss_abandons_without_overwriting(queue: PostgresJobQueue, engine: Engine) -> None:
+def test_lease_loss_abandons_without_overwriting(
+    queue: PostgresJobQueue, engine: Engine, aoi_id: UUID
+) -> None:
     """If another actor takes the job over, the old worker must stop and not write a result."""
-    j = queue.enqueue("sleep", {"s": 30})
+    j = queue.enqueue("sleep", {"s": 30}, aoi_id=aoi_id)
     r = make_runner(queue, heartbeat_interval=0.2)
     t = threading.Thread(target=r.run_once)
     t.start()
@@ -140,8 +145,8 @@ def test_lease_loss_abandons_without_overwriting(queue: PostgresJobQueue, engine
     assert s.status is JobStatus.RUNNING and s.locked_by == "someone-else"
 
 
-def test_graceful_stop_returns_running_job_to_queue(queue: PostgresJobQueue) -> None:
-    j = queue.enqueue("sleep", {"s": 30})
+def test_graceful_stop_returns_running_job_to_queue(queue: PostgresJobQueue, aoi_id: UUID) -> None:
+    j = queue.enqueue("sleep", {"s": 30}, aoi_id=aoi_id)
     r = make_runner(queue)
     t = threading.Thread(target=r.run_once)
     t.start()

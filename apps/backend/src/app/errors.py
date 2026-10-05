@@ -52,3 +52,29 @@ def install_error_handlers(app: FastAPI) -> None:
             "unhandled error", extra={"request_id": getattr(request.state, "request_id", None)}
         )
         return JSONResponse(_body(request, "internal_error", "internal server error"), status_code=500)
+
+
+def translate_deletion_error(exc: Exception) -> ApiError | None:
+    """Map `app.deletion` exceptions to API errors (ADR-0014 §7.6); None for anything else."""
+    import logging
+
+    from app import deletion
+
+    if isinstance(exc, deletion.HasActiveJobsError):
+        return ApiError(409, "has_active_jobs", f"{exc}")
+    if isinstance(exc, deletion.NeedsCascadeError):
+        return ApiError(409, "needs_cascade", f"{exc}")
+    if isinstance(exc, deletion.StillReferencedError):
+        logging.getLogger("app").warning("deletion refused: still referenced (%s)", exc.constraint)
+        return ApiError(409, "still_referenced", "a row that references this target still exists")
+    if isinstance(exc, deletion.RetryLaterError):
+        return ApiError(
+            503, "retry_later", "the operation could not complete under contention; retry shortly"
+        )
+    if isinstance(exc, deletion.IntegrityFailureError):
+        # SQLSTATE and constraint are logged; the client gets no SQL detail
+        logging.getLogger("app").error(
+            "integrity error: SQLSTATE %s constraint %s", exc.state, exc.constraint
+        )
+        return ApiError(500, "integrity_error", "an unexpected integrity error occurred")
+    return None
