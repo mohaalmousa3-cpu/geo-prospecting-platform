@@ -50,3 +50,41 @@ def test_symlink_escape_rejected(store: LocalStorage, tmp_path: Path) -> None:
 def test_no_stray_temp_files(store: LocalStorage, tmp_path: Path) -> None:
     store.put("k/v", b"x")
     assert os.listdir(tmp_path / "root" / "k") == ["v"]
+
+
+# --- staging protocol (ADR-0014 §8): write to a staging file, flush, rename atomically ---
+def test_staging_directory_is_reserved(store: LocalStorage) -> None:
+    for key in (".staging/x.part", ".staging"):
+        with pytest.raises(StorageKeyError):
+            store.put(key, b"x")
+
+
+def test_put_leaves_no_staging_file_and_staging_is_not_listed_as_a_key(store: LocalStorage) -> None:
+    store.put("a/b.json", b"{}")
+    assert list(store.iter_staging()) == [] and list(store.iter_keys()) == ["a/b.json"]
+
+
+def test_a_failed_put_leaves_neither_the_target_nor_a_staging_file(
+    store: LocalStorage, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def boom(*_a: object) -> None:
+        raise OSError("simulated rename failure")
+
+    monkeypatch.setattr(os, "replace", boom)
+    with pytest.raises(OSError, match="simulated"):
+        store.put("a/b.json", b"{}")
+    assert not store.exists("a/b.json") and list(store.iter_staging()) == []
+
+
+def test_delete_staging_touches_only_the_file_derived_from_that_key(store: LocalStorage) -> None:
+    (store._root / ".staging").mkdir()  # type: ignore[attr-defined]
+    own = store._staging_path("a/own.json")  # type: ignore[attr-defined]
+    other = store._root / ".staging" / "other.part"  # type: ignore[attr-defined]
+    own.write_bytes(b"1")
+    other.write_bytes(b"2")
+    store.delete_staging("a/own.json")
+    store.delete_staging("a/own.json")  # idempotent
+    assert not own.exists() and other.exists()
+    assert [n for n, _m, _s in store.iter_staging()] == [
+        "other.part"
+    ]  # a crash leftover is visible to reports

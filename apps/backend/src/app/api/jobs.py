@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.errors import ApiError
 from geo_common.models._generated import Job, JobStatus, JobType
-from geo_common.queue import JobNotFoundError, JobQueue, JobRecord, QueueFullError
+from geo_common.queue import JobNotFoundError, JobQueue, JobRecord, QueueBusyError, QueueFullError
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -61,6 +61,10 @@ def create_job(body: JobCreate, request: Request) -> Job:
     except QueueFullError as exc:
         raise ApiError(
             429, "queue_full", f"queue is full (MAX_QUEUED_JOBS={exc.limit}); retry later"
+        ) from exc
+    except QueueBusyError as exc:  # the queue transaction exhausted its attempt budget (lock contention)
+        raise ApiError(
+            503, "retry_later", "the queue is busy; the job was not created, retry shortly"
         ) from exc
     return _to_model(record)
 

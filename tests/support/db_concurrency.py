@@ -76,6 +76,27 @@ class Bg:
         return self._exc
 
 
+class Held:
+    """A raw session with an open transaction; always rolled back and closed, even if the test fails."""
+
+    def __init__(self, engine: Engine) -> None:
+        self.conn = engine.connect()
+        self.tx = self.conn.begin()
+        self.pid = backend_pid(self.conn)
+
+    def run(self, sql: str, **params: object) -> None:
+        self.conn.execute(text(sql), params)
+
+    def commit(self) -> None:
+        self.tx.commit()
+
+    def __enter__(self) -> Held:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.conn.close()
+
+
 class Gate:
     """A hook that pauses the deleter inside its transaction until the test releases it."""
 

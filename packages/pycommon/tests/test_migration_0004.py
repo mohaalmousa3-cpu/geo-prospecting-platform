@@ -18,6 +18,16 @@ from geo_common.transactions import constraint_name, sqlstate
 
 TEST_URL = os.environ.get("GEO_TEST_DATABASE_URL", "postgresql+pg8000://geo:geo@localhost:5432/geo_test")
 pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(autouse=True)
+def _start_from_empty_tables(db_engine: Engine) -> None:
+    """Migration tests move the schema up and down; other tests leave rows behind (some of which a downgrade
+    refuses to destroy or an upgrade refuses to guess about). Each test here starts from empty tables."""
+    with db_engine.begin() as c:
+        c.execute(text("TRUNCATE job, aoi, project, storage_tombstone, provenance, result CASCADE"))
+
+
 MakeAoi = Callable[..., tuple[UUID, UUID]]
 
 CONSTRAINTS = {
@@ -55,6 +65,8 @@ def _job_columns(engine: Engine) -> set[str]:
 
 # --------------------------------------------------------------------------------- T1 migration
 def test_up_down_up_on_an_empty_table(db_engine: Engine) -> None:
+    with db_engine.begin() as c:  # other tests leave rows behind; this one is about an empty table
+        c.execute(text("TRUNCATE job, aoi, project, storage_tombstone, provenance, result CASCADE"))
     downgrade_base(TEST_URL, "0003")
     assert not _constraints(db_engine) & (
         CONSTRAINTS - {"aoi_id_project_id_key"}
@@ -101,6 +113,8 @@ def test_a_non_noop_row_aborts_atomically_and_lists_its_id(db_engine: Engine) ->
 
 
 def test_downgrade_removes_columns_and_constraints(db_engine: Engine) -> None:
+    with db_engine.begin() as c:
+        c.execute(text("TRUNCATE job, aoi, project, storage_tombstone, provenance, result CASCADE"))
     downgrade_base(TEST_URL, "0003")
     assert "project_id" not in _job_columns(db_engine)
     assert "aoi_id_project_id_key" not in _constraints(db_engine)

@@ -13,6 +13,14 @@ TEST_URL = os.environ.get("GEO_TEST_DATABASE_URL", "postgresql+pg8000://geo:geo@
 pytestmark = pytest.mark.integration
 
 
+@pytest.fixture(autouse=True)
+def _start_from_empty_tables(db_engine: Engine) -> None:
+    """Migration tests move the schema up and down; other tests leave rows behind (some of which a downgrade
+    refuses to destroy or an upgrade refuses to guess about). Each test here starts from empty tables."""
+    with db_engine.begin() as c:
+        c.execute(text("TRUNCATE job, aoi, project, storage_tombstone, provenance, result CASCADE"))
+
+
 def test_up_down_up_and_postgis(db_engine: Engine) -> None:
     downgrade_base(TEST_URL)
     with db_engine.connect() as c:

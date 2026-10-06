@@ -23,6 +23,10 @@ export type LonLat = [number, number];
  */
 export type Bbox = [number, number, number, number];
 export type ProjectName = string;
+/**
+ * Staged input kind (ADR-0014). Inputs, never scientific results.
+ */
+export type AssetKind = "scene_catalog" | "dem_clip" | "user_vector";
 
 /**
  * Shared contracts (ADR-0009, ADR-0010, ADR-0011). Single source of truth; Pydantic and TypeScript types are generated from this file.
@@ -40,6 +44,9 @@ export interface GeoContracts {
   project?: Project;
   project_list?: ProjectList;
   project_create_request?: ProjectCreateRequest;
+  asset?: Asset;
+  asset_list?: AssetList;
+  asset_deleted?: AssetDeleted;
 }
 export interface Job {
   id: string;
@@ -245,4 +252,33 @@ export interface ProjectList {
 export interface ProjectCreateRequest {
   name: ProjectName;
   description?: string | null;
+}
+/**
+ * A staged data input (catalogue metadata, clipped DEM, user vector). NOT a result: it carries no confidence, score or interpretation, and must never be described as a finding. Source metadata is in `provenance`.
+ */
+export interface Asset {
+  id: string;
+  project_id: string;
+  aoi_id: string;
+  job_id: string | null;
+  kind: AssetKind;
+  media_type: string;
+  size_bytes: number;
+  sha256: string;
+  created_at: string;
+  /**
+   * Source metadata: dataset, version, date, parameters, code version.
+   */
+  provenance: {};
+}
+export interface AssetList {
+  items: Asset[];
+  total: number;
+}
+/**
+ * Result of deleting one asset. The database deletion is committed; `files_pending_cleanup` counts files whose post-commit removal is still pending (0 or 1). A pending cleanup is never a failed deletion.
+ */
+export interface AssetDeleted {
+  deleted: true;
+  files_pending_cleanup: number;
 }

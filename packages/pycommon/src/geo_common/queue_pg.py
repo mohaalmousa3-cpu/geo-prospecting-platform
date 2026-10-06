@@ -21,7 +21,13 @@ from geo_common.queue import (
     QueueBusyError,
     QueueFullError,
 )
-from geo_common.transactions import RetryBudgetExhaustedError, constraint_name, run_transaction, sqlstate
+from geo_common.transactions import (
+    DEFAULT_LOCK_TIMEOUT_MS,
+    RetryBudgetExhaustedError,
+    constraint_name,
+    run_transaction,
+    sqlstate,
+)
 
 # _COLS is a module constant (never user input), so f-string interpolation below is safe.
 _COLS = (
@@ -59,7 +65,15 @@ def _trim(msg: str | None) -> str | None:
 
 
 class PostgresJobQueue(JobQueue):
-    def __init__(self, engine: Engine, *, max_queued_jobs: int, default_max_attempts: int) -> None:
+    def __init__(
+        self,
+        engine: Engine,
+        *,
+        max_queued_jobs: int,
+        default_max_attempts: int,
+        lock_timeout_ms: int = DEFAULT_LOCK_TIMEOUT_MS,
+    ) -> None:
+        self._lock_timeout_ms = lock_timeout_ms
         self._engine = engine
         self._max_queued = max_queued_jobs
         self._default_attempts = default_max_attempts
@@ -113,7 +127,7 @@ class PostgresJobQueue(JobQueue):
             return _record(row)
 
         try:
-            return run_transaction(self._engine, op)
+            return run_transaction(self._engine, op, lock_timeout_ms=self._lock_timeout_ms)
         except RetryBudgetExhaustedError as exc:
             raise QueueBusyError(str(exc)) from exc
         except DBAPIError as exc:

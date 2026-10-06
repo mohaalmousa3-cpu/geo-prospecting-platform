@@ -393,6 +393,47 @@ class ProjectList(BaseModel):
     total: Annotated[int, Field(ge=0)]
 
 
+class AssetKind(StrEnum):
+    scene_catalog = "scene_catalog"
+    dem_clip = "dem_clip"
+    user_vector = "user_vector"
+
+
+class Asset(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    id: UUID
+    project_id: UUID
+    aoi_id: UUID
+    job_id: UUID | None
+    kind: AssetKind
+    media_type: str
+    size_bytes: Annotated[int, Field(ge=0)]
+    sha256: Annotated[str, Field(pattern="^[0-9a-f]{64}$")]
+    created_at: AwareDatetime
+    provenance: Annotated[
+        dict[str, Any],
+        Field(description="Source metadata: dataset, version, date, parameters, code version."),
+    ]
+
+
+class AssetList(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    items: list[Asset]
+    total: Annotated[int, Field(ge=0)]
+
+
+class AssetDeleted(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    deleted: Literal[True]
+    files_pending_cleanup: Annotated[int, Field(ge=0)]
+
+
 class GeoContracts(BaseModel):
     job: Job | None = None
     result_envelope: ResultEnvelope | None = None
@@ -406,3 +447,6 @@ class GeoContracts(BaseModel):
     project: Project | None = None
     project_list: ProjectList | None = None
     project_create_request: ProjectCreateRequest | None = None
+    asset: Asset | None = None
+    asset_list: AssetList | None = None
+    asset_deleted: AssetDeleted | None = None

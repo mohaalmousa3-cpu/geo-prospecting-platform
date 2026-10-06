@@ -40,6 +40,15 @@
     },
     "project_create_request": {
       "$ref": "#/definitions/ProjectCreateRequest"
+    },
+    "asset": {
+      "$ref": "#/definitions/Asset"
+    },
+    "asset_list": {
+      "$ref": "#/definitions/AssetList"
+    },
+    "asset_deleted": {
+      "$ref": "#/definitions/AssetDeleted"
     }
   },
   "definitions": {
@@ -916,6 +925,114 @@
           }
         },
         "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "AssetKind": {
+      "type": "string",
+      "enum": [
+        "scene_catalog",
+        "dem_clip",
+        "user_vector"
+      ],
+      "description": "Staged input kind (ADR-0014). Inputs, never scientific results."
+    },
+    "Asset": {
+      "description": "A staged data input (catalogue metadata, clipped DEM, user vector). NOT a result: it carries no confidence, score or interpretation, and must never be described as a finding. Source metadata is in `provenance`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "project_id",
+        "aoi_id",
+        "job_id",
+        "kind",
+        "media_type",
+        "size_bytes",
+        "sha256",
+        "created_at",
+        "provenance"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "project_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aoi_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "job_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "kind": {
+          "$ref": "#/definitions/AssetKind"
+        },
+        "media_type": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "provenance": {
+          "type": "object",
+          "description": "Source metadata: dataset, version, date, parameters, code version."
+        }
+      }
+    },
+    "AssetList": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "items",
+        "total"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Asset"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "AssetDeleted": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deleted",
+        "files_pending_cleanup"
+      ],
+      "description": "Result of deleting one asset. The database deletion is committed; `files_pending_cleanup` counts files whose post-commit removal is still pending (0 or 1). A pending cleanup is never a failed deletion.",
+      "properties": {
+        "deleted": {
+          "type": "boolean",
+          "const": true
+        },
+        "files_pending_cleanup": {
           "type": "integer",
           "minimum": 0
         }
