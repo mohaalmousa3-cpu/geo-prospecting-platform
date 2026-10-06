@@ -41,8 +41,21 @@ def test_ci_runs_the_image_smoke_test_and_the_smoke_override_is_fixtures_only() 
     override = (ROOT / "infrastructure/docker/docker-compose.smoke.yml").read_text()
     assert set(re.findall(r"CONNECTOR_MODE:\s*(\w+)", override)) == {"fixture"}
     assert "ports: !reset []" in override  # nothing is published on the host by the smoke stack
-    assert "pg_isready -h 127.0.0.1" in override  # readiness over TCP, not only the init-time unix socket
     script = (ROOT / "scripts/image_smoke.sh").read_text()
     assert "--network none" in script  # the import check runs without any network
-    # CI exports POSTGRES_PASSWORD; compose would then initialise postgis with it while the services read .env
-    assert re.search(r"^unset .*POSTGRES_PASSWORD", script, re.M)
+
+
+def test_postgis_takes_its_credentials_from_the_same_env_file_as_the_services() -> None:
+    """Regression (CI #18/#19): `${POSTGRES_PASSWORD}` interpolation lets the caller's shell override --env-file."""
+    block = service_block("postgis")
+    assert re.search(r"^\s+env_file:\s*\.\./\.\./\.env\s*$", block, re.M)
+    code = "\n".join(ln for ln in COMPOSE.splitlines() if not ln.lstrip().startswith("#"))
+    # `$${VAR}` is the escaped, container-side form; a bare `${POSTGRES_*}` would be interpolated by Compose
+    assert not re.search(r"(?<!\$)\$\{POSTGRES_", code), "no credential may be interpolated by Compose"
+    assert re.search(r"^x-python-env:.*?env_file:\s*\.\./\.\./\.env", COMPOSE, re.M | re.S)
+
+
+def test_postgis_health_is_checked_over_tcp_on_loopback() -> None:
+    block = service_block("postgis")
+    assert re.search(r"pg_isready -h 127\.0\.0\.1 -U \$\$\{POSTGRES_USER\} -d \$\$\{POSTGRES_DB\}", block)
+    assert "service_healthy" in COMPOSE  # dependants wait for it

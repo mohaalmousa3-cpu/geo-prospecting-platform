@@ -11,14 +11,17 @@ x-python-env: &python-env
 services:
   postgis:
     image: postgis/postgis:16-3.4
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-geo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-geo_prospecting}
+    # Credentials come from ../../.env, the SAME file the services read (`env_file` below), never from
+    # `${POSTGRES_*}` interpolation: Compose lets variables exported in the caller's shell override --env-file when
+    # it interpolates, which initialised the database with one password while the services used another (CI runs
+    # #18/#19). Container environments are not affected by the caller's shell.
+    env_file: ../../.env
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      # TCP on 127.0.0.1, the path the services use. The default unix-socket check answers ~2 s before TCP does on
+      # a cold start (init-time server), so dependants could be started into "connection refused".
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 20
