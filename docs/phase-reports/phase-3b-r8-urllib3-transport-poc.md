@@ -56,9 +56,56 @@ The environment's system store loads (127 CA certificates here; `/etc/ssl/certs/
 ## 7. Still unproven / residual
 
 * Real-provider behaviour (redirect/CDN hosts, rate limits, TLS chain, IPv6, HTTP/2 absence) — R1–R3 and a real transport test; nothing here touched a provider.
-* A body read can block up to one read timeout, so the real total can exceed the deadline by that amount (tested bounded).
+* A body read can block up to one read timeout, so the real total can exceed the deadline by that amount (tested bounded). **The deadline does not bound the header phase at all, see §8.**
 * No proof that urllib3/OpenSSL never perform a name lookup for the numeric-IP pool beyond the audit hook (a `getaddrinfo` on the literal IP is observed; DNS packets cannot be observed here).
-* HTTP header-section size limits are not set by the adapter (`http.client` defaults).
+* ~~HTTP header-section size limits are not set by the adapter~~ — resolved in the hardening checkpoint, see §8 (what stays stack-owned is listed there).
 * Equivalence of urllib3's `_match_hostname` with the stdlib for wildcard/IDN names; the `server_hostname`/`ssl_context` pool pass-through is documented by example only.
 * The context factory with no `cafile` follows OpenSSL's ambient store/env.
 * Remaining blockers: R1 partial, R2 unresolved, R3 unresolved, R4 owner host:port approval, R5 application + network controls, R6 start instruction, R8 not complete for live use (client not selected for any live slice; real-transport tests absent). R7 met.
+
+## 8. Hardening checkpoint — peer address and response headers (2026-10-06; offline; loopback only)
+
+Baseline `2e66d24`. No dependency, lock, licence-approval or fixed-query change (`APPROVED_FOR_EXECUTION` is still `False`); urllib3 is still pinned at exactly 2.8.0.
+
+### 8.1 Peer-address assertion
+
+* **Where.** `_PeerCheckedHTTPSConnection(HTTPSConnection).connect()` calls the parent, then `assert_peer(self.sock, selected_ip, port)`; on any failure it closes the socket and raises. It runs after TCP+TLS and **before any HTTP request is written**, so no request and no response body can exist for a wrong peer. The ClientHello (with the SNI) has already been sent to that peer; no HTTP data has.
+* **Rule.** `getpeername()` must return a 2- or 4-tuple whose host is a clean IP string (no scope id) and whose port is an int, and the address must equal the **selected** `request.connect_ip` (not merely any validated address) and the port must equal the destination port. Codes: `transport_peer_unavailable` (no accessor, no socket, accessor raised), `transport_peer_malformed`, `transport_peer_mismatch`. An IPv4-mapped IPv6 form is a mismatch, never normalised into equality.
+* **Supported-API assessment (recorded limitation).** urllib3 2.8.0 has **no documented accessor** for the peer address. The code relies on (a) overriding `connect()` of the public `HTTPSConnection` (`connect` is part of urllib3's `BaseHTTPConnection` protocol), (b) the pool's `ConnectionCls` attribute, assigned per pool instance, with the expected peer passed through the pool's `**conn_kw`, and (c) the `sock` attribute set by urllib3 and `http.client` — an undocumented but not underscore-private name. No `_`-prefixed urllib3 member is used. This coupling is isolated in one class and one function, verified only for 2.8.0; an upgrade must re-run the peer tests. The check fails closed if `sock` is missing.
+* **What the tests prove (loopback TLS servers, real sockets).** A matching peer succeeds; the check runs on the real `SSLSocket` exactly once; the selected address (not another validated one) is what counts (a second server on 127.0.0.2, same port); a mismatching peer (other address, IPv4-mapped spelling, `::1`, wrong port) fails with the server having received **zero HTTP requests**, SNI still equal to the original hostname; the injected resolver ran exactly once; malformed and unavailable peers fail closed; the connection is closed by `connect()` itself (independent of the pool's clean-up) and the pool is closed; the audit hook saw only loopback `socket.connect` events and no resolution of the logical name.
+* **Honest limit of that proof.** On loopback the kernel always reports the address that was dialled, so a *genuine* mismatch cannot be produced without privileged network setup. The mismatch and malformed paths are exercised on real TLS connections by substituting the module-level reader `_peer_address` with a faulty one; the success path uses the real reader. The mutation checks show the comparison is load-bearing.
+
+### 8.2 Response-header policy
+
+* **Where.** `check_response_headers(response.headers.iteritems(), limits)` is the **first** thing `_consume` does — before the status, `Location`, `Content-Encoding` or the body is looked at (tests: an over-limit response that also carries gzip or a 302 + `Location` gets the header code, and no body byte is read).
+* **Limits** (`ResponseHeaderLimits`, provisional operational safeguards, not scientific thresholds): count 32, name 64 bytes, value 4096 bytes, aggregate 16384 bytes (sum of name + value + 4 per field); hard ceilings 100 / 256 / 8192 / 65536, never above what the stdlib itself accepts; invalid limits → `transport_config`.
+* **Codes**, checked in this order: `transport_header_count`, `transport_header_name_size`, `transport_header_value_size`, `transport_header_malformed` (name not an RFC token, control character other than HTAB in a value, non-text or non-ISO-8859-1), `transport_header_total_size`, `transport_header_duplicate` (a repeated `Content-Length`, `Content-Encoding`, `Content-Type`, `Location` or `Transfer-Encoding`, even with identical values), `transport_header_conflict` (`Transfer-Encoding` together with `Content-Length`).
+* **Tests.** Every limit accepts the exact boundary and rejects one over; each malformed/duplicate/conflict case has its own code; an ordinary STAC-like set of JSON response headers (11 fields) passes under the defaults.
+* **Owned by the Python HTTP stack or urllib3 — not guaranteed by the adapter:**
+  1. `http.client` reads the status line and header lines before the adapter sees anything: at most 100 fields and 65536 bytes per line (`_MAXHEADERS`, `_MAXLINE`, values read from this interpreter); beyond that it raises and the adapter reports `transport_protocol` (tested for 150 fields and a 70000-byte line). Worst-case memory held before the adapter's limits apply is therefore about 100 × 64 KiB per response.
+  2. Header decoding (ISO-8859-1), continuation-line (obs-fold) handling and what the parser does with a line it cannot parse are the stdlib parser's; the adapter sees only what survives (for example `Bad(Name)` survives and is refused by the token rule). Behaviour for other unparseable lines was not characterised.
+  3. urllib3 parses `Content-Length`/`Transfer-Encoding` inside `urlopen` before the adapter sees the response: differing `Content-Length` lines raise `InvalidHeader` there (reported as `transport_error`); identical repeats are accepted by urllib3 and refused later by the adapter's duplicate rule.
+  4. Merged `HTTPHeaderDict` semantics: the adapter reads the raw lines through `iteritems()`.
+  5. **Time spent in the header phase.** See 8.3.
+
+### 8.3 New finding — the total deadline does not bound the header phase
+
+Measured locally (1 s total deadline, 1 s read timeout): a server that sends one header line every 0.2 s for about 6 s, and one that sends a stream of `100 Continue` blocks for about 6 s, each kept `urlopen` busy for **6.0 s** before the deadline error fired. `http.client` resets the per-read timeout on every line and loops over `100 Continue` responses without a bound, and the adapter's deadline is only checked between its own steps. This is **not fixed** in this checkpoint (out of scope; a fix needs a watchdog or a custom response-reading path). It is recorded here and in the R8 row.
+
+### 8.4 Local results
+
+Tests: `test_transport_urllib3_hardening.py` (49) in addition to the 30 loopback TLS tests and 9 isolation tests; the loopback tests were repeated three times without a failure. Mutation checks (not committed): peer — no assertion, `ConnectionCls` not installed, mismatch ignored, port ignored, mapped form normalised, unavailable peer tolerated, close-on-failure removed, expected = first validated address instead of the selected one — each fails at least one test; headers — each of the seven checks removed, header check moved after the status/encoding handling, HTAB wrongly rejected — each fails at least one test. One equivalent mutant: replacing `iteritems()` by `items()` changes nothing in 2.8.0 (both iterate every raw line).
+
+### 8.5 R8 against ADR-0014 §9 R-a…R-f — **Partial** (not Met)
+
+| Condition | Covered offline | Not covered |
+|---|---|---|
+| R-a scheme/host:port/URL shape | yes (policy + tests) | — |
+| R-b public addresses only | yes | metadata-name list is a short blocklist, not exhaustive |
+| R-c pinning, SNI, certificate vs the original name | yes on loopback, including the peer-address assertion | a real provider's TLS chain; a genuine (kernel-level) peer mismatch |
+| R-d redirects/pagination | no automatic redirects, manual ≤ 3 re-validated, downgrade refused | **pagination/asset links staying on the API base host, port and path prefix is not implemented** |
+| R-e bounds | timeouts, byte ceiling, identity-only (decompression guard), no cookies/credentials, redirect and request budgets, header limits | **content-type check not implemented; page limits, JSON depth/size limits and rates are connector-level and absent; the total deadline does not cover the header phase (8.3)** |
+| R-f offline tests | fake resolver and a real loopback transport; every listed attack class except as noted | pagination to another host (only the generic host allow-list applies); no fake transport |
+| Client selection note (R8) | urllib3 evaluated; licence review RV-0001 | **no client is selected for any live slice; no real-provider transport test** |
+
+Remaining blockers: R1 partial, R2 unresolved, R3 unresolved, R4 owner host:port approval, R5 application + network controls, R6 start instruction; R7 met; R8 partial as above.

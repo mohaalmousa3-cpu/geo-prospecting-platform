@@ -31,6 +31,23 @@ Response: `Accept-Encoding: identity`, any other `Content-Encoding` refused, `de
 is ever decompressed), a raw byte ceiling enforced while streaming, a monotonic total deadline checked
 before the request and before every body read, and non-2xx statuses refused without reading the body.
 
+Peer address (hardening checkpoint): after the connection is established (TCP and TLS) and BEFORE any HTTP
+request is written, the connection's actual peer address (`getpeername()`) must equal the selected, validated
+pinned IP and port exactly; unavailable, malformed or different values fail closed. urllib3 2.8.0 has no
+documented accessor for this: the check overrides `connect()` of the public `HTTPSConnection` (a member of
+urllib3's connection protocol) and reads the `sock` attribute set by urllib3 and `http.client` (not an
+underscore-private name, but not in the documented protocol either). The pool's `ConnectionCls` attribute is
+set per pool instance. This coupling is isolated in `_PeerCheckedHTTPSConnection` / `_peer_address`, is
+verified only for the pinned 2.8.0, and any urllib3 upgrade needs the peer tests re-run. The ClientHello (with
+the SNI) has already been sent when the check runs; no HTTP data has.
+
+Response headers: explicit limits (`ResponseHeaderLimits`: count, name length, value length, aggregate bytes)
+and RFC token / control-character / duplicate-sensitive-field checks run on the raw header lines FIRST, before
+the status, `Content-Encoding`, `Location` or the body are looked at. What stays owned by the Python HTTP
+stack and cannot be guaranteed by this adapter is listed in the design note (stdlib line and field-count caps,
+obs-fold and charset handling, `Content-Length`/`Transfer-Encoding` parsing inside urllib3 before the adapter
+sees the response, and the time spent in the header phase).
+
 Known limit: a body read can block for at most the read timeout, so the real total can exceed the deadline
 by up to one read timeout. Not proven here: behaviour against a real provider, real DNS, proxies in the
 network path.
@@ -38,13 +55,17 @@ network path.
 
 from __future__ import annotations
 
+import ipaddress
 import math
+import re
 import ssl
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 
 import urllib3.exceptions
 from urllib3 import HTTPSConnectionPool, Timeout
+from urllib3.connection import HTTPSConnection
 
 from geo_connectors.egress_policy import (
     HTTPS_DEFAULT_PORT,
@@ -131,6 +152,129 @@ def _exposed_headers(headers: urllib3.HTTPHeaderDict) -> tuple[tuple[str, str], 
     return tuple(out)
 
 
+# ---- response-header policy -------------------------------------------------------------------------
+# Provisional operational safeguards (like the ADR-0008 limits), not scientific thresholds. Sized for ordinary
+# JSON API responses (a STAC-like response carries roughly 8-20 header fields); the ceilings never exceed what
+# the Python HTTP stack itself accepts (100 fields, 65536 bytes per line).
+HEADER_COUNT_CEILING = 100
+HEADER_NAME_CEILING = 256
+HEADER_VALUE_CEILING = 8192
+HEADER_TOTAL_CEILING = 65536
+_HEADER_FRAMING_BYTES = 4  # ": " and CRLF, counted per field in the aggregate
+_TOKEN = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
+_CONTROL = re.compile(r"[\x00-\x08\x0a-\x1f\x7f]")  # HTAB is the only control character allowed in a value
+_DUPLICATE_SENSITIVE = frozenset(
+    {"content-length", "content-encoding", "content-type", "location", "transfer-encoding"}
+)
+
+
+@dataclass(frozen=True)
+class ResponseHeaderLimits:
+    """Bounds on the response header section, checked on the raw (unmerged) header lines."""
+
+    max_count: int = 32
+    max_name_bytes: int = 64
+    max_value_bytes: int = 4096
+    max_total_bytes: int = 16384  # sum over fields of len(name) + len(value) + 4
+
+    def __post_init__(self) -> None:
+        for name, value, ceiling in (
+            ("max_count", self.max_count, HEADER_COUNT_CEILING),
+            ("max_name_bytes", self.max_name_bytes, HEADER_NAME_CEILING),
+            ("max_value_bytes", self.max_value_bytes, HEADER_VALUE_CEILING),
+            ("max_total_bytes", self.max_total_bytes, HEADER_TOTAL_CEILING),
+        ):
+            if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= ceiling:
+                raise _fail("transport_config", f"{name} must be an integer in 1..{ceiling}")
+
+
+DEFAULT_HEADER_LIMITS = ResponseHeaderLimits()
+
+
+def check_response_headers(fields: Iterable[tuple[str, str]], limits: ResponseHeaderLimits) -> None:
+    """Refuse an over-limit, malformed or duplicate-sensitive header section. `fields` must be the raw lines
+    (duplicates kept). Order of checks, each with its own stable code: count, name length, value length,
+    malformed name/value, aggregate size, duplicate-sensitive repeats, Transfer-Encoding plus Content-Length.
+    """
+    items = list(fields)
+    if len(items) > limits.max_count:
+        raise _fail("transport_header_count", "too many response header fields")
+    total = 0
+    seen: dict[str, int] = {}
+    for name, value in items:
+        if not isinstance(name, str) or not isinstance(value, str):
+            raise _fail("transport_header_malformed", "a header name or value is not text")
+        try:
+            name_bytes, value_bytes = len(name.encode("latin-1")), len(value.encode("latin-1"))
+        except UnicodeEncodeError:
+            raise _fail(
+                "transport_header_malformed", "a header contains a character outside ISO-8859-1"
+            ) from None
+        if name_bytes > limits.max_name_bytes:
+            raise _fail("transport_header_name_size", "a response header name is too long")
+        if value_bytes > limits.max_value_bytes:
+            raise _fail("transport_header_value_size", "a response header value is too long")
+        if not _TOKEN.fullmatch(name) or _CONTROL.search(value):
+            raise _fail("transport_header_malformed", "a response header name or value is malformed")
+        total += name_bytes + value_bytes + _HEADER_FRAMING_BYTES
+        key = name.lower()
+        seen[key] = seen.get(key, 0) + 1
+    if total > limits.max_total_bytes:
+        raise _fail("transport_header_total_size", "the response header section is too large")
+    if any(n > 1 and k in _DUPLICATE_SENSITIVE for k, n in seen.items()):
+        raise _fail("transport_header_duplicate", "a field that must not repeat appears more than once")
+    if "transfer-encoding" in seen and "content-length" in seen:
+        raise _fail("transport_header_conflict", "Transfer-Encoding and Content-Length are both present")
+
+
+# ---- peer-address assertion -------------------------------------------------------------------------
+def _peer_address(sock: object) -> object:
+    """The one place the connection's peer is read (module-level so tests can substitute a faulty reader)."""
+    getter = getattr(sock, "getpeername", None)
+    if not callable(getter):
+        raise AttributeError("no peer address accessor")
+    return getter()
+
+
+def assert_peer(sock: object, expected_ip: str, expected_port: int) -> None:
+    """Fail closed unless the connected peer is exactly `expected_ip:expected_port` (strict: IPv4-mapped IPv6
+    form, a scope id or any other spelling is a mismatch or malformed, never normalised into equality)."""
+    try:
+        raw = _peer_address(sock)
+    except Exception:
+        raise _fail("transport_peer_unavailable", "the connection's peer address is not available") from None
+    if not isinstance(raw, tuple) or len(raw) not in (2, 4):
+        raise _fail("transport_peer_malformed", "the peer address has an unexpected shape")
+    host, port = raw[0], raw[1]
+    if not isinstance(host, str) or "%" in host or isinstance(port, bool) or not isinstance(port, int):
+        raise _fail("transport_peer_malformed", "the peer address is malformed")
+    try:
+        actual = ipaddress.ip_address(host)
+    except ValueError:
+        raise _fail("transport_peer_malformed", "the peer address is not an IP address") from None
+    if actual != ipaddress.ip_address(expected_ip) or port != expected_port:
+        raise _fail("transport_peer_mismatch", "the connected peer is not the pinned, validated address")
+
+
+class _PeerCheckedHTTPSConnection(HTTPSConnection):
+    """`HTTPSConnection` whose `connect()` asserts the peer before any request can be written."""
+
+    def __init__(
+        self, *args: object, expected_peer_ip: str, expected_peer_port: int, **kwargs: object
+    ) -> None:
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+        self._expected_peer_ip = expected_peer_ip
+        self._expected_peer_port = expected_peer_port
+
+    def connect(self) -> None:
+        super().connect()
+        try:
+            assert_peer(self.sock, self._expected_peer_ip, self._expected_peer_port)
+        except BaseException:
+            self.close()  # never leave a connection to an unverified peer open
+            raise
+
+
 class Urllib3PinnedTransport:
     """`egress_policy.PinnedTransport` for ONE verified destination; holds no connection between calls."""
 
@@ -140,7 +284,10 @@ class Urllib3PinnedTransport:
         ssl_context_factory: Callable[[], ssl.SSLContext],
         *,
         clock: Callable[[], float] = time.monotonic,
+        header_limits: ResponseHeaderLimits | None = None,
     ) -> None:
+        if header_limits is not None and not isinstance(header_limits, ResponseHeaderLimits):
+            raise _fail("transport_config", "header_limits must be a ResponseHeaderLimits")
         if not isinstance(destination, VerifiedDestination):
             raise _fail("transport_mismatch", "a VerifiedDestination is required")
         if not callable(ssl_context_factory):
@@ -148,6 +295,7 @@ class Urllib3PinnedTransport:
         self._destination = destination
         self._factory = ssl_context_factory
         self._clock = clock
+        self._limits = header_limits or DEFAULT_HEADER_LIMITS
 
     # ---- validation -------------------------------------------------------------------------------------
     def _check_request(self, request: PinnedRequest) -> None:
@@ -194,7 +342,10 @@ class Urllib3PinnedTransport:
             assert_hostname=request.server_hostname,
             server_hostname=request.server_hostname,  # SNI
             ssl_context=ctx,
+            expected_peer_ip=request.connect_ip,  # reaches _PeerCheckedHTTPSConnection via the pool's conn_kw
+            expected_peer_port=request.port,
         )
+        pool.ConnectionCls = _PeerCheckedHTTPSConnection
         response: urllib3.BaseHTTPResponse | None = None
         try:
             try:
@@ -243,6 +394,9 @@ class Urllib3PinnedTransport:
     def _consume(
         self, response: urllib3.BaseHTTPResponse, budget: RequestBudget, deadline: float
     ) -> TransportResponse:
+        # every raw header line, duplicates kept (`iteritems()` is the documented way; `items()` is a set
+        # subclass that iterates identically in 2.8.0); checked before anything in the response is used
+        check_response_headers(response.headers.iteritems(), self._limits)
         status = response.status
         if not 200 <= status < 300:
             location = response.headers.get("location") if 300 <= status < 400 else None

@@ -12,7 +12,7 @@ import ipaddress
 import os
 import ssl
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,6 @@ from local_tls import (
     NetworkAudit,
     Pki,
     TlsServer,
-    make_pki,
     unused_loopback_port,
 )
 
@@ -44,21 +43,7 @@ LOOPBACK = "127.0.0.1"
 SECOND_LOOPBACK = "127.0.0.2"
 
 
-@pytest.fixture(scope="module")
-def pki(tmp_path_factory: pytest.TempPathFactory) -> Pki:
-    return make_pki(tmp_path_factory.mktemp("pki"))
-
-
-@pytest.fixture(autouse=True)
-def allow_loopback_for_these_tests(monkeypatch: pytest.MonkeyPatch) -> None:
-    original = ep.forbidden_reason
-
-    def patched(addr: ep.IPAddress) -> str | None:
-        if isinstance(addr, ipaddress.IPv4Address) and addr in ipaddress.ip_network("127.0.0.0/8"):
-            return None
-        return original(addr)
-
-    monkeypatch.setattr(ep, "forbidden_reason", patched)
+pytestmark = pytest.mark.usefixtures("allow_loopback_for_these_tests")
 
 
 class Resolver:
@@ -100,20 +85,16 @@ def run(
     b: RequestBudget | None = None,
     clock: Callable[[], float] | None = None,
     cafile: str | None = None,
+    header_limits: tu.ResponseHeaderLimits | None = None,
 ) -> ep.TransportResponse:
     verified, req = target(host, server.port, path, b=b)
     t = tu.Urllib3PinnedTransport(
         verified.destination,
         tu.verifying_context_factory(cafile or pki.ca_pem),
         **({"clock": clock} if clock else {}),
+        header_limits=header_limits,
     )
     return t.execute(req)
-
-
-@pytest.fixture
-def server(pki: Pki) -> Iterator[TlsServer]:
-    with TlsServer(pki, HOST) as s:
-        yield s
 
 
 def code_of(fn: Callable[[], object]) -> str:
@@ -468,6 +449,6 @@ def test_the_transport_signature_exposes_no_header_url_or_credential_parameter()
 
     assert list(inspect.signature(tu.Urllib3PinnedTransport.execute).parameters) == ["self", "request"]
     assert list(inspect.signature(tu.Urllib3PinnedTransport.__init__).parameters) == [
-        "self", "destination", "ssl_context_factory", "clock",
+        "self", "destination", "ssl_context_factory", "clock", "header_limits",
     ]  # fmt: skip
     assert fixed_query.APPROVED_FOR_EXECUTION is False  # untouched by this checkpoint

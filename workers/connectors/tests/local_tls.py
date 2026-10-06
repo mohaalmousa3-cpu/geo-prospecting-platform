@@ -159,8 +159,66 @@ class _Handler(BaseHTTPRequestHandler):
             except OSError:
                 pass
             self.close_connection = True
+        elif path == "/stac-like":  # ordinary header set of a small JSON API response
+            body = b'{"type": "FeatureCollection", "features": []}'
+            self._send(
+                200,
+                body,
+                {
+                    "Content-Type": "application/geo+json",
+                    "Cache-Control": "public, max-age=60",
+                    "Vary": "Accept-Encoding",
+                    "ETag": '"5d41402abc4b2a76b9719d911017c592"',
+                    "X-Request-Id": "8f0c1a5e-3b2d-4c55-9a1e-0b7d3e6f9a21",
+                    "Access-Control-Allow-Origin": "*",
+                    "Strict-Transport-Security": "max-age=31536000",
+                    "X-Content-Type-Options": "nosniff",
+                },
+            )
+        elif path == "/raw":
+            self._raw({k: v[0] for k, v in query.items()})
         else:
             self._send(404, b"unknown")
+
+    def _raw(self, q: dict[str, str]) -> None:
+        """A hand-written HTTP response: exact control over the header section (the stdlib helpers would hide it)."""
+        kind, n, size = q.get("kind", ""), int(q.get("n", "0")), int(q.get("size", "40"))
+        status = q.get("status", "200")
+        lines = [f"HTTP/1.1 {status} X", "Content-Type: application/json", "Content-Length: 2"]
+        body = b"{}"
+        if kind == "count":
+            lines += [f"X-H{i}: v" for i in range(n)]
+        elif kind == "name":
+            lines += ["X-" + "n" * (n - 2) + ": v"]  # a header name of exactly n characters
+        elif kind == "value":
+            lines += ["X-V: " + "v" * n]
+        elif kind == "total":
+            lines += [f"X-T{i:03d}: " + "v" * size for i in range(n)]
+        elif kind == "dup-ct":
+            lines += ["Content-Type: application/json"]
+        elif kind == "dup-cl-same":
+            lines += ["Content-Length: 2"]
+        elif kind == "dup-cl-diff":
+            lines += ["Content-Length: 3"]
+        elif kind == "dup-loc":
+            lines += ["Location: https://a.example/x", "Location: https://b.example/x"]
+        elif kind == "bad-name":
+            lines += ["Bad(Name): v"]
+        elif kind == "ctrl-value":
+            lines += ["X-Ctl: a\x01b"]
+        elif kind == "te-and-cl":
+            lines += ["Transfer-Encoding: chunked"]
+            body = b"2\r\n{}\r\n0\r\n\r\n"
+        elif kind != "plain":
+            raise AssertionError(f"unknown raw kind {kind}")
+        if "enc" in q:
+            lines += ["Content-Encoding: gzip"]
+        if "loc" in q:
+            lines += ["Location: https://other.test.example/x"]
+        lines += ["Connection: close"]
+        self.close_connection = True
+        self.wfile.write(("\r\n".join(lines) + "\r\n\r\n").encode("latin-1") + body)
+        self.wfile.flush()
 
 
 class _Server(ThreadingHTTPServer):
