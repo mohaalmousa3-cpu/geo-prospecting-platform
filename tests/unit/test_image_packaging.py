@@ -44,3 +44,5 @@ def test_ci_runs_the_image_smoke_test_and_the_smoke_override_is_fixtures_only() 
     assert "pg_isready -h 127.0.0.1" in override  # readiness over TCP, not only the init-time unix socket
     script = (ROOT / "scripts/image_smoke.sh").read_text()
     assert "--network none" in script  # the import check runs without any network
+    # CI exports POSTGRES_PASSWORD; compose would then initialise postgis with it while the services read .env
+    assert re.search(r"^unset .*POSTGRES_PASSWORD", script, re.M)

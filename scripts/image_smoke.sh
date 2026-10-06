@@ -11,6 +11,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Compose prefers variables of the calling shell over `--env-file` when it interpolates. CI exports
+# POSTGRES_PASSWORD for other jobs, which initialised the database with that value while the services read the
+# password from .env (CI run #18/#19: "password authentication failed"). The smoke stack must take ALL its
+# settings from .env, so the caller's database variables are dropped.
+unset POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB POSTGRES_HOST POSTGRES_PORT
+
 PROJECT=geo-smoke
 COMPOSE=(docker compose -p "$PROJECT" -f infrastructure/docker/docker-compose.yml
          -f infrastructure/docker/docker-compose.smoke.yml --env-file .env)
