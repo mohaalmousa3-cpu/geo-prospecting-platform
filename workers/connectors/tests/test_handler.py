@@ -338,12 +338,23 @@ def test_whole_worker_path_connects_only_to_the_test_database_and_never_inside_t
     )
     doc = json.loads(p.stdout.strip().splitlines()[-1])
     assert doc["status"] == "succeeded" and doc["events"], "the DB connections must have been observed"
+    import ast
+    import socket
+
     from sqlalchemy.engine import make_url
 
-    host = str(make_url(TEST_URL).host)
+    url = make_url(TEST_URL)
+    host, port = str(url.host), int(url.port or 5432)
+    allowed_ips = {
+        ai[4][0] for ai in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    }  # what the name means
     for e in doc["events"]:
         assert not e["in_fetch_window"], e  # nothing happens inside Connector.fetch()
-        assert host in " ".join(e["args"]), e  # every destination is the test PostgreSQL endpoint
+        if e["event"] == "socket.connect":
+            addr = ast.literal_eval(e["args"][0])
+            assert addr[0] in allowed_ips and addr[1] == port, e  # only the test PostgreSQL endpoint
+        else:  # name resolution: only the database host name
+            assert e["args"][0] == host, e
 
 
 # ------------------------------------------------------------------ the real runner, spawn child process
