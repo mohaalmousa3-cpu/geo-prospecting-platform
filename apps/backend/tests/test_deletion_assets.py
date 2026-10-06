@@ -301,7 +301,7 @@ def test_provenance_of_an_asset_outside_the_selection_is_protected_inside_it_is_
     assert (count(engine, "data_asset"), count(engine, "provenance"), count(engine, "aoi")) == (0, 0, 0)
 
 
-def test_the_guard_is_per_target_and_the_schema_cascade_is_unchanged(
+def test_the_guard_is_per_target_and_raw_job_deletes_are_restricted(
     engine: Engine, make_aoi: MakeAoi, add_job: AddJob
 ) -> None:
     _, with_result = make_aoi()
@@ -310,11 +310,10 @@ def test_the_guard_is_per_target_and_the_schema_cascade_is_unchanged(
     add_job(clean, "succeeded")
     delete_aoi(engine, clean, cascade=True, options=opts())  # unaffected by the other AOI's result
     assert count(engine, "aoi") == 1
-    # Characterisation (not policy): result.job_id is still ON DELETE CASCADE in the schema, which is exactly
-    # why the application guard above exists. Raw SQL on the job removes its result silently.
-    with engine.begin() as c:
-        c.execute(text("DELETE FROM job"))
-    assert count(engine, "result") == 0
+    # Migration 0006 (owner option B): raw SQL can no longer remove the result silently with its job.
+    with pytest.raises(DBAPIError) as err, engine.begin() as c:
+        c.execute(text("DELETE FROM job WHERE id IN (SELECT job_id FROM result)"))
+    assert "result_job_id_fkey" in str(err.value) and count(engine, "result") == 1
 
 
 # ------------------------------------------------------------------ results guard (API level)
