@@ -33,7 +33,7 @@ Plan: `docs/phase-2-plan.md` · Design decisions: ADR-0012.
 3. Next.js injects its own `role="alert"` route announcer, which made a generic alert selector match the wrong element → our error element has `data-testid="aoi-error"`.
 
 ## 3. Not verified / limitations
-- **GitHub Actions on the Phase 2 commits:** checked only after push; see the final status in the hand-over message and `TASKS.md`.
+- **GitHub Actions on the Phase 2 commits:** checked only after push; see the final status in the hand-over message and `TASKS.md`. *[historical, annotated 2026-10-06: later CI runs on these commits are recorded in `TASKS.md` (Phase 2) and `docs/phase-reports/acceptance-reconciliation.md` §3; this line is kept as written.]*
 - **Real-world files:** parsers were tested with synthetic files (pyshp-written Shapefiles, hand-built KML/KMZ). Exports from QGIS/ArcGIS/Google Earth are untested (risk P-10); please supply samples.
 - **CRS coverage:** reprojection is tested for EPSG:32632 → 4326 only.
 - **Basemap:** the headless check used no basemap tiles. The OSM default was not exercised, and its tile policy was not re-verified (risk P-9).
@@ -43,7 +43,7 @@ Plan: `docs/phase-2-plan.md` · Design decisions: ADR-0012.
 - Working CRS (UTM, no Norway/Svalbard exceptions) is recorded but not used for any computation yet.
 
 ## 4. Deviations / decisions for the owner
-1. **No `project` entity.** "AOI/project scaffolding" is satisfied by a named, persisted AOI; a grouping table is deferred. Say if you want it now.
+1. **No `project` entity.** "AOI/project scaffolding" is satisfied by a named, persisted AOI; a grouping table is deferred. Say if you want it now. *[historical, superseded 2026-10-04: the `project` entity was added in Phase 2.5 (ADR-0013, `docs/data-model.md`); this line is kept as written.]*
 2. New dependencies (all permissive; recorded in `docs/third-party-licences.md`, no new weak/strong copyleft): `shapely` BSD-3, `pyproj` MIT, `pyshp` MIT, `defusedxml` PSF, `python-multipart` Apache-2.0, `maplibre-gl` BSD-3.
 3. New env settings: `MAX_STORED_AOIS`, `NEXT_PUBLIC_BASEMAP_TILE_URL`, `NEXT_PUBLIC_BASEMAP_ATTRIBUTION`.
 4. Choose a production basemap provider (or keep the empty/no-basemap setting) before any use beyond low-volume development.

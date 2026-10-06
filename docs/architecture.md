@@ -1,6 +1,6 @@
 # Architecture
 
-Status: Draft v0.1 · Changes via ADR (`docs/adr/`).
+Status: living document, **aligned through Phase 2.5 only** (§2a AOI handling, §2b Projects); **not yet updated for Phase 3a**: §5 is the original pre-implementation connector outline, and §2 and §8 do not describe `workers/connectors`, `data_asset`, `geo_common.assets_pg` or the migrations 0004–0006 (those are documented in ADR-0014, `docs/connectors.md` and `docs/data-model.md`). Open F1-7 follow-up: `docs/phase-reports/acceptance-reconciliation.md` §9b. · Changes via ADR (`docs/adr/`).
 
 ## 1. Overview
 

@@ -140,7 +140,7 @@ Implemented 2026-10-04 (ADR-0013, `docs/data-model.md`, report + acceptance chec
 ---
 
 ## Backlog (unscheduled; do not implement without approval)
-- Authentication / multi-user / projects
+- Authentication / multi-user
 - Hyperspectral (EnMAP/PRISMA) ingestion
 - Time-series change detection
 - Mobile/offline field companion

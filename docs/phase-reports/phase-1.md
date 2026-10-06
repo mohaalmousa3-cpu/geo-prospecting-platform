@@ -51,7 +51,7 @@ Infrastructure, API skeleton, PostgreSQL-backed job queue and worker, local stor
 | Deliberate forbidden-term violation | scan failed, then reverted |
 
 ## 5. Not verified / limitations (honest list)
-- **GitHub Actions has not run.** `ci.yml` is syntax-checked (YAML) and mirrors `make ci`; action versions (`checkout@v4`, `setup-uv@v5`, `setup-node@v4`) and `zricethezav/gitleaks:latest` were not exercised. Treat first CI run as a test of the workflow itself.
+- **GitHub Actions has not run.** `ci.yml` is syntax-checked (YAML) and mirrors `make ci`; action versions (`checkout@v4`, `setup-uv@v5`, `setup-node@v4`) and `zricethezav/gitleaks:latest` were not exercised. Treat first CI run as a test of the workflow itself. *[historical, annotated 2026-10-06: superseded — runs #1–#2 failed on two defects and run #3 passed (`phase-1-closeout.md` §2); this line is kept as written.]*
 - PostgreSQL for local tests was a system install (PG 16 + PostGIS 3.4 packages), CI/Compose use the `postgis/postgis:16-3.4` image; the Compose run used that image.
 - Dependency vulnerability audits were not run or triaged.
 - Throughput/latency and resource use were not measured; ADR-0008 limits remain unmeasured guesses (provisional operational safeguards, not scientific thresholds).
