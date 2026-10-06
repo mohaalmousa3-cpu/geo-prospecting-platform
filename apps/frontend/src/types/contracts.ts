@@ -1,9 +1,9 @@
 /* Generated from packages/schemas. DO NOT EDIT. */
 
 /**
- * Phase 1 allows only the noop job. Later phases extend this enum.
+ * `noop` (Phase 1) and `catalog_search` (Phase 3a, fixtures only: CONNECTOR_MODE=fixture; no live provider). Later phases extend this enum.
  */
-export type JobType = "noop";
+export type JobType = "noop" | "catalog_search";
 export type JobStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled" | "insufficient_data";
 export type Uncertainty = QuantifiedUncertainty | NotQuantifiedUncertainty;
 export type AoiName = string;
@@ -51,6 +51,14 @@ export interface GeoContracts {
 export interface Job {
   id: string;
   type: JobType;
+  /**
+   * Target AOI of an AOI-bound job (catalog_search); null for noop.
+   */
+  aoi_id?: string | null;
+  /**
+   * Derived from the AOI by the server, never supplied by the client; null for noop.
+   */
+  project_id?: string | null;
   status: JobStatus;
   priority: number;
   attempts: number;

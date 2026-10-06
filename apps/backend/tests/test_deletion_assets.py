@@ -265,6 +265,42 @@ def test_result_side_provenance_blocks_but_asset_provenance_does_not(
     assert count(engine, "provenance") == 1
 
 
+def test_the_guard_counts_each_row_once_and_never_counts_a_selected_assets_provenance(
+    engine: Engine, make_aoi: MakeAoi, add_job: AddJob, assets: Any
+) -> None:
+    _, aoi = make_aoi()
+    job = add_job(aoi, "succeeded")
+    add_result(engine, job)  # 1 result
+    with engine.begin() as c:
+        c.execute(text("INSERT INTO provenance (job_id, record) VALUES (:j, '{}'::jsonb)"), {"j": job})  # 1
+    assets.add(aoi, job)  # an asset of the selected AOI: its provenance is explicitly deleted, not counted
+    with pytest.raises(HasResultsError) as err:
+        delete_aoi(engine, aoi, cascade=True, options=opts())
+    assert err.value.results == 2 and count(engine, "data_asset") == 1  # result + foreign provenance
+
+
+def test_provenance_of_an_asset_outside_the_selection_is_protected_inside_it_is_not(
+    engine: Engine, make_aoi: MakeAoi, add_job: AddJob, assets: Any
+) -> None:
+    """Raw-SQL state the application never creates: a provenance row linked to job A is owned by an asset of
+    AOI B. Whether it is refused depends only on whether B is selected for deletion too (real SQL)."""
+    p, a = make_aoi()
+    _, b = make_aoi(p)
+    job_a = add_job(a, "succeeded")
+    assets.add(b, None)
+    with engine.begin() as c:
+        c.execute(
+            text("UPDATE provenance SET job_id = :j WHERE id IN (SELECT provenance_id FROM data_asset)"),
+            {"j": job_a},
+        )
+    before = snapshot(engine)
+    with pytest.raises(HasResultsError):  # B's asset is not selected when only A is deleted
+        delete_aoi(engine, a, cascade=True, options=opts())
+    assert snapshot(engine) == before
+    delete_project(engine, p, delete_aois=True, options=opts())  # both AOIs selected: nothing protected
+    assert (count(engine, "data_asset"), count(engine, "provenance"), count(engine, "aoi")) == (0, 0, 0)
+
+
 def test_the_guard_is_per_target_and_the_schema_cascade_is_unchanged(
     engine: Engine, make_aoi: MakeAoi, add_job: AddJob
 ) -> None:

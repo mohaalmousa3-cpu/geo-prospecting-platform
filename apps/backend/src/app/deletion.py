@@ -158,8 +158,20 @@ def _decide_active(rows: list[Any]) -> None:
         raise HasActiveJobsError(len(active))
 
 
-def _results_guard(conn: Connection, opts: DeletionOptions, job_ids: list[UUID]) -> None:
-    """Refuse if any result row, or provenance that is not a staged asset's, references these jobs."""
+def _results_guard(conn: Connection, opts: DeletionOptions, job_ids: list[UUID], aoi_ids: list[UUID]) -> None:
+    """Refuse if scientific records reference the target jobs (owner decision, 2026-10-06).
+
+    Counted, per target job (the locked jobs of the AOI(s) being deleted):
+
+    * every `result` row; and
+    * every `provenance` row that is **not** owned by a `data_asset` of the AOI(s) selected for deletion.
+      Provenance of a selected asset is deleted explicitly with that asset in the same transaction (accepted
+      asset lifecycle) and is therefore neither refused nor counted. Provenance owned by an asset of any
+      other AOI, or by no asset, is protected like a result.
+
+    Each row is counted once. The AOI rows are locked by the caller, so no asset can be published into the
+    selected AOIs while this query and the later deletion run.
+    """
     if not job_ids:
         return
     n = _x(
@@ -168,8 +180,10 @@ def _results_guard(conn: Connection, opts: DeletionOptions, job_ids: list[UUID])
         "results_guard",
         "SELECT (SELECT count(*) FROM result WHERE job_id = ANY(CAST(:j AS uuid[]))) "
         "+ (SELECT count(*) FROM provenance p WHERE p.job_id = ANY(CAST(:j AS uuid[])) "
-        "AND NOT EXISTS (SELECT 1 FROM data_asset a WHERE a.provenance_id = p.id))",
+        "AND NOT EXISTS (SELECT 1 FROM data_asset a WHERE a.provenance_id = p.id "
+        "AND a.aoi_id = ANY(CAST(:a AS uuid[]))))",
         j=_ids(job_ids),
+        a=_ids(aoi_ids),
     ).scalar_one()
     if n:
         raise HasResultsError(int(n))
@@ -295,7 +309,7 @@ def delete_aoi(
         job_ids = [r.id for r in jobs]
         _hook(opts, "after_job_locks", conn)
         # (3b) results guard: after the active-job protection, before anything destructive
-        _results_guard(conn, opts, job_ids)
+        _results_guard(conn, opts, job_ids, [aoi_id])
         # (4) cascade flag (unlocked count: the AOI lock froze the membership of its dependents)
         n_assets = _x(conn, opts, "asset_count", "SELECT count(*) FROM data_asset WHERE aoi_id = :i", **key)
         n_assets = int(n_assets.scalar_one())
@@ -365,7 +379,7 @@ def delete_project(
             job_ids = [r.id for r in jobs]
             _hook(opts, "after_job_locks", conn)
             # (4b) results guard (applies whatever the flag says)
-            _results_guard(conn, opts, job_ids)
+            _results_guard(conn, opts, job_ids, aoi_ids)
         # (5) cascade flag (existing `delete_aois=true` semantics, ADR-0013)
         if aoi_ids and not delete_aois:
             raise NotEmptyError(len(aoi_ids))

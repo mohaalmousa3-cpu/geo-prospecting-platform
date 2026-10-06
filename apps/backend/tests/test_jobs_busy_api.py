@@ -33,10 +33,3 @@ def test_exhausting_the_queue_retry_budget_returns_503_and_then_recovers(engine:
         from sqlalchemy import text
 
         assert c.execute(text("SELECT count(*) FROM job")).scalar_one() == 1
-
-
-def test_the_public_api_still_offers_no_non_noop_job_creation(engine: Engine) -> None:
-    settings = Settings(_env_file=None, CORS_ALLOWED_ORIGINS="http://localhost:3000")
-    with TestClient(create_app(settings, engine=engine)) as client:
-        r = client.post("/api/v1/jobs", json={"type": "catalog_search", "payload": {}})
-        assert r.status_code == 422

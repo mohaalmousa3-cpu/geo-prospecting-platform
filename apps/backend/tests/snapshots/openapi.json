@@ -641,6 +641,19 @@
       "Job": {
         "additionalProperties": false,
         "properties": {
+          "aoi_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Target AOI of an AOI-bound job (catalog_search); null for noop.",
+            "title": "Aoi Id"
+          },
           "attempts": {
             "minimum": 0.0,
             "title": "Attempts",
@@ -692,6 +705,19 @@
             "title": "Priority",
             "type": "integer"
           },
+          "project_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Derived from the AOI by the server, never supplied by the client; null for noop.",
+            "title": "Project Id"
+          },
           "started_at": {
             "anyOf": [
               {
@@ -726,7 +752,21 @@
       },
       "JobCreate": {
         "additionalProperties": false,
+        "description": "`project_id` is not a field and `extra=\"forbid\"` rejects it: the project comes from the AOI.",
         "properties": {
+          "aoi_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required for catalog_search; not allowed for noop.",
+            "title": "Aoi Id"
+          },
           "payload": {
             "additionalProperties": true,
             "title": "Payload",
@@ -756,7 +796,8 @@
       },
       "JobType": {
         "enum": [
-          "noop"
+          "noop",
+          "catalog_search"
         ],
         "title": "JobType",
         "type": "string"
@@ -1588,7 +1629,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Create a noop job",
+        "summary": "Create a job (noop, or a fixtures-only catalog_search)",
         "tags": [
           "jobs"
         ]

@@ -20,6 +20,7 @@ class JobStatus(StrEnum):
 
 class JobType(StrEnum):
     noop = "noop"
+    catalog_search = "catalog_search"
 
 
 class Job(BaseModel):
@@ -28,6 +29,14 @@ class Job(BaseModel):
     )
     id: UUID
     type: JobType
+    aoi_id: Annotated[
+        UUID | None,
+        Field(description="Target AOI of an AOI-bound job (catalog_search); null for noop."),
+    ] = None
+    project_id: Annotated[
+        UUID | None,
+        Field(description="Derived from the AOI by the server, never supplied by the client; null for noop."),
+    ] = None
     status: JobStatus
     priority: int
     attempts: Annotated[int, Field(ge=0)]
