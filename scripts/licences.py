@@ -11,18 +11,28 @@ import json
 import re
 import sys
 import tomllib
+from dataclasses import dataclass
 from datetime import date
 from importlib import metadata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "third-party-licences.md"
+APPROVALS_FILE = ROOT / "docs" / "licence-acknowledgements.toml"
 STRONG = re.compile(r"(?<![A-Za-z])(AGPL|GPL|EUPL|SSPL|CC-BY-SA)", re.I)
 WEAK = re.compile(r"(?<![A-Za-z])(LGPL|MPL|EPL|CDDL)|Mozilla Public", re.I)
 # Strong copyleft always fails. Weak copyleft (LGPL/MPL) must appear in the register's
-# "Pending owner acknowledgement" section (generated) until the owner approves it in
-# APPROVED_COPYLEFT (CLAUDE.md §6: copyleft needs owner approval). Approving is NOT done by tooling.
+# "Pending owner acknowledgement" section (generated) until the owner approves it (CLAUDE.md §6: copyleft needs
+# owner approval). Two mechanisms, both owner-controlled:
+#   * APPROVED_COPYLEFT — name-level approval of any version (empty; unchanged);
+#   * `[[approved]]` records in docs/licence-acknowledgements.toml — the ONLY narrow policy for MPL-2.0 (F1-8,
+#     decision OA-0001): one record per package, matched on ecosystem + name + exact version + exact licence string
+#     + scope (runtime / development). Anything not matching exactly stays pending. Tooling never approves.
 APPROVED_COPYLEFT: dict[str, str] = {}
+MPL2 = re.compile(r"^(MPL-2\.0|Mozilla Public License 2\.0 \(MPL 2\.0\))$")
+SECTIONS = ("runtime", "development")
+ECOSYSTEMS = ("pypi", "npm")
+_APPROVAL_FIELDS = ("id", "decision", "ecosystem", "name", "version", "licence", "scope", "reason")
 WORKSPACE = {"geo-common", "geo-backend", "geo-runner", "geo-connectors", "geo-prospecting-platform"}
 
 
@@ -79,6 +89,73 @@ def npm_rows() -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]]]:
     return sorted(set(runtime)), sorted(set(dev))
 
 
+@dataclass(frozen=True)
+class Entry:
+    ecosystem: str
+    scope: str
+    name: str
+    version: str
+    licence: str
+
+
+@dataclass(frozen=True)
+class Approval:
+    id: str
+    decision: str
+    ecosystem: str
+    name: str
+    version: str
+    licence: str
+    scope: str
+    reason: str
+
+
+def load_approvals(path: Path | None = None) -> list[Approval]:
+    """`[[approved]]` records of the acknowledgements file. Raises ValueError on any malformed or out-of-policy
+    record (policy: MPL-2.0 licence strings only; known ecosystem and scope; every field present)."""
+    path = path or APPROVALS_FILE
+    if not path.exists():
+        return []
+    out: list[Approval] = []
+    for rec in tomllib.loads(path.read_text(encoding="utf-8")).get("approved", []):
+        missing = [f for f in _APPROVAL_FIELDS if not isinstance(rec.get(f), str) or not rec[f].strip()]
+        if missing:
+            raise ValueError(f"approval {rec.get('id', '?')}: missing or empty fields {missing}")
+        a = Approval(**{f: rec[f] for f in _APPROVAL_FIELDS})
+        if not MPL2.fullmatch(a.licence):
+            raise ValueError(f"approval {a.id}: licence {a.licence!r} is outside the MPL-2.0-only policy")
+        if a.ecosystem not in ECOSYSTEMS or a.scope not in SECTIONS:
+            raise ValueError(f"approval {a.id}: unknown ecosystem or scope")
+        out.append(a)
+    ids = [a.id for a in out]
+    if len(ids) != len(set(ids)):
+        raise ValueError("duplicate approval ids")
+    return out
+
+
+def entries() -> list[Entry]:
+    pr, pd = python_rows()
+    nr, nd = npm_rows()
+    return [
+        Entry(eco, scope, n, v, lic)
+        for eco, scope, rows in (("pypi", "runtime", pr), ("pypi", "development", pd),
+                                 ("npm", "runtime", nr), ("npm", "development", nd))
+        for n, v, lic in rows
+    ]  # fmt: skip
+
+
+def approval_for(e: Entry, approvals: list[Approval]) -> Approval | None:
+    """Exact match only: a different version, scope, ecosystem or licence string is NOT approved."""
+    if not WEAK.search(e.licence) or STRONG.search(e.licence) or not MPL2.fullmatch(e.licence):
+        return None
+    for a in approvals:
+        if (a.ecosystem, a.scope, norm(a.name), a.version, a.licence) == (
+            e.ecosystem, e.scope, norm(e.name), e.version, e.licence,
+        ):  # fmt: skip
+            return a
+    return None
+
+
 def table(rows: list[tuple[str, str, str]]) -> str:
     return "\n".join(
         ["| Package | Version | Licence |", "|---|---|---|"]
@@ -86,25 +163,51 @@ def table(rows: list[tuple[str, str, str]]) -> str:
     )
 
 
-def pending(rows: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
-    return [r for r in rows if WEAK.search(r[2]) and r[0] not in APPROVED_COPYLEFT]
+def pending(es: list[Entry], approvals: list[Approval]) -> list[Entry]:
+    return [
+        e for e in es
+        if WEAK.search(e.licence) and e.name not in APPROVED_COPYLEFT and approval_for(e, approvals) is None
+    ]  # fmt: skip
 
 
-def render() -> str:
+def approved_table(rows: list[tuple[Entry, Approval]]) -> str:
+    return "\n".join(
+        ["| Package | Version | Licence | Scope | Decision |", "|---|---|---|---|---|"]
+        + [f"| {e.name} | {e.version} | {e.licence} | {e.scope} | {a.decision} ({a.id}) |" for e, a in rows]
+    )
+
+
+def render(approvals: list[Approval] | None = None) -> str:
+    approvals = load_approvals() if approvals is None else approvals
     pr, pd = python_rows()
     nr, nd = npm_rows()
-    pend = pending(pr + pd + nr + nd)
+    es = entries()
+    approved = [(e, a) for e in es if (a := approval_for(e, approvals))]
+    pend = pending(es, approvals)
+    approved_md = approved_table(approved) if approved else "_none_"
+    pend_md = table([(e.name, e.version, e.licence) for e in pend]) if pend else "_none_"
     return f"""# Third-Party Licence Register
 
 Generated by `scripts/licences.py --write` from installed package metadata and lockfiles
 (verified {date.today().isoformat()}). Do not edit by hand. Not legal advice (ADR-0002).
-Copyleft entries require explicit owner approval before they may appear in `APPROVED_COPYLEFT`.
+Copyleft entries require explicit owner approval. Approvals are recorded per package in `[[approved]]` records of
+`docs/licence-acknowledgements.toml` (policy: MPL-2.0 only; exact package, version, licence string and scope;
+nothing is approved by tooling). Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the check.
+
+## Approved weak-copyleft entries (MPL-2.0 only; owner decision OA-0001)
+Acknowledgement recorded by the owner for the entries below **as they are present in the current lock graph**
+(unmodified use; no vendored or modified source). It is not a licence-compliance finding, covers no other package,
+version, licence or scope, and does not authorise adding any dependency (a new MPL-2.0 package needs a separate
+review). Reasons per entry: `docs/licence-acknowledgements.toml`.
+
+{approved_md}
 
 ## Pending owner acknowledgement (weak copyleft: LGPL/MPL)
-Used unmodified as dependencies (no vendored or modified source). Listed so the owner can approve or veto; nothing
-here has been approved. Strong copyleft (GPL/AGPL/EUPL/SSPL) is blocked by the check.
+Used unmodified as dependencies (no vendored or modified source). **Not approved**: no matching record in
+`docs/licence-acknowledgements.toml` (this includes LGPL entries and the `lightningcss-<platform>` packages, which are
+undecided there — P-0001). Listed so the owner can approve or veto.
 
-{table(pend) if pend else "_none_"}
+{pend_md}
 
 ## Python — runtime (shipped in backend/worker images)
 {table(pr)}
@@ -129,32 +232,69 @@ Scientific tools (EIS Toolkit, MintPy, pyGIMLi, ResIPy, GPRPy, GemPy) are **not*
 """
 
 
+def _section(text: str, heading: str) -> str:
+    start = text.find(heading)
+    if start < 0:
+        return ""
+    end = text.find("\n## ", start + len(heading))
+    return text[start : end if end > 0 else len(text)]
+
+
+def problems_for(es: list[Entry], text: str, approvals: list[Approval]) -> list[str]:
+    problems = []
+    approved_text = _section(text, "## Approved weak-copyleft entries")
+    pending_text = _section(text, "## Pending owner acknowledgement")
+    for e in es:
+        if f"| {e.name} | {e.version} |" not in text:
+            problems.append(f"{e.ecosystem}: {e.name} {e.version} missing from register")
+        if STRONG.search(e.licence) and e.name not in APPROVED_COPYLEFT:
+            problems.append(
+                f"{e.ecosystem}: {e.name} strong copyleft licence '{e.licence}' lacks owner approval"
+            )
+        if e.licence == "UNKNOWN":
+            problems.append(f"{e.ecosystem}: {e.name} licence unknown")
+        if WEAK.search(e.licence) and e.name not in APPROVED_COPYLEFT:
+            a = approval_for(e, approvals)
+            if a is None:
+                if f"| {e.name} | {e.version} | {e.licence} |" not in pending_text:
+                    problems.append(
+                        f"{e.ecosystem}: {e.name} weak copyleft not listed under pending acknowledgement"
+                    )
+            elif (
+                f"| {e.name} | {e.version} | {e.licence} | {e.scope} | {a.decision} ({a.id}) |"
+                not in approved_text
+            ):
+                problems.append(
+                    f"{e.ecosystem}: {e.name} approved by {a.decision} but not rendered in the approved section"
+                )
+    present = {(e.ecosystem, e.scope, norm(e.name), e.version, e.licence) for e in es}
+    for a in approvals:
+        if (a.ecosystem, a.scope, norm(a.name), a.version, a.licence) not in present:
+            problems.append(
+                f"approval {a.id} ({a.name} {a.version}) matches nothing in the current lock graph"
+            )
+    return problems
+
+
 def main() -> int:
     if "--write" in sys.argv:
-        DOC.write_text(render(), encoding="utf-8")
+        try:
+            DOC.write_text(render(), encoding="utf-8")
+        except ValueError as exc:
+            print(f"approvals invalid: {exc}")
+            return 1
         print(f"wrote {DOC}")
         return 0
     if not DOC.exists():
         print("register missing; run scripts/licences.py --write")
         return 1
     text = DOC.read_text(encoding="utf-8")
-    problems = []
-    pr, pd = python_rows()
-    nr, nd = npm_rows()
-    for kind, rows in (("python", pr + pd), ("npm", nr + nd)):
-        for name, version, lic in rows:
-            if f"| {name} | {version} |" not in text:
-                problems.append(f"{kind}: {name} {version} missing from register")
-            if STRONG.search(lic) and name not in APPROVED_COPYLEFT:
-                problems.append(f"{kind}: {name} strong copyleft licence '{lic}' lacks owner approval")
-            if lic == "UNKNOWN":
-                problems.append(f"{kind}: {name} licence unknown")
-            if (
-                WEAK.search(lic)
-                and name not in APPROVED_COPYLEFT
-                and f"| {name} | {version} | {lic} |" not in text.split("## Python — runtime")[0]
-            ):
-                problems.append(f"{kind}: {name} weak copyleft not listed under pending acknowledgement")
+    try:
+        approvals = load_approvals()
+    except ValueError as exc:
+        print(f"approvals invalid: {exc}")
+        return 1
+    problems = problems_for(entries(), text, approvals)
     for p in problems:
         print(p)
     return 1 if problems else 0

@@ -416,7 +416,7 @@ Common to every row: the OWNER evidence is a **transcription** (§2). "—" = no
 8. Limits that remain true: the terminology guard is a source-text scan (§6); other-CRS reprojection untested (risk P-10); ADR-0008 limits unmeasured; no live provider verification; Phase 5 region gate and Earth Engine eligibility unchanged.
 9. The revision described in §2b is **uncommitted**; the CI result of the commit that eventually records it cannot be recorded inside that commit.
 
-## 9a. F-1 — known unresolved documentation-consistency issues (**partially reconciled; not closed** — see §9b; list is not exhaustive)
+## 9a. F-1 — known unresolved documentation-consistency issues (**closed 2026-10-06 — see §9b**; the list below is the historical state; it was not exhaustive)
 
 F-1 = Phase 0 checklist item *all files exist and are internally consistent*. Verified instances (file:line as of this revision) — none has been fixed in this round:
 
@@ -435,7 +435,7 @@ F-1 = Phase 0 checklist item *all files exist and are internally consistent*. Ve
 
 **Closure criteria:** every listed item is corrected or explicitly annotated, a systematic pass over F1-7 is recorded, and the owner confirms. **Gate:** non-blocking for fixtures-only Phase 3a (owner exception, 2026-10-05); **must be closed before any live connector slice is authorised.**
 
-## 9b. F-1 reconciliation status (2026-10-06; documentation-only; **F-1 is partially reconciled; not closed**)
+## 9b. F-1 reconciliation status (2026-10-06; **F-1 closed with the F1-8 reconciliation; closure is not live readiness**)
 
 Scope of this pass: documentation corrections and a review note only. No code, schema, migration, Compose, CI, test, generated file or licence-generator change; no provider request; **F-1 is not closed and nothing here approves live readiness** (live work still needs F-1 closed, D8 R1–R8 and the owner's explicit start instruction; see `docs/phase-3-plan.md` §8a).
 
@@ -448,7 +448,7 @@ Scope of this pass: documentation corrections and a review note only. No code, s
 | F1-5 | resolved by annotation | `docs/phase-reports/phase-1.md` (CI "has not run") now carries a `[historical]` note. `docs/phase-reports/phase-2.5.md:3` was left unchanged: the note on line 4 expressly states that the status line and "proposal only" wording are preserved as written and superseded |
 | F1-6 | resolved (existing annotations reviewed and accepted as sufficient) | `TASKS.md:25,41,55` carry `[historical, superseded…]` tags with status notes (`:38,:52`); `docs/acceptance-criteria.md` Phase 1/2/2.5 each have a status note immediately below the "Owner acceptance still required" sentence. Left unchanged |
 | F1-7 | **resolved for every specified item** (2026-10-06 completion pass); observations recorded below | stale items corrected in `data-model.md`, `job-lifecycle.md`, root `README.md`, `apps/backend/README.md`, `apps/frontend/README.md`, `workers/connectors/README.md`; `packages/pycommon/README.md` added; `scientific-constraints.md` reviewed and annotated as current. Residual observations (not inconsistencies): `docs/dependency-strategy.md` has no row for the `geo-connectors` workspace member and **no HTTP-client or transport entry — client selection remains pending and is not covered there** |
-| F1-8 | **open** | `OA-0001` is documented in `docs/licence-acknowledgements.toml`; the generated register (`docs/third-party-licences.md`, header "nothing here has been approved") and the generator policy (`scripts/licences.py`, `APPROVED_COPYLEFT = {}`) are unchanged and remain a **separate authorised-code-task decision** |
+| F1-8 | **resolved** (2026-10-06, F1-8 task) | Owner decision: OA-0001 is the project's explicit acknowledgement for **MPL-2.0 where already present in the locked dependency graph**. Implemented as a narrow policy in `scripts/licences.py`: `[[approved]]` records in `docs/licence-acknowledgements.toml` (AP-0001 certifi 2026.7.22 runtime, AP-0002 pathspec 1.1.1 dev, AP-0003 axe-core 4.13.0 npm dev, AP-0004 lightningcss 1.33.0 npm dev), **MPL-2.0 only**, matched exactly on ecosystem + name + version + licence string + scope; a stale record fails the check; strong copyleft and unknown licences are unchanged; `APPROVED_COPYLEFT` stays empty. The generated register no longer says "nothing here has been approved": it has an *Approved weak-copyleft entries* section citing OA-0001 per package, and the pending section lists only what is still undecided (LGPL entries; the 11 `lightningcss-<platform>` packages, P-0001). Tests: `tests/unit/test_licences_approvals.py`. **Not approved by this:** certifi/httpx or any other package as a *new* runtime dependency, any future MPL-2.0 dependency (needs separate review; a version bump needs a new record) |
 
 **F1-7 systematic-review note (state after the 2026-10-06 completion pass; the first pass at `7242dcf` found the "was" items):**
 
@@ -469,7 +469,7 @@ Scope of this pass: documentation corrections and a review note only. No code, s
 | `infrastructure/README.md`, `tests/README.md`, `data/README.md` | reviewed — current | |
 | `docs/scientific-constraints.md` | reviewed — **current**; dated annotation added | no factual inconsistency with the fixtures-only scope |
 
-**Remaining open under F-1:** **F1-8 only** (the generated register header and generator policy versus OA-0001 remain a separate authorised-code-task decision; `docs/third-party-licences.md`, `docs/licence-acknowledgements.toml` and `scripts/licences.py` were not touched). Closure of F-1 still needs the owner's confirmation (§9a closure criteria). **F-1 remains partially reconciled; not closed.** Nothing here approves Phase 3b or live readiness.
+**Remaining open under F-1:** **none.** F1-1…F1-8 are resolved and F-1 is **closed** (owner-directed F1-8 reconciliation, 2026-10-06). **Closure of F-1 does not approve live networking, a provider (Earth Search / Element 84 is a candidate for later R1–R3 research only), any host or port, HTTP-client selection, or Phase 3b.** Live work still needs D8 readiness R1–R8 and the owner's explicit start instruction (`docs/phase-3-plan.md` §8a). Residual licence items: P-0001 and the LGPL components stay pending/unapproved.
 
 ## 10. Verification of the code baseline
 

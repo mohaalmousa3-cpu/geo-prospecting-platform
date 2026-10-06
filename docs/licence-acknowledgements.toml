@@ -1,8 +1,10 @@
 # Owner acknowledgements of weak-copyleft / unusual licences — version-controlled record.
 #
-# STATUS: documented record. It is NOT read by scripts/licences.py (making the generator consume this file is code
-# and is not authorised); the generated register docs/third-party-licences.md is unchanged and APPROVED_COPYLEFT in
-# the script is still empty. This file does not weaken any check.
+# STATUS (updated 2026-10-06, F1-8): the `[[acknowledgement]]`, `[[pending]]` and `[[unsupported]]` records below are
+# a documented record that scripts/licences.py does NOT read. The generator reads ONLY the `[[approved]]` records at the
+# end of this file: the narrow MPL-2.0-only policy decided by the owner on 2026-10-06 (see there). APPROVED_COPYLEFT in
+# the script is still empty. Nothing in this file weakens any check: strong copyleft and unknown licences stay
+# blocked, and anything without an exact `[[approved]]` match stays "pending".
 #
 # RULES: only decisions supported by actual owner messages are recorded; nothing is inferred retroactively;
 # strong-copyleft and unknown cases remain blocked. "observed_version" is evidence of what the generated register
@@ -210,3 +212,55 @@ id = "U-0004"
 subject = "Whether, and how, OA-0001 (a provisional, by-name acknowledgement) should be rendered in the generated register and in APPROVED_COPYLEFT"
 reason = "that is a generator change (code); no such change is authorised"
 needed = "separately authorised implementation task; until then the register header ('nothing here has been approved') is known to differ from the owner's provisional acknowledgement (documented as F-1 item F1-8)"
+resolved = "2026-10-06 (F1-8): implemented for MPL-2.0 ONLY as the `[[approved]]` records below, read by scripts/licences.py. The LGPL-3.0-or-later components named in OA-0001 and the 11 lightningcss-<platform> packages (P-0001) are NOT approved by it and stay pending in the generated register."
+
+# ---------------------------------------------------------------------------------------------------------
+# APPROVED — machine-read by scripts/licences.py (the only records it consumes)
+# ---------------------------------------------------------------------------------------------------------
+# Owner decision of 2026-10-06 (F1-8 authorisation): OA-0001 is approved as the project's explicit acknowledgement
+# for MPL-2.0 where it is ALREADY present in the locked dependency graph. Not a licence-compliance finding. It does
+# NOT authorise certifi, httpx or any other package as a NEW runtime dependency, and does NOT approve any future
+# MPL-2.0 dependency (each needs a separate review and a new record here). Matching is exact: ecosystem + name +
+# version + licence string + scope; a version bump, a scope change or a different licence string is NOT approved and
+# reappears under "pending". Only the four components OA-0001 names with an MPL-2.0 licence are recorded; LGPL
+# components and the lightningcss-<platform> packages (P-0001) are deliberately not recorded.
+
+[[approved]]
+id = "AP-0001"
+decision = "OA-0001"
+ecosystem = "pypi"
+name = "certifi"
+version = "2026.7.22"
+licence = "MPL-2.0"
+scope = "runtime"
+reason = "Present in the locked graph as a runtime transitive dependency (unmodified use). Approval covers this existing presence only, not certifi as a new dependency of any package."
+
+[[approved]]
+id = "AP-0002"
+decision = "OA-0001"
+ecosystem = "pypi"
+name = "pathspec"
+version = "1.1.1"
+licence = "Mozilla Public License 2.0 (MPL 2.0)"
+scope = "development"
+reason = "Present in the locked graph as development tooling (not shipped; unmodified use)."
+
+[[approved]]
+id = "AP-0003"
+decision = "OA-0001"
+ecosystem = "npm"
+name = "axe-core"
+version = "4.13.0"
+licence = "MPL-2.0"
+scope = "development"
+reason = "Present in the locked graph as frontend development tooling (not shipped; unmodified use)."
+
+[[approved]]
+id = "AP-0004"
+decision = "OA-0001"
+ecosystem = "npm"
+name = "lightningcss"
+version = "1.33.0"
+licence = "MPL-2.0"
+scope = "development"
+reason = "Present in the locked graph as frontend development tooling (not shipped; unmodified use). Its 11 platform packages (P-0001) are NOT covered."
