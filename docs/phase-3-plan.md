@@ -257,7 +257,7 @@ Basis: the owner replied **"Approved with constraints"** to the plan and its rec
 | R5 | Concrete application **and** network controls for the specific approved hosts approved by the owner (ADR-0014 §9 is accepted as design only; the live path must not exist before this) | PENDING |
 | R6 | An explicit start instruction covering the slice that will be verified | NOT GIVEN |
 | R7 | Follow-up F-1 (Phase 0 documentation consistency) closed | **MET 2026-10-06** (F1-8 resolved; closure is not live readiness — the other R items and the start instruction remain) |
-| R8 | HTTP-client selection note and offline tests R-a–R-f of ADR-0014 §9 passing; licence review of ADR-0014 §10 recorded | PENDING |
+| R8 | HTTP-client selection note and offline tests R-a–R-f of ADR-0014 §9 passing; licence review of ADR-0014 §10 recorded | **PARTIAL (2026-10-06):** offline policy module and tests exist (`docs/phase-reports/phase-3b-r8-offline-http-security-design.md`); client NOT selected, licence review NOT recorded, transport-level properties unproven |
 
 **Constraints on every verification run:** read-only requests; **no private AOI geometry is sent** — only small fixed queries or public example data; no load testing and no deliberate probing of rate limits (stop and report on the first throttle or error); no credentials; the report records time, endpoints, responses' relevant fields, licence/attribution text found and observed limits; a mismatch with this plan is handled by an ADR-sized decision, not a silent switch (§1.3).
 

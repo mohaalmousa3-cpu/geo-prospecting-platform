@@ -11,6 +11,7 @@ Package surface (`src/geo_connectors/`):
 * `provenance.py` — `build_provenance_record` (pure; the record stored with each asset).
 * `request_hash.py` — canonical, versioned `request_hash` (`v1:<sha256>`); idempotency of the publication request only, not result deduplication.
 * `errors.py` — connector, mode, publication-busy (retryable) and publication-refused errors.
+* `egress_policy.py`, `fixed_query.py` — **Phase 3b R8, offline and unwired** (2026-10-06): pure URL/host:port/IP/budget/redirect policy with injected resolver, the future `PinnedTransport` *contract* (no implementation) and two candidate fixed queries that are **not authorised to execute**. Imported by nothing else; no provider host is configured. See `docs/phase-reports/phase-3b-r8-offline-http-security-design.md`.
 * `testing.py` — reusable contract checks for any connector (offline fixture harness).
 
 Boundaries (tested in `tests/unit/test_architecture.py` and the connector tests): imports `geo_common` only; the backend and the runner never import it (the runner loads the handler by import-path string); no HTTP client, `socket`, `ssl`, `urllib*` or `rasterio`; no third-party dependency; no cache; no provider host, port or credential configuration. **No live network behaviour exists**; live slices are deferred (`docs/phase-3-plan.md` §8a). The worker image installs this package (`EXTRA_PACKAGE`); the backend image does not.
