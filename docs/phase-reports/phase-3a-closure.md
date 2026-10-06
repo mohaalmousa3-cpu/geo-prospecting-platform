@@ -1,6 +1,8 @@
 # Phase 3a closure checkpoint — reconciliation and acceptance matrix
 
-> **Status (2026-10-06): implemented, awaiting the owner's review. Phase 3a is NOT declared accepted.** Scope: fixtures-only (ADR-0014). No live provider, host, HTTP client, cache, `rasterio`, DEM, `user_vector`, 3D, UI feature or new dependency exists. F-1 remains open under the fixtures-only exception; D8 live-verification readiness is pending; no host or network control is approved. The commit SHA and CI result of this checkpoint are reported with the checkpoint, not stored here.
+> **Acceptance record (2026-10-06).** **Phase 3a is ACCEPTED by the owner as fixtures-only (2026-10-06) at `0c2406fffa7e2332c4665a0fd38f8b829f9d9995` on `claude/phase-3a-fixtures`, with CI run #21 (https://github.com/mohaalmousa3-cpu/geo-prospecting-platform/actions/runs/37479576123).** The acceptance covers only the implemented fixtures-only scope and the evidence reported for that SHA; it is not authorisation for Phase 3b, any live connector or any networked provider execution, and it does not waive F-1 for any live work. T-D11 and T-D15 remain simulated; T-D14, T8 and the policy portions of T5/T9 remain policy-only; network audit/hook tests are test controls, not an egress firewall; nothing here implies live-provider readiness or a verified live network control. Remaining live requirements are **deferred**: F-1 closed, D8 readiness R1–R8, owner approval of exact hosts/ports and of application and network controls, HTTP-client selection (ADR-0014 §9/§10), a revisit of the 10-collection cap, and a new start instruction.
+>
+> *Status when the closure checkpoint was reported (historical):* implemented, awaiting the owner's review. Scope: fixtures-only (ADR-0014). No live provider, host, HTTP client, cache, `rasterio`, DEM, `user_vector`, 3D, UI feature or new dependency exists. F-1 remains open under the fixtures-only exception; D8 live-verification readiness is pending; no host or network control is approved. The commit SHA and CI result of this checkpoint are reported with the checkpoint, not stored here.
 
 ## 1. What the closure checkpoint added
 | Item | Where |
@@ -28,7 +30,7 @@ Labels: **passed** = executed and green on real PostgreSQL/HTTP/filesystem/proce
 | T8 architecture | **policy-only** | import/dependency rules; image packaging rules |
 | T9 guards | **policy-only** (forbidden-term scan incl. `.sh`, allow-listed shapes, `CONNECTOR_MODE` default); the real job output is **passed** in the flow test | |
 | T10 full local CI and Actions | **passed** (`make ci-full`; Actions result reported per exact SHA) | |
-| T11 licence register, no new third-party package | **passed** (`make licences`; `uv.lock` unchanged) | |
+| T11 licence register, no new third-party package | **passed** (`make licences`; no third-party package added. Relative to the pre-3a baseline `6b8d15e`, `uv.lock` and `pyproject.toml` did change, to add the workspace member `geo-connectors`, which depends only on `geo-common`; it was unchanged by CP4 and the closure checkpoint) | |
 | Live provider behaviour, live verification (D8 R1–R8), F-1 closure | **deferred** — not part of fixtures-only 3a; required before any live slice | |
 | UI for jobs/assets | **n/a** (not authorised) | |
 

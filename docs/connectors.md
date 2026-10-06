@@ -1,6 +1,6 @@
 # Connectors (Phase 3a — fixtures only)
 
-> **Status (CP4, 2026-10-06; implemented, awaiting the owner's review, not accepted).** Phase 3a is **not complete and not accepted**. There is no live provider, no HTTP client, no cache, no `rasterio` and no network code in this repository; nothing here was verified against a real catalogue. F-1 stays open under the fixtures-only exception; D8 live-verification readiness is pending; no host, port or egress control is approved. Binding decisions: ADR-0014, ADR-0008, ADR-0011.
+> **Status (CP4, 2026-10-06; implemented; Phase 3a ACCEPTED by the owner as fixtures-only on 2026-10-06 at `0c2406f`, CI run #21).** This is not live-slice readiness. There is no live provider, no HTTP client, no cache, no `rasterio` and no network code in this repository; nothing here was verified against a real catalogue. F-1 stays open under the fixtures-only exception; D8 live-verification readiness is pending; no host, port or egress control is approved. Binding decisions: ADR-0014, ADR-0008, ADR-0011.
 
 ## 1. What exists
 
