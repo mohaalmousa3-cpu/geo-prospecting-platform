@@ -49,6 +49,7 @@ SCAN_SUFFIXES = {
     ".html",
     ".css",
     ".sql",
+    ".sh",
     ".example",
 }
 ALLOWLIST_PREFIXES = ("docs/", "CLAUDE.md", "MASTER_SPEC.md", "TASKS.md", "tests/scientific/")
@@ -83,16 +84,22 @@ def scan_text(text: str) -> list[tuple[int, str]]:
     return sorted(hits.items())
 
 
+def is_scanned(root: Path, f: Path) -> bool:
+    """True if `scan_repo` reads this file (allow-listed documentation, lockfiles and other types are skipped)."""
+    rel = f.relative_to(root).as_posix()
+    if rel.startswith(ALLOWLIST_PREFIXES) or f.name in SKIP_NAMES:
+        return False
+    if f.suffix not in SCAN_SUFFIXES and f.name != ".env.example":
+        return False
+    return not (SKIP_PARTS & set(f.parts))
+
+
 def scan_repo(root: Path, files: list[Path]) -> list[str]:
     problems = []
     for f in files:
+        if not is_scanned(root, f):
+            continue
         rel = f.relative_to(root).as_posix()
-        if rel.startswith(ALLOWLIST_PREFIXES) or f.name in SKIP_NAMES:
-            continue
-        if f.suffix not in SCAN_SUFFIXES and f.name != ".env.example":
-            continue
-        if SKIP_PARTS & set(f.parts):
-            continue
         for n, line in scan_text(f.read_text(encoding="utf-8", errors="ignore")):
             problems.append(f"{rel}:{n}: {line}")
     return problems
