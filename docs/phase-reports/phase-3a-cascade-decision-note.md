@@ -1,6 +1,6 @@
 # Decision note — `ON DELETE CASCADE` on `result.job_id` and `provenance.job_id`
 
-**Status: awaiting the owner's decision. No schema change was made in CP4 and none will be made without separate explicit approval.**
+**Status: DECIDED 2026-10-06 — owner chose option B; implemented as migration 0006 in the Phase 3a closure checkpoint (see `migration-0006-design-note.md`).** The text below is the analysis as it stood when the decision was requested.
 Prepared 2026-10-06 (Phase 3a, CP4), as required by the owner's CP4 instruction. The application guard (`409 has_results`, ADR-0014 CP3 record) stays required whatever is decided.
 
 ## 1. Facts (verified on the CP4 schema, PostgreSQL 16)

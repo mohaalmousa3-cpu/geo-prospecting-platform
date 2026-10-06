@@ -13,7 +13,7 @@ A `catalog_search` job reads a **committed synthetic fixture** and stores the ma
 | Job handler (read AOI → fetch → stage file → publish asset) | `geo_connectors/handler.py` |
 | Request identity (`request_hash`, version 1) | `geo_connectors/request_hash.py` (definition in the module docstring; golden value pinned by a test) |
 | Persistence and storage protocol (shared, no scientific logic) | `packages/pycommon/src/geo_common/assets_pg.py`, `storage.py`, migration `0005_data_asset.py` |
-| Public API | `POST /api/v1/jobs` (`apps/backend/src/app/api/jobs.py`, `catalog_jobs.py`); `GET /api/v1/assets…` (read/delete only) |
+| Public API | `GET /api/v1/connectors` (fixture-only capability; no host or credential), `GET /api/v1/aois/{id}/assets` (AOI-scoped list), `POST /api/v1/jobs` (`apps/backend/src/app/api/jobs.py`, `catalog_jobs.py`); `GET /api/v1/assets…` (read/delete only) |
 
 ## 2. `CONNECTOR_MODE`
 
@@ -38,7 +38,7 @@ POST /api/v1/jobs
 
 * **The AOI is the only target.** The project is derived from the AOI by the queue layer (`INSERT … SELECT`, ADR-0014 §7.4) and returned as `project_id`; the request has no `project_id` field and any extra key is rejected with 422 (also inside `payload`).
 * **Payload keys** (exactly these; all others are refused): `start`, `end` (`YYYY-MM-DD`), `collections` (1–10 names, `[A-Za-z0-9][A-Za-z0-9._-]{0,63}`), optional `max_items`. There is deliberately **no** dataset, fixture, provider, host, URL, cache, DEM or user-vector option: which connector answers is decided only by the server's `CONNECTOR_MODE`.
-* **Limits (server-side, never clamped):** `end ≥ start`; window ≤ `MAX_TIME_WINDOW_DAYS`; `max_items` ≤ `MAX_SCENES_PER_JOB` (default made explicit in the stored payload); at most 10 collections (provisional, bounds the request independently of the body cap). These are provisional operational safeguards, not scientific thresholds (ADR-0008).
+* **Limits (server-side, never clamped):** `end ≥ start`; window ≤ `MAX_TIME_WINDOW_DAYS`; `max_items` ≤ `MAX_SCENES_PER_JOB` (default made explicit in the stored payload); at most 10 collections (a **temporary fixtures-only operational bound**, confirmed by the owner 2026-10-06; not a provider or API capability; to be revisited before any live catalogue slice). These are provisional operational safeguards, not scientific thresholds (ADR-0008).
 * **Stored payload is normalised:** collections sorted and de-duplicated, `max_items` always present.
 * **Order of refusals** (no refusal creates a job): 422 `validation_error` (shape, targeting, limits) → mode gate (409 / 501) → 404 `aoi_not_found` → 429 `queue_full` / 503 `retry_later` (queue). The mode gate comes before the AOI lookup, so a disabled or live server never reveals whether an AOI exists.
 * `GET /jobs/{id}` returns `aoi_id` and `project_id`; `POST /jobs/{id}/cancel` works as for `noop`.
@@ -57,7 +57,7 @@ POST /api/v1/jobs
 
 ## 5. Deletion interplay
 
-Deleting an AOI or project removes its assets, their provenance and (after the commit) their files; the routes keep `204`. The refusal order is **`has_active_jobs` → `has_results` → `needs_cascade` / `project_not_empty`** (all 409). `has_results` counts, over the jobs of the AOI(s) being deleted, each `result` row once plus each `provenance` row **not owned by an asset of the AOI(s) selected for deletion**; provenance of a selected asset is deleted explicitly and is not counted. See `docs/data-model.md` §2 and ADR-0014 (CP3/CP4 records). The schema's `ON DELETE CASCADE` on `result.job_id` / `provenance.job_id` is unchanged; the decision is pending (`docs/phase-reports/phase-3a-cascade-decision-note.md`).
+Deleting an AOI or project removes its assets, their provenance and (after the commit) their files; the routes keep `204`. The refusal order is **`has_active_jobs` → `has_results` → `needs_cascade` / `project_not_empty`** (all 409). `has_results` counts, over the jobs of the AOI(s) being deleted, each `result` row once plus each `provenance` row **not owned by an asset of the AOI(s) selected for deletion**; provenance of a selected asset is deleted explicitly and is not counted. See `docs/data-model.md` §2 and ADR-0014 (CP3/CP4 records). Since migration 0006 (owner option B) `result.job_id` and `provenance.job_id` are `RESTRICT`: a raw `DELETE FROM job` is refused while such rows exist; the application guard still answers first (`docs/phase-reports/migration-0006-design-note.md`). `TRUNCATE … CASCADE` remains an administrative operation outside any protection.
 
 ## 6. Worker image
 
