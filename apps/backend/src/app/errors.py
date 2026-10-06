@@ -62,6 +62,8 @@ def translate_deletion_error(exc: Exception) -> ApiError | None:
 
     if isinstance(exc, deletion.HasActiveJobsError):
         return ApiError(409, "has_active_jobs", f"{exc}")
+    if isinstance(exc, deletion.HasResultsError):
+        return ApiError(409, "has_results", f"{exc}")
     if isinstance(exc, deletion.NeedsCascadeError):
         return ApiError(409, "needs_cascade", f"{exc}")
     if isinstance(exc, deletion.StillReferencedError):

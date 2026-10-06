@@ -117,6 +117,9 @@ def test_only_expected_routes_exist_and_no_result_routes(client: TestClient) -> 
         "/api/v1/aois/preview",
         "/api/v1/aois/upload",
         "/api/v1/aois/{aoi_id}",
+        "/api/v1/assets",  # Phase 3a CP3: read/delete only, no creation route (owner-authorised)
+        "/api/v1/assets/{asset_id}",
+        "/api/v1/assets/{asset_id}/content",
     }
 
 

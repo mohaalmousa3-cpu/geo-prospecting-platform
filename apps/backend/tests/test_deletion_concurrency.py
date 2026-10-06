@@ -13,7 +13,7 @@ from collections.abc import Callable
 from uuid import UUID
 
 import pytest
-from concurrency import Bg, Gate, backend_pid, wait_blocked_by
+from db_concurrency import Bg, Gate, Held, wait_blocked_by
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
 
@@ -42,30 +42,6 @@ def count(engine: Engine, table: str) -> int:
         return int(c.execute(text(f"SELECT count(*) FROM {table}")).scalar_one())  # noqa: S608
 
 
-class Held:
-    """A raw session with an open transaction; always rolled back and closed, even if the test fails."""
-
-    def __init__(self, engine: Engine) -> None:
-        self.conn = engine.connect()
-        self.tx = self.conn.begin()
-        self.pid = backend_pid(self.conn)
-
-    def run(self, sql: str, **params: object) -> None:
-        self.conn.execute(text(sql), params)
-
-    def commit(self) -> None:
-        self.tx.commit()
-
-    def close(self) -> None:
-        self.conn.close()  # rolls back anything still open
-
-    def __enter__(self) -> Held:
-        return self
-
-    def __exit__(self, *exc: object) -> None:
-        self.close()
-
-
 def paused(gate: Gate, at: str = "after_parent_lock", **kw: object) -> DeletionOptions:
     return DeletionOptions(hooks=DeletionHooks(**{at: gate}), backoff=lambda _n: None, **kw)  # type: ignore[arg-type]
 
@@ -75,18 +51,17 @@ def test_insert_first_then_delete_sees_the_new_job(
     engine: Engine, queue: PostgresJobQueue, make_aoi: MakeAoi
 ) -> None:
     _, aoi = make_aoi()
-    s = engine.connect()
-    tx = s.begin()
-    s.execute(
-        text(
-            "INSERT INTO job (type, aoi_id, project_id) SELECT 'catalog_search', id, project_id FROM aoi WHERE id=:a"
-        ),
-        {"a": aoi},
-    )  # uncommitted: holds a key-share lock on the AOI row through the FK check
-    d = Bg(lambda: delete_aoi(engine, aoi, cascade=True, options=DeletionOptions(backoff=lambda _n: None)))
-    wait_blocked_by(engine, backend_pid(s), "deleter waiting for the AOI row lock")
-    tx.commit()
-    s.close()
+    with Held(engine) as s:
+        s.run(
+            "INSERT INTO job (type, aoi_id, project_id) "
+            "SELECT 'catalog_search', id, project_id FROM aoi WHERE id=:a",
+            a=aoi,
+        )  # uncommitted: holds a key-share lock on the AOI row through the FK check
+        d = Bg(
+            lambda: delete_aoi(engine, aoi, cascade=True, options=DeletionOptions(backoff=lambda _n: None))
+        )
+        wait_blocked_by(engine, s.pid, "deleter waiting for the AOI row lock")
+        s.commit()
     assert isinstance(d.exception(), HasActiveJobsError)  # the committed queued job is seen after the lock
     assert (count(engine, "aoi"), count(engine, "job")) == (1, 1)
 

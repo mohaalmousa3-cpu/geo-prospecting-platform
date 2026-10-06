@@ -104,3 +104,47 @@ def test_connectors_declare_no_third_party_dependency() -> None:
 def test_connectors_have_no_analysis_modules() -> None:
     for f in py_files("workers/connectors/src"):
         assert not any(w in f.stem.lower() for w in ANALYSIS_WORDS), f
+
+
+# --- Phase 3a CP3: asset persistence module (geo_common.assets_pg) and runner boundaries ---
+def test_assets_module_has_no_network_http_or_analysis_imports_and_stays_in_geo_common() -> None:
+    f = ROOT / "packages/pycommon/src/geo_common/assets_pg.py"
+    roots = imported_roots(f)
+    assert not CONNECTOR_BANNED & roots, CONNECTOR_BANNED & roots
+    assert not {"app", "runner", "geo_connectors", "fastapi", "starlette"} & roots  # dependency direction
+    tree = ast.parse(f.read_text())
+    docstrings = {
+        id(n.body[0].value)
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Module | ast.FunctionDef | ast.ClassDef)
+        and n.body
+        and isinstance(n.body[0], ast.Expr)
+        and isinstance(n.body[0].value, ast.Constant)
+    }
+    words: list[str] = []
+    for n in ast.walk(tree):
+        if isinstance(n, ast.FunctionDef | ast.ClassDef):
+            words.append(n.name)
+        elif isinstance(n, ast.arg):
+            words.append(n.arg)
+        elif isinstance(n, ast.Name):
+            words.append(n.id)
+        elif isinstance(n, ast.Attribute):
+            words.append(n.attr)
+        elif isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in docstrings:
+            words.append(n.value)  # SQL text, keys, messages: code, not documentation
+    code = " ".join(words).lower()
+    for word in ("confidence", "score", "probab", "prospectiv", "interpret", "uncertain"):
+        assert word not in code, word  # assets are inputs: no scientific vocabulary in identifiers or SQL
+
+
+def test_runner_registers_connector_handlers_by_import_path_only() -> None:
+    for f in py_files("workers/runner/src"):
+        assert "geo_connectors" not in imported_roots(f), f  # the string path is data, not an import
+    handlers = (ROOT / "workers/runner/src/runner/handlers.py").read_text()
+    assert '"geo_connectors.handler:catalog_search"' in handlers
+
+
+def test_connector_handler_does_not_import_the_runner_or_the_backend() -> None:
+    roots = imported_roots(ROOT / "workers/connectors/src/geo_connectors/handler.py")
+    assert not {"runner", "app", "sqlalchemy"} & roots

@@ -170,7 +170,16 @@ def _scenario(make_aoi: MakeAoi, add_job: AddJob) -> UUID:
     return aoi
 
 
-STATEMENTS = ["aoi_lock", "diagnostic", "job_lock", "job_delete", "aoi_delete"]
+STATEMENTS = [
+    "aoi_lock",
+    "diagnostic",
+    "job_lock",
+    "results_guard",
+    "asset_count",
+    "asset_lock",
+    "job_delete",
+    "aoi_delete",
+]
 
 
 @pytest.mark.parametrize("code", ["40P01", "40001", "55P03"])
@@ -422,21 +431,39 @@ def test_the_policy_check_can_fail() -> None:
     )
 
 
-def test_only_the_known_modules_write_or_delete_job_rows() -> None:
+WRITE_PATTERNS = (
+    r"(?:INSERT INTO|UPDATE|DELETE FROM) (job|data_asset|provenance|storage_tombstone|result)\b",
+    r'_delete_by_ids\(\s*conn,\s*opts,\s*"[a-z_]+",\s*"(job|data_asset|provenance|aoi)"',
+)
+
+
+def test_only_the_known_modules_write_or_delete_job_asset_and_provenance_rows() -> None:
+    """Policy check (not a database guarantee): who may write these tables is an explicit, reviewed list."""
     writers: dict[str, set[str]] = {}
     for rel in ("packages/pycommon/src", "apps/backend/src", "workers"):
         for f in (ROOT / rel).rglob("*.py"):
-            if "tests" in f.parts or "migrations" in f.parts or "__pycache__" in f.parts:
+            if {"tests", "migrations", "__pycache__"} & set(f.parts):
                 continue
-            text_ = f.read_text()
-            for pat in ("UPDATE job", "DELETE FROM job", "INSERT INTO job"):
-                if pat in text_:
-                    writers.setdefault(pat, set()).add(f.name)
+            code = f.read_text()
+            for i, pat in enumerate(WRITE_PATTERNS):
+                for m in re.finditer(pat, code):
+                    stmt = "BYIDS" if i else " ".join(m.group(0).split()[:-1])
+                    writers.setdefault(f"{stmt}:{m.group(1)}", set()).add(f.name)
     assert writers == {
-        "UPDATE job": {"queue_pg.py"},
-        "INSERT INTO job": {"queue_pg.py"},
-        "DELETE FROM job": {"deletion.py"},
-    }
+        "UPDATE:job": {"queue_pg.py"},
+        "INSERT INTO:job": {"queue_pg.py"},
+        "INSERT INTO:data_asset": {"assets_pg.py"},
+        "INSERT INTO:provenance": {"assets_pg.py"},
+        "INSERT INTO:storage_tombstone": {"assets_pg.py", "deletion.py"},
+        "UPDATE:storage_tombstone": {"assets_pg.py"},
+        "DELETE FROM:data_asset": {"assets_pg.py"},
+        "DELETE FROM:provenance": {"assets_pg.py"},
+        "DELETE FROM:storage_tombstone": {"assets_pg.py"},
+        "BYIDS:job": {"deletion.py"},
+        "BYIDS:data_asset": {"deletion.py"},
+        "BYIDS:provenance": {"deletion.py"},
+        "BYIDS:aoi": {"deletion.py"},
+    }, writers
 
 
 def test_deletion_code_never_takes_the_enqueue_advisory_lock() -> None:

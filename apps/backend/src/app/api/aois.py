@@ -18,6 +18,7 @@ from app.aoi.service import (
     draft_from_upload,
     limits_view,
 )
+from app.api.deps import get_storage
 from app.errors import ApiError, translate_deletion_error
 from app.projects import ProjectNotFoundError
 from geo_common.config import Settings
@@ -129,9 +130,14 @@ def delete_aoi(
     ] = False,
 ) -> Response:
     try:
-        found = _repo(request).delete(aoi_id, cascade=delete_dependents)
+        found = _repo(request).delete(
+            aoi_id,
+            cascade=delete_dependents,
+            options=deletion.DeletionOptions(storage=get_storage(request)),
+        )
     except (
         deletion.HasActiveJobsError,
+        deletion.HasResultsError,
         deletion.NeedsCascadeError,
         deletion.StillReferencedError,
         deletion.RetryLaterError,

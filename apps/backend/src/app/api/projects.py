@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Request, Response, status
 
 from app import deletion
+from app.api.deps import get_storage
 from app.errors import ApiError, translate_deletion_error
 from app.projects import (
     ProjectLimitReachedError,
@@ -59,7 +60,11 @@ def delete_project(
     delete_aois: Annotated[bool, Query(description="Also delete the project's AOIs")] = False,
 ) -> Response:
     try:
-        _repo(request).delete(project_id, delete_aois=delete_aois)
+        _repo(request).delete(
+            project_id,
+            delete_aois=delete_aois,
+            options=deletion.DeletionOptions(storage=get_storage(request)),
+        )
     except ProjectNotFoundError as exc:
         raise ApiError(404, "project_not_found", "project not found") from exc
     except ProjectNotEmptyError as exc:
@@ -70,6 +75,7 @@ def delete_project(
         ) from exc
     except (
         deletion.HasActiveJobsError,
+        deletion.HasResultsError,
         deletion.NeedsCascadeError,
         deletion.StillReferencedError,
         deletion.RetryLaterError,

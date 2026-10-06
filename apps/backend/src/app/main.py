@@ -7,10 +7,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Engine
 
-from app.api import aois, health, jobs, projects
+from app.api import aois, assets, health, jobs, projects
 from app.cors import ALLOWED_HEADERS, EXPOSED_HEADERS, PREFLIGHT_MAX_AGE_SECONDS, declared_methods
 from app.errors import install_error_handlers
 from app.middleware import BodySizeLimitMiddleware, RequestIdMiddleware
+from geo_common.assets_pg import drain_at_startup
 from geo_common.config import Settings, get_settings
 from geo_common.db import make_engine
 from geo_common.logging_setup import configure_logging
@@ -45,6 +46,7 @@ def create_app(
                 max_queued_jobs=s.MAX_QUEUED_JOBS,
                 default_max_attempts=s.JOB_MAX_ATTEMPTS,
             )
+            drain_at_startup(app.state.engine, s.STORAGE_LOCAL_PATH)
         yield
         if not app.state.engine_injected:
             app.state.engine.dispose()
@@ -70,6 +72,7 @@ def create_app(
     app.include_router(jobs.router, prefix=API_PREFIX)
     app.include_router(projects.router, prefix=API_PREFIX)
     app.include_router(aois.router, prefix=API_PREFIX)
+    app.include_router(assets.router, prefix=API_PREFIX)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=s.cors_origins,
