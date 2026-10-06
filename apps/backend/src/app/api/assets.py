@@ -31,7 +31,7 @@ router = APIRouter(prefix="/assets", tags=["assets"])
 log = logging.getLogger("app.assets")
 
 
-def _model(a: AssetRecord) -> Asset:
+def to_model(a: AssetRecord) -> Asset:
     return Asset.model_validate(
         {
             "id": a.id,
@@ -65,7 +65,7 @@ def list_(
         limit=limit,
         offset=offset,
     )
-    return AssetList.model_validate({"items": [_model(a).model_dump() for a in items], "total": total})
+    return AssetList.model_validate({"items": [to_model(a).model_dump() for a in items], "total": total})
 
 
 @router.get("/{asset_id}", response_model=Asset, summary="Get one staged asset")
@@ -73,7 +73,7 @@ def get(asset_id: UUID, request: Request) -> Asset:
     a = get_asset(request.app.state.engine, asset_id)
     if a is None:
         raise ApiError(404, "asset_not_found", "asset not found")
-    return _model(a)
+    return to_model(a)
 
 
 @router.get("/{asset_id}/content", summary="Download the stored file of an asset")

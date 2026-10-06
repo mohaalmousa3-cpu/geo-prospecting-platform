@@ -23,7 +23,9 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from app.errors import ApiError
 from geo_common.config import Settings
 
-MAX_COLLECTIONS = 10  # provisional: bounds the request size independently of the body cap
+# Temporary fixtures-only operational bound (owner, 2026-10-06): NOT a provider/API capability; revisit before
+# any live catalogue slice. It bounds the request size independently of the body cap.
+MAX_COLLECTIONS = 10
 _COLLECTION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 

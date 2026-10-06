@@ -41,6 +41,7 @@ from geo_common.db import make_engine
 from geo_common.storage import LocalStorage, StorageBackend
 from geo_connectors.contracts import FetchContext
 from geo_connectors.errors import ConnectorRequestError, PublicationBusyError, PublicationRefusedError
+from geo_connectors.provenance import build_provenance_record
 from geo_connectors.registry import ConnectorRegistry, resolve_connector
 from geo_connectors.request_hash import request_hash
 
@@ -156,13 +157,13 @@ def run_catalog_search(
             size_bytes=len(body),
             sha256=digest,
             request_hash=req_hash,
-            provenance_record={
-                "kind": KIND,
-                "job_id": str(job_id),
-                "asset_id": str(asset_id),
-                "request_hash": req_hash,
-                "source": asdict(fetched.source),
-            },
+            provenance_record=build_provenance_record(
+                kind=KIND,
+                job_id=job_id,
+                asset_id=asset_id,
+                request_hash=req_hash,
+                source=fetched.source,
+            ),
             hooks=hooks,
             **kw,
         )

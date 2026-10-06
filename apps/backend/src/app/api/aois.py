@@ -18,11 +18,13 @@ from app.aoi.service import (
     draft_from_upload,
     limits_view,
 )
+from app.api.assets import to_model
 from app.api.deps import get_storage
 from app.errors import ApiError, translate_deletion_error
 from app.projects import ProjectNotFoundError
+from geo_common.assets_pg import list_assets
 from geo_common.config import Settings
-from geo_common.models._generated import Aoi, AoiDraft, AoiLimits, AoiList
+from geo_common.models._generated import Aoi, AoiDraft, AoiLimits, AoiList, AssetList
 
 router = APIRouter(prefix="/aois", tags=["aois"])
 
@@ -119,6 +121,28 @@ def get_aoi(aoi_id: UUID, request: Request) -> Aoi:
     if row is None:
         raise ApiError(404, "aoi_not_found", "AOI not found")
     return Aoi.model_validate(row)
+
+
+@router.get(
+    "/{aoi_id}/assets",
+    response_model=AssetList,
+    summary="List the staged assets of one AOI (oldest first; metadata only)",
+)
+def list_aoi_assets(
+    aoi_id: UUID,
+    request: Request,
+    job_id: UUID | None = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> AssetList:
+    """Only assets whose `aoi_id` is this AOI; `job_id` narrows further and never widens. Ordered by
+    `created_at, id`; `total` counts all matches. No storage key or path is returned or accepted."""
+    if _repo(request).get(aoi_id) is None:
+        raise ApiError(404, "aoi_not_found", "AOI not found")
+    items, total = list_assets(
+        request.app.state.engine, aoi_id=aoi_id, job_id=job_id, limit=limit, offset=offset
+    )
+    return AssetList.model_validate({"items": [to_model(a).model_dump() for a in items], "total": total})
 
 
 @router.delete("/{aoi_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an AOI")

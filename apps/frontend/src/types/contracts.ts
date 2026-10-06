@@ -47,6 +47,7 @@ export interface GeoContracts {
   asset?: Asset;
   asset_list?: AssetList;
   asset_deleted?: AssetDeleted;
+  connector_list?: ConnectorList;
 }
 export interface Job {
   id: string;
@@ -289,4 +290,29 @@ export interface AssetList {
 export interface AssetDeleted {
   deleted: true;
   files_pending_cleanup: number;
+}
+/**
+ * Read-only description of connector capability. `live_available` is always false in Phase 3a.
+ */
+export interface ConnectorList {
+  mode: "disabled" | "fixture" | "live";
+  live_available: false;
+  connectors: Connector[];
+}
+/**
+ * A data connector the server can run. Phase 3a: only the offline fixture connector exists. No host, URL, credential or provider setting is ever part of this object.
+ */
+export interface Connector {
+  name: string;
+  kind: "fixture";
+  /**
+   * True only while CONNECTOR_MODE=fixture.
+   */
+  enabled: boolean;
+  /**
+   * Serves committed synthetic fixtures, not a real catalogue.
+   */
+  synthetic: boolean;
+  job_types: JobType[];
+  asset_kinds: AssetKind[];
 }

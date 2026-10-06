@@ -443,6 +443,40 @@ class AssetDeleted(BaseModel):
     files_pending_cleanup: Annotated[int, Field(ge=0)]
 
 
+class Kind1(StrEnum):
+    fixture = "fixture"
+
+
+class Connector(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    name: str
+    kind: Kind1
+    enabled: Annotated[bool, Field(description="True only while CONNECTOR_MODE=fixture.")]
+    synthetic: Annotated[
+        bool,
+        Field(description="Serves committed synthetic fixtures, not a real catalogue."),
+    ]
+    job_types: list[JobType]
+    asset_kinds: list[AssetKind]
+
+
+class Mode(StrEnum):
+    disabled = "disabled"
+    fixture = "fixture"
+    live = "live"
+
+
+class ConnectorList(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+    mode: Mode
+    live_available: Literal[False]
+    connectors: list[Connector]
+
+
 class GeoContracts(BaseModel):
     job: Job | None = None
     result_envelope: ResultEnvelope | None = None
@@ -459,3 +493,4 @@ class GeoContracts(BaseModel):
     asset: Asset | None = None
     asset_list: AssetList | None = None
     asset_deleted: AssetDeleted | None = None
+    connector_list: ConnectorList | None = None

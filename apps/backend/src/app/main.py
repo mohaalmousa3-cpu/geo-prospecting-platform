@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Engine
 
-from app.api import aois, assets, health, jobs, projects
+from app.api import aois, assets, connectors, health, jobs, projects
 from app.cors import ALLOWED_HEADERS, EXPOSED_HEADERS, PREFLIGHT_MAX_AGE_SECONDS, declared_methods
 from app.errors import install_error_handlers
 from app.middleware import BodySizeLimitMiddleware, RequestIdMiddleware
@@ -73,6 +73,7 @@ def create_app(
     app.include_router(projects.router, prefix=API_PREFIX)
     app.include_router(aois.router, prefix=API_PREFIX)
     app.include_router(assets.router, prefix=API_PREFIX)
+    app.include_router(connectors.router, prefix=API_PREFIX)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=s.cors_origins,

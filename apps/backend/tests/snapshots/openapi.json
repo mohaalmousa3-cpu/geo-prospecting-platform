@@ -601,6 +601,79 @@
         "title": "Body_upload_api_v1_aois_upload_post",
         "type": "object"
       },
+      "Connector": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_kinds": {
+            "items": {
+              "$ref": "#/components/schemas/AssetKind"
+            },
+            "title": "Asset Kinds",
+            "type": "array"
+          },
+          "enabled": {
+            "description": "True only while CONNECTOR_MODE=fixture.",
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "job_types": {
+            "items": {
+              "$ref": "#/components/schemas/JobType"
+            },
+            "title": "Job Types",
+            "type": "array"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/Kind1"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "synthetic": {
+            "description": "Serves committed synthetic fixtures, not a real catalogue.",
+            "title": "Synthetic",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "enabled",
+          "synthetic",
+          "job_types",
+          "asset_kinds"
+        ],
+        "title": "Connector",
+        "type": "object"
+      },
+      "ConnectorList": {
+        "additionalProperties": false,
+        "properties": {
+          "connectors": {
+            "items": {
+              "$ref": "#/components/schemas/Connector"
+            },
+            "title": "Connectors",
+            "type": "array"
+          },
+          "live_available": {
+            "const": false,
+            "title": "Live Available",
+            "type": "boolean"
+          },
+          "mode": {
+            "$ref": "#/components/schemas/Mode"
+          }
+        },
+        "required": [
+          "mode",
+          "live_available",
+          "connectors"
+        ],
+        "title": "ConnectorList",
+        "type": "object"
+      },
       "GeoJsonPolygon": {
         "additionalProperties": false,
         "properties": {
@@ -802,6 +875,13 @@
         "title": "JobType",
         "type": "string"
       },
+      "Kind1": {
+        "enum": [
+          "fixture"
+        ],
+        "title": "Kind1",
+        "type": "string"
+      },
       "LonLat": {
         "description": "[longitude, latitude] in EPSG:4326",
         "items": {
@@ -811,6 +891,15 @@
         "minItems": 2,
         "title": "LonLat",
         "type": "array"
+      },
+      "Mode": {
+        "enum": [
+          "disabled",
+          "fixture",
+          "live"
+        ],
+        "title": "Mode",
+        "type": "string"
       },
       "Project": {
         "additionalProperties": false,
@@ -1318,6 +1407,90 @@
         ]
       }
     },
+    "/api/v1/aois/{aoi_id}/assets": {
+      "get": {
+        "description": "Only assets whose `aoi_id` is this AOI; `job_id` narrows further and never widens. Ordered by\n`created_at, id`; `total` counts all matches. No storage key or path is returned or accepted.",
+        "operationId": "list_aoi_assets_api_v1_aois__aoi_id__assets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "aoi_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Aoi Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List the staged assets of one AOI (oldest first; metadata only)",
+        "tags": [
+          "aois"
+        ]
+      }
+    },
     "/api/v1/assets": {
       "get": {
         "operationId": "list__api_v1_assets_get",
@@ -1547,6 +1720,27 @@
         "summary": "Download the stored file of an asset",
         "tags": [
           "assets"
+        ]
+      }
+    },
+    "/api/v1/connectors": {
+      "get": {
+        "operationId": "list_connectors_api_v1_connectors_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Describe connector capability (fixtures only)",
+        "tags": [
+          "connectors"
         ]
       }
     },

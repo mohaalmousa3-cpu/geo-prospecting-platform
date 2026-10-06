@@ -49,6 +49,9 @@
     },
     "asset_deleted": {
       "$ref": "#/definitions/AssetDeleted"
+    },
+    "connector_list": {
+      "$ref": "#/definitions/ConnectorList"
     }
   },
   "definitions": {
@@ -1052,6 +1055,80 @@
         "files_pending_cleanup": {
           "type": "integer",
           "minimum": 0
+        }
+      }
+    },
+    "Connector": {
+      "description": "A data connector the server can run. Phase 3a: only the offline fixture connector exists. No host, URL, credential or provider setting is ever part of this object.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "kind",
+        "enabled",
+        "synthetic",
+        "job_types",
+        "asset_kinds"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "fixture"
+          ]
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "True only while CONNECTOR_MODE=fixture."
+        },
+        "synthetic": {
+          "type": "boolean",
+          "description": "Serves committed synthetic fixtures, not a real catalogue."
+        },
+        "job_types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JobType"
+          }
+        },
+        "asset_kinds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AssetKind"
+          }
+        }
+      }
+    },
+    "ConnectorList": {
+      "description": "Read-only description of connector capability. `live_available` is always false in Phase 3a.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "live_available",
+        "connectors"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "disabled",
+            "fixture",
+            "live"
+          ]
+        },
+        "live_available": {
+          "type": "boolean",
+          "const": false
+        },
+        "connectors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Connector"
+          }
         }
       }
     }

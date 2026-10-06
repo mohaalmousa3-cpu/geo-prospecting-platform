@@ -120,6 +120,8 @@ def test_only_expected_routes_exist_and_no_result_routes(client: TestClient) -> 
         "/api/v1/assets",  # Phase 3a CP3: read/delete only, no creation route (owner-authorised)
         "/api/v1/assets/{asset_id}",
         "/api/v1/assets/{asset_id}/content",
+        "/api/v1/aois/{aoi_id}/assets",  # Phase 3a closure: read-only, AOI-scoped
+        "/api/v1/connectors",  # Phase 3a closure: read-only capability description
     }
 
 
