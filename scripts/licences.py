@@ -70,7 +70,9 @@ def python_rows() -> tuple[list[tuple[str, str, str]], list[tuple[str, str, str]
             stack += [norm(d["name"]) for d in pkgs[n].get("dependencies", [])]
         return seen
 
-    runtime = closure(["geo-backend", "geo-runner", "geo-common"]) - {norm(w) for w in WORKSPACE}
+    runtime = closure(["geo-backend", "geo-runner", "geo-connectors", "geo-common"]) - {
+        norm(w) for w in WORKSPACE
+    }
     dev = set(pkgs) - runtime - {norm(w) for w in WORKSPACE}
     row = lambda n: (pkgs[n]["name"], pkgs[n].get("version", "?"), py_licence(pkgs[n]["name"]))  # noqa: E731
     return [row(n) for n in sorted(runtime)], [row(n) for n in sorted(dev)]

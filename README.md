@@ -2,7 +2,7 @@
 
 A scientific web platform for **prospectivity and anomaly screening** from remote-sensing, geological, terrain and thermal data — for gold-related targets, cavity/void-related targets and thermal anomalies — with explicit confidence and uncertainty.
 
-> **Update 2026-10-06:** **Phase 3a (fixtures-only) is accepted by the owner** (accepted at `0c2406f`, CI run #21) and merged into this branch. It adds the offline `catalog_search` path, the `geo_connectors` package and migrations 0004–0006; **there is no live provider, HTTP client, cache or egress control, and no live slice is authorised** (Phase 3b not started; F-1 closed 2026-10-06 — not a live-readiness approval; D8 readiness pending). Authoritative status: [`MASTER_SPEC.md`](MASTER_SPEC.md) → Current Project Status.
+> **Update 2026-10-06:** **Phase 3a (fixtures-only) is accepted by the owner** (accepted at `0c2406f`, CI run #21) and merged into this branch. It adds the offline `catalog_search` path, the `geo_connectors` package and migrations 0004–0006; **there is no live provider, cache or egress control, no live code path, and no live slice is authorised** (since 2026-10-06 the worker image also ships `urllib3==2.8.0` for an unregistered, unreachable transport proof of concept that runs only against local test servers — Phase 3b R8, not an approval of any provider or host) (Phase 3b not started; F-1 closed 2026-10-06 — not a live-readiness approval; D8 readiness pending). Authoritative status: [`MASTER_SPEC.md`](MASTER_SPEC.md) → Current Project Status.
 >
 > *[Historical, 2026-10-05 — superseded by the update above]* "the owner authorised the first checkpoint of Phase 3a on `claude/phase-3a-fixtures`; it is in progress, not complete and not accepted."
 >

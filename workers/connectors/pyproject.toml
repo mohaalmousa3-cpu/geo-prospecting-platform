@@ -1,9 +1,9 @@
 [project]
 name = "geo-connectors"
 version = "0.1.0"
-description = "Data-access connectors (Phase 3a: contracts, registry and an offline fixture connector; no HTTP client, no analysis)"
+description = "Data-access connectors (Phase 3a fixtures-only connector; Phase 3b R8 offline egress policy and an unregistered urllib3 transport proof of concept; no live path, no analysis)"
 requires-python = ">=3.12"
-dependencies = ["geo-common"]
+dependencies = ["geo-common", "urllib3==2.8.0"]
 
 [build-system]
 requires = ["hatchling"]

@@ -24,6 +24,7 @@ Principles: prefer free/open source; integrate via library/CLI behind internal i
 | Next.js / React | MIT | |
 | FastAPI / Pydantic / Starlette | MIT | |
 | SQLAlchemy / Alembic | MIT | |
+| urllib3 2.8.0 (`geo-connectors`, **runtime, worker image only**) | MIT | Owner decision 2026-10-06 (Phase 3b R8): approved **only** as the evaluated transport dependency, used by the unregistered proof of concept `transport_urllib3.py`. No mandatory dependencies; extras (brotli, zstd, socks, h2) not requested. Licence review: RV-0001 in `docs/licence-acknowledgements.toml`. Not an approval of Earth Search, any host:port, any provider request, or any other HTTP client (httpx, certifi, requests, aiohttp). |
 | pg8000 (PostgreSQL driver) | BSD-3-Clause | Chosen over psycopg (LGPL-3.0) to avoid a copyleft runtime dependency; see phase report deviation 1. |
 | PostgreSQL / PostGIS | PostgreSQL / GPL-2.0+ (PostGIS) | Used as a separate service (no linking issue). |
 | MapLibre GL JS | BSD-3-Clause | |

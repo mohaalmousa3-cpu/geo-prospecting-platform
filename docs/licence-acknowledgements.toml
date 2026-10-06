@@ -3,7 +3,9 @@
 # STATUS (updated 2026-10-06, F1-8): the `[[acknowledgement]]`, `[[pending]]` and `[[unsupported]]` records below are
 # a documented record that scripts/licences.py does NOT read. The generator reads ONLY the `[[approved]]` records at the
 # end of this file: the narrow MPL-2.0-only policy decided by the owner on 2026-10-06 (see there). APPROVED_COPYLEFT in
-# the script is still empty. Nothing in this file weakens any check: strong copyleft and unknown licences stay
+# the script is still empty. `[[review]]` records (2026-10-06, Phase 3b R8) document a licence review of a permissive
+# package and approve nothing: the generator ignores them and tests/unit/test_licences_reviews.py checks them against the
+# register. Nothing in this file weakens any check: strong copyleft and unknown licences stay
 # blocked, and anything without an exact `[[approved]]` match stays "pending".
 #
 # RULES: only decisions supported by actual owner messages are recorded; nothing is inferred retroactively;
@@ -264,3 +266,25 @@ version = "1.33.0"
 licence = "MPL-2.0"
 scope = "development"
 reason = "Present in the locked graph as frontend development tooling (not shipped; unmodified use). Its 11 platform packages (P-0001) are NOT covered."
+
+# --- Licence reviews (documentary; permissive licences only) -----------------------------------------------------------
+# A review records WHY a new package was accepted into the dependency graph. It is not an approval mechanism: MIT needs
+# none, no `[[approved]]` record is added for it, and no other package, version or extra is covered. The generator does
+# not read these records; tests/unit/test_licences_reviews.py fails if a review no longer matches the generated register.
+
+[[review]]
+id = "RV-0001"
+ecosystem = "pypi"
+package = "urllib3"
+version = "2.8.0"
+licence = "MIT"
+scope = "runtime"
+decision = "OD-2026-10-06-R8"
+decision_date = "2026-10-06"
+decision_reference = "Owner message of 2026-10-06, 'Authorize Phase 3b R8 urllib3 transport proof-of-concept only' (transcribed in the session transcript; written by Claude, not an independently signed record)"
+reason = "Permissive MIT licence (LICENSE.txt at tag 2.8.0; PyPI license_expression MIT). No mandatory dependencies (the brotli, zstd, socks and h2 extras are NOT requested). Used unmodified as a dependency of geo-connectors only, behind the unregistered transport proof of concept."
+not_approved = [
+  "Earth Search live use, any host:port pair, any provider request, connector registration or Phase 3b execution",
+  "httpx, certifi, requests, aiohttp or any other HTTP client or package",
+  "any other urllib3 version, or any of its extras",
+]

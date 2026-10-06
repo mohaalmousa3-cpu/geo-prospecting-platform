@@ -86,7 +86,7 @@ def run_catalog_search(
     payload: dict[str, Any],
     context: dict[str, Any],
     *,
-    engine: Any,  # a SQLAlchemy Engine (typed Any: this package declares no third-party dependency)
+    engine: Any,  # a SQLAlchemy Engine (typed Any: this package's only third-party dependency is urllib3)
     storage: StorageBackend,
     settings: Settings,
     registry: ConnectorRegistry | None = None,

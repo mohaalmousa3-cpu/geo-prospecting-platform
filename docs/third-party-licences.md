@@ -91,6 +91,7 @@ undecided there — P-0001). Listed so the owner can approve or veto.
 | starlette | 1.7.0 | BSD-3-Clause |
 | typing-extensions | 4.16.0 | PSF-2.0 |
 | typing-inspection | 0.4.4 | MIT |
+| urllib3 | 2.8.0 | MIT |
 | uvicorn | 0.54.0 | BSD-3-Clause |
 
 ## Python — development tooling (not shipped)

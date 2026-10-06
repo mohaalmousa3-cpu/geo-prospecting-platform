@@ -80,9 +80,19 @@ def test_connectors_import_neither_backend_nor_runner() -> None:
         assert not {"app", "runner"} & imported_roots(f), f
 
 
+# Phase 3b R8 (owner decision 2026-10-06): exactly ONE module may import the evaluated HTTP client and `ssl`; it is an
+# unregistered, unreachable proof of concept (see workers/connectors/tests/test_transport_urllib3_isolation.py).
+TRANSPORT_POC = "transport_urllib3.py"
+TRANSPORT_POC_ALLOWED_BANNED = {"urllib3", "ssl"}
+CONNECTORS_THIRD_PARTY_DEPENDENCIES = ["geo-common", "urllib3==2.8.0"]
+
+
 def test_connectors_import_no_network_http_or_raster_modules() -> None:
     for f in py_files("workers/connectors/src"):
-        assert not CONNECTOR_BANNED & imported_roots(f), (f, CONNECTOR_BANNED & imported_roots(f))
+        banned = CONNECTOR_BANNED & imported_roots(f)
+        if f.name == TRANSPORT_POC:
+            banned -= TRANSPORT_POC_ALLOWED_BANNED  # nothing else: no socket, http, requests, httpx, ...
+        assert not banned, (f, banned)
 
 
 def test_connectors_use_only_stdlib_and_geo_common() -> None:
@@ -91,14 +101,15 @@ def test_connectors_use_only_stdlib_and_geo_common() -> None:
     stdlib = set(sys.stdlib_module_names)
     for f in py_files("workers/connectors/src"):
         extra = {r for r in imported_roots(f) if r not in stdlib and r != "geo_connectors"}
-        assert extra <= CONNECTOR_ALLOWED_THIRD_PARTY, (f, extra)
+        allowed = CONNECTOR_ALLOWED_THIRD_PARTY | ({"urllib3"} if f.name == TRANSPORT_POC else set())
+        assert extra <= allowed, (f, extra)
 
 
-def test_connectors_declare_no_third_party_dependency() -> None:
+def test_connectors_declare_exactly_the_approved_dependencies() -> None:
     import tomllib
 
     doc = tomllib.loads((ROOT / "workers/connectors/pyproject.toml").read_text())
-    assert doc["project"]["dependencies"] == ["geo-common"]
+    assert doc["project"]["dependencies"] == CONNECTORS_THIRD_PARTY_DEPENDENCIES
 
 
 def test_connectors_have_no_analysis_modules() -> None:

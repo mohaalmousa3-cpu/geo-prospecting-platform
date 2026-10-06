@@ -1,6 +1,6 @@
 # Connectors (Phase 3a — fixtures only)
 
-> **Status (CP4, 2026-10-06; implemented; Phase 3a ACCEPTED by the owner as fixtures-only on 2026-10-06 at `0c2406f`, CI run #21).** This is not live-slice readiness. There is no live provider, no HTTP client, no cache, no `rasterio` and no network code in this repository; nothing here was verified against a real catalogue. F-1 stays open under the fixtures-only exception; D8 live-verification readiness is pending; no host, port or egress control is approved. Binding decisions: ADR-0014, ADR-0008, ADR-0011.
+> **Status (CP4, 2026-10-06; implemented; Phase 3a ACCEPTED by the owner as fixtures-only on 2026-10-06 at `0c2406f`, CI run #21).** This is not live-slice readiness. There is no live provider, no cache and no `rasterio`, and no network code is reachable from any job, API or connector path. *[2026-10-06, Phase 3b R8: `geo_connectors/transport_urllib3.py` — an unregistered `urllib3==2.8.0` transport proof of concept tested only against loopback servers — and the offline `egress_policy`/`fixed_query` modules exist but are imported by nothing; see `docs/phase-reports/phase-3b-r8-urllib3-transport-poc.md`.]* nothing here was verified against a real catalogue. F-1 stays open under the fixtures-only exception; D8 live-verification readiness is pending; no host, port or egress control is approved. Binding decisions: ADR-0014, ADR-0008, ADR-0011.
 
 ## 1. What exists
 
@@ -61,7 +61,7 @@ Deleting an AOI or project removes its assets, their provenance and (after the c
 
 ## 6. Worker image
 
-The worker image installs `geo-connectors` from the same lockfile through the Dockerfile build argument `EXTRA_PACKAGE` (set only for the worker in `docker-compose.yml`); it adds **no** third-party package (the connectors depend only on `geo-common`). The backend image does not contain `geo_connectors` or `runner`. `scripts/image_smoke.sh` (CI job *docker build smoke*, or `make image-smoke` with a Docker daemon) verifies inside the built images that the registered handlers load, that the backend image lacks the connectors, and that an API-created job runs in the worker image.
+The worker image installs `geo-connectors` from the same lockfile through the Dockerfile build argument `EXTRA_PACKAGE` (set only for the worker in `docker-compose.yml`); since 2026-10-06 it adds exactly one third-party package, `urllib3==2.8.0` (MIT; owner decision for the evaluated transport only), used only by the unreachable transport proof of concept (before that date the connectors depended only on `geo-common`). The backend image does not contain `geo_connectors` or `runner`. `scripts/image_smoke.sh` (CI job *docker build smoke*, or `make image-smoke` with a Docker daemon) verifies inside the built images that the registered handlers load, that the backend image lacks the connectors, and that an API-created job runs in the worker image.
 
 ## 7. What is verified, and how (labels)
 
@@ -74,4 +74,4 @@ The worker image installs `geo-connectors` from the same lockfile through the Do
 
 ## 8. Not here (by design)
 
-Live providers and hosts, HTTP client, cache, retries/back-off against a remote, `rasterio`, DEM clips, user vectors, 3D, Earth Engine, any scoring or interpretation, destructive orphan cleanup, UI for jobs/assets. Each needs a separate, explicit instruction (and, for live slices, the owner's approval of exact hosts/ports and of the application and network controls).
+Live providers and hosts, a *reachable* HTTP client (the urllib3 transport proof of concept is unregistered), cache, retries/back-off against a remote, `rasterio`, DEM clips, user vectors, 3D, Earth Engine, any scoring or interpretation, destructive orphan cleanup, UI for jobs/assets. Each needs a separate, explicit instruction (and, for live slices, the owner's approval of exact hosts/ports and of the application and network controls).

@@ -96,6 +96,8 @@ Phase 3 stages data inputs (catalogue metadata, clipped DEM, user-supplied vecto
 - *R-e Bounds:* timeouts, maximum bytes/pages/redirects, content-type check, decompression guard, no cookies, no credentials, per-job request budgets (plan §3.3). `disabled`/`fixture` create no sockets (tested).
 - *R-f Tests (offline, fake resolver/transport):* each blocked address class incl. decimal/octal/hex/IPv6/mapped spellings, `localhost`, the user-info trick, wrong port, downgrade, redirect to a metadata address and to a non-permitted host, pagination to another host, DNS rebinding, oversized response.
 
+*[2026-10-06 note (R8 transport proof): `urllib3==2.8.0` was approved by the owner only as the *evaluated* transport; a local-loopback proof of concept (`transport_urllib3.py`) exists, unregistered, with licence review RV-0001. It does not select the client for any live slice and approves no provider or host — see `docs/phase-reports/phase-3b-r8-urllib3-transport-poc.md`.]*
+
 *[2026-10-06 note: an offline, unwired policy module and tests for R-a–R-f exist (Phase 3b R8 design checkpoint); they select no client and prove no transport-level property — see `docs/phase-reports/phase-3b-r8-offline-http-security-design.md`.]*
 
 **Client selection (before the first live slice, recorded in a short note):** evaluate maintained options against R-a–R-f — e.g. `httpx` with a custom transport/resolver hook, `urllib3`/`requests` with a pinned-address adapter, `aiohttp` with a custom resolver, or an egress proxy/sidecar that enforces the policy — and choose by test results. A thin wrapper is written only if no option meets the requirements. No bespoke transport is mandated by this ADR.
