@@ -41,5 +41,6 @@ def test_ci_runs_the_image_smoke_test_and_the_smoke_override_is_fixtures_only() 
     override = (ROOT / "infrastructure/docker/docker-compose.smoke.yml").read_text()
     assert set(re.findall(r"CONNECTOR_MODE:\s*(\w+)", override)) == {"fixture"}
     assert "ports: !reset []" in override  # nothing is published on the host by the smoke stack
+    assert "pg_isready -h 127.0.0.1" in override  # readiness over TCP, not only the init-time unix socket
     script = (ROOT / "scripts/image_smoke.sh").read_text()
     assert "--network none" in script  # the import check runs without any network

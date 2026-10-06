@@ -2,6 +2,12 @@
 # mode for the API and the worker, and nothing published on the host (the client runs inside the backend
 # container). Not a deployment file; it adds no service, no host and no credential.
 services:
+  postgis:
+    # The base healthcheck asks over the unix socket, which answers while the image's init-time server is still
+    # up (measured on a cold start: socket-ready ~1 s, TCP-ready ~3 s), so `migrate` could start in that gap and
+    # fail with "connection refused". Ask over TCP, as the other services connect.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
   backend:
     environment:
       CONNECTOR_MODE: fixture

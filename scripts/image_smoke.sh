@@ -18,7 +18,10 @@ created_env=0
 if [ ! -f .env ]; then cp .env.example .env; created_env=1; fi
 cleanup() {
   status=$?
-  if [ "$status" -ne 0 ]; then "${COMPOSE[@]}" logs --no-color --tail 80 worker backend 2>&1 || true; fi
+  if [ "$status" -ne 0 ]; then
+    "${COMPOSE[@]}" ps -a 2>&1 || true
+    "${COMPOSE[@]}" logs --no-color --tail 80 2>&1 || true   # every service, incl. postgis and migrate
+  fi
   "${COMPOSE[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   if [ "$created_env" = 1 ]; then rm -f .env; fi
   exit "$status"
