@@ -1,4 +1,4 @@
-.PHONY: sync lint typecheck test test-integration schemas schemas-check up down migrate guard
+.PHONY: sync lint typecheck test test-integration schemas schemas-check up down migrate guard reconcile-assets
 
 sync:
 	uv sync --all-packages
@@ -36,6 +36,10 @@ migrate:
 .PHONY: licences frontend-check e2e ci ci-full
 licences:
 	uv run python scripts/licences.py
+
+# Drain pending tombstones, then report (never delete or repair) unreferenced files and rows without a file.
+reconcile-assets:
+	uv run python scripts/reconcile_assets.py
 
 frontend-check:
 	cd apps/frontend && npm run lint && npm run typecheck && npm run format:check && npm test && npm run build

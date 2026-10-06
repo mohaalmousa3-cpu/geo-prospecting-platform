@@ -22,6 +22,9 @@ H = {
     "boom": "handlers_for_tests:boom",
     "insufficient": "handlers_for_tests:insufficient",
     "crash": "handlers_for_tests:hard_crash",
+    "retry": "handlers_for_tests:retry_me",
+    "ctx": "handlers_for_tests:echo_context",
+    "stops": "handlers_for_tests:cancels",
 }
 
 
@@ -167,3 +170,44 @@ def test_run_forever_stops_when_idle(queue: PostgresJobQueue) -> None:
     r.stop_event.set()
     t.join(5)
     assert not t.is_alive()
+
+
+def test_two_argument_handlers_receive_the_job_context(
+    queue: PostgresJobQueue, aoi_id: UUID, engine: Engine
+) -> None:
+    import json
+
+    j = queue.enqueue("ctx", aoi_id=aoi_id)
+    assert make_runner(queue).run_once()
+    done = queue.get(j.id)
+    ctx = json.loads(done.error)  # the success message is stored in `error` for explained terminal states
+    assert (
+        done.status is JobStatus.SUCCEEDED
+        and ctx["job_id"] == str(j.id)
+        and ctx["worker_id"] == "test-worker"
+    )
+    assert ctx["aoi_id"] == str(j.aoi_id) and ctx["project_id"] == str(j.project_id)
+
+
+def test_one_argument_handlers_still_work_and_noop_has_no_aoi_in_its_context(queue: PostgresJobQueue) -> None:
+    j = queue.enqueue("noop")
+    assert make_runner(queue).run_once()
+    assert queue.get(j.id).status is JobStatus.SUCCEEDED
+
+
+def test_a_retryable_handler_exception_requeues_the_job_within_its_attempt_budget(
+    queue: PostgresJobQueue, aoi_id: UUID
+) -> None:
+    j = queue.enqueue("retry", max_attempts=2, aoi_id=aoi_id)
+    assert make_runner(queue).run_once()
+    first = queue.get(j.id)
+    assert first.status is JobStatus.QUEUED and "temporarily busy" in (first.error or "")
+    assert make_runner(queue).run_once()
+    assert queue.get(j.id).status is JobStatus.FAILED  # the attempt budget is respected, then it fails
+
+
+def test_a_handler_may_end_the_job_as_cancelled(queue: PostgresJobQueue, aoi_id: UUID) -> None:
+    j = queue.enqueue("stops", aoi_id=aoi_id)
+    assert make_runner(queue).run_once()
+    done = queue.get(j.id)
+    assert done.status is JobStatus.CANCELLED and done.error == "stopped before publication"

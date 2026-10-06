@@ -24,3 +24,22 @@ def insufficient(payload: dict[str, Any]) -> HandlerResult:
 
 def hard_crash(payload: dict[str, Any]) -> HandlerResult:
     os._exit(137)
+
+
+class WantsRetry(Exception):
+    retryable = True  # duck-typed: the runner must treat this as a retryable failure
+
+
+def retry_me(payload: dict[str, Any]) -> HandlerResult:
+    raise WantsRetry("temporarily busy")
+
+
+def echo_context(payload: dict[str, Any], context: dict[str, Any]) -> HandlerResult:
+    """Two-argument handler: receives the job context from the runner."""
+    import json
+
+    return HandlerResult("succeeded", json.dumps(context, sort_keys=True))
+
+
+def cancels(payload: dict[str, Any]) -> HandlerResult:
+    return HandlerResult("cancelled", "stopped before publication")

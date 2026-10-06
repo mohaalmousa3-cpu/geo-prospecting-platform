@@ -6,6 +6,7 @@ leaking handler from taking the worker down.
 
 from __future__ import annotations
 
+import inspect
 import logging
 import multiprocessing as mp
 import threading
@@ -21,12 +22,21 @@ log = logging.getLogger("runner")
 _CTX = mp.get_context("spawn")
 
 
-def _child(conn: Connection, handler_path: str, payload: dict[str, Any]) -> None:
+def _child(conn: Connection, handler_path: str, payload: dict[str, Any], context: dict[str, Any]) -> None:
     try:
-        result = load_handler(handler_path)(payload)
+        fn = load_handler(handler_path)
+        accepts_context = len(inspect.signature(fn).parameters) >= 2
+        result = fn(payload, context) if accepts_context else fn(payload)
         conn.send(("ok", result.status, result.message))
     except BaseException as exc:  # report everything; parent decides
-        conn.send(("error", f"{type(exc).__name__}: {exc}", None))
+        # an exception carrying `retryable = True` asks for the job to be retried (attempt budget applies)
+        conn.send(
+            (
+                "error",
+                f"{type(exc).__name__}: {exc}",
+                "retryable" if getattr(exc, "retryable", False) else None,
+            )
+        )
     finally:
         conn.close()
 
@@ -79,7 +89,13 @@ class Runner:
             return
         log.info("job started (attempt %d)", job.attempts, extra=extra)
         parent, child_conn = _CTX.Pipe(duplex=False)
-        proc = _CTX.Process(target=_child, args=(child_conn, handler_path, job.payload), daemon=True)
+        context = {
+            "job_id": str(job.id),
+            "worker_id": self._worker,
+            "aoi_id": None if job.aoi_id is None else str(job.aoi_id),
+            "project_id": None if job.project_id is None else str(job.project_id),
+        }
+        proc = _CTX.Process(target=_child, args=(child_conn, handler_path, job.payload, context), daemon=True)
         proc.start()
         child_conn.close()
         try:
@@ -148,4 +164,4 @@ class Runner:
             log.info("job finished: %s", a, extra=extra)
         else:
             log.error("job failed: %s", a, extra=extra)
-            self._q.fail(job_id, self._worker, a)
+            self._q.fail(job_id, self._worker, a, retryable=(b == "retryable"))

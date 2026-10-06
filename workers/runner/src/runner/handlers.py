@@ -15,16 +15,22 @@ from typing import Any
 
 NOOP_MAX_SLEEP_SECONDS = 60.0
 
-DEFAULT_HANDLERS: dict[str, str] = {"noop": "runner.handlers:noop"}
+# Handlers are import-path strings only: the runner never imports the packages that provide them.
+DEFAULT_HANDLERS: dict[str, str] = {
+    "noop": "runner.handlers:noop",
+    "catalog_search": "geo_connectors.handler:catalog_search",  # Phase 3a, fixtures only (ADR-0014)
+}
 
 
 @dataclass(frozen=True)
 class HandlerResult:
-    status: str = "succeeded"  # "succeeded" | "insufficient_data"
+    status: str = "succeeded"  # "succeeded" | "insufficient_data" | "cancelled"
     message: str | None = None
 
 
-Handler = Callable[[dict[str, Any]], HandlerResult]
+# A handler takes the payload and optionally a second argument: the job context
+# {job_id, worker_id, aoi_id, project_id} (strings; the AOI fields are None for AOI-free jobs).
+Handler = Callable[..., HandlerResult]
 
 
 def noop(payload: dict[str, Any]) -> HandlerResult:

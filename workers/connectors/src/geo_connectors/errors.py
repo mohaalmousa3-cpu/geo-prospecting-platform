@@ -31,3 +31,17 @@ class ConnectorRequestError(ConnectorError):
 
 class FixtureError(ConnectorError):
     """A fixture file is missing, malformed or not labelled synthetic."""
+
+
+class PublicationBusyError(ConnectorError):
+    """Publishing could not complete within its attempt budget; the runner may retry the job."""
+
+    retryable = True  # duck-typed by the runner (it does not import this package)
+
+
+class PublicationRefusedError(ConnectorError):
+    """The job may no longer publish (not running / not owned / target gone). Not retryable."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(f"asset publication refused: {reason}")
+        self.reason = reason

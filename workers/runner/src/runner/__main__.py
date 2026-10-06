@@ -6,6 +6,7 @@ import signal
 import socket
 import uuid
 
+from geo_common.assets_pg import drain_at_startup
 from geo_common.config import get_settings
 from geo_common.db import make_engine
 from geo_common.logging_setup import configure_logging
@@ -16,8 +17,10 @@ from runner.loop import Runner
 def main() -> None:
     s = get_settings()
     configure_logging(s.LOG_LEVEL)
+    engine = make_engine(s.database_url, pool_size=2)
+    drain_at_startup(engine, s.STORAGE_LOCAL_PATH)
     queue = PostgresJobQueue(
-        make_engine(s.database_url, pool_size=2),
+        engine,
         max_queued_jobs=s.MAX_QUEUED_JOBS,
         default_max_attempts=s.JOB_MAX_ATTEMPTS,
     )
