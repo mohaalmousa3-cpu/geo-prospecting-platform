@@ -61,7 +61,7 @@ services:
     build:
       context: ../..
       dockerfile: infrastructure/docker/python.Dockerfile
-      args: { PACKAGE: geo-runner }
+      args: { PACKAGE: geo-runner, EXTRA_PACKAGE: geo-connectors }
       secrets: [proxy_ca]
     <<: *python-env
     command: ["python", "-m", "runner"]

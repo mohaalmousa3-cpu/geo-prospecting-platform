@@ -1,4 +1,4 @@
-.PHONY: sync lint typecheck test test-integration schemas schemas-check up down migrate guard reconcile-assets
+.PHONY: sync lint typecheck test test-integration schemas schemas-check up down migrate guard reconcile-assets image-smoke
 
 sync:
 	uv sync --all-packages
@@ -40,6 +40,11 @@ licences:
 # Drain pending tombstones, then report (never delete or repair) unreferenced files and rows without a file.
 reconcile-assets:
 	uv run python scripts/reconcile_assets.py
+
+# Needs a Docker daemon. Builds the worker/backend images and checks, inside them, that the registered handlers load
+# and that an API-created fixtures-only catalog_search job runs in the worker image (scripts/image_smoke.sh).
+image-smoke:
+	PROXY_CA_BUNDLE=$${PROXY_CA_BUNDLE:-} ./scripts/image_smoke.sh
 
 frontend-check:
 	cd apps/frontend && npm run lint && npm run typecheck && npm run format:check && npm test && npm run build

@@ -1,0 +1,11 @@
+# Merged over docker-compose.yml by scripts/image_smoke.sh ONLY (CI and `make image-smoke`): the fixtures-only
+# mode for the API and the worker, and nothing published on the host (the client runs inside the backend
+# container). Not a deployment file; it adds no service, no host and no credential.
+services:
+  backend:
+    environment:
+      CONNECTOR_MODE: fixture
+    ports: !reset []
+  worker:
+    environment:
+      CONNECTOR_MODE: fixture
