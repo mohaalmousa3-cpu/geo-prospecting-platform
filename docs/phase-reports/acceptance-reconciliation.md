@@ -441,36 +441,35 @@ Scope of this pass: documentation corrections and a review note only. No code, s
 
 | Item | Status | Evidence / what was done |
 |---|---|---|
-| F1-1 | **partially resolved** | `docs/architecture.md:3` no longer says "Draft v0.1"; it now states it is aligned through Phase 2.5 only. The whole document was read: it has **no** connector/asset architecture beyond the pre-implementation outline in §5, and §8 omits `workers/connectors` — recorded under F1-7 below, not invented here |
+| F1-1 | **resolved** (2026-10-06 completion pass) | `docs/architecture.md` now has §5a *Phase 3a as built* (backend boundary, migrations 0004–0006, AOI/project/job/asset/provenance/result relationships, queue and worker boundary, `geo_connectors`, `catalog_search` and `CONNECTOR_MODE`, `LocalStorage` staging/publication, tombstones, drain, report-only `reconcile-assets`, deletion guards, explicit absences, deferred live design points); §1, §2, §5 and §8 were annotated or corrected so design intent is not read as implementation. Cross-checked against ADR-0014, `docs/connectors.md`, `docs/data-model.md`, `docs/job-lifecycle.md` and the code layout |
 | F1-2 | resolved | `TASKS.md` Backlog now reads "Authentication / multi-user" |
 | F1-3 | resolved | `docs/risk-register.md` P-9: "OSM is opt-in; default basemap is none (ADR-0013)" |
 | F1-4 | resolved by annotation | `docs/phase-reports/phase-2.md` §3 (CI after push) and §4 item 1 (no project entity) carry dated `[historical]` notes; text kept |
 | F1-5 | resolved by annotation | `docs/phase-reports/phase-1.md` (CI "has not run") now carries a `[historical]` note. `docs/phase-reports/phase-2.5.md:3` was left unchanged: the note on line 4 expressly states that the status line and "proposal only" wording are preserved as written and superseded |
 | F1-6 | resolved (existing annotations reviewed and accepted as sufficient) | `TASKS.md:25,41,55` carry `[historical, superseded…]` tags with status notes (`:38,:52`); `docs/acceptance-criteria.md` Phase 1/2/2.5 each have a status note immediately below the "Owner acceptance still required" sentence. Left unchanged |
-| F1-7 | **open** (review note below) | systematic pass recorded; stale and missing items listed, none yet corrected |
+| F1-7 | **resolved for every specified item** (2026-10-06 completion pass); observations recorded below | stale items corrected in `data-model.md`, `job-lifecycle.md`, root `README.md`, `apps/backend/README.md`, `apps/frontend/README.md`, `workers/connectors/README.md`; `packages/pycommon/README.md` added; `scientific-constraints.md` reviewed and annotated as current. Residual observations (not inconsistencies): `docs/dependency-strategy.md` has no row for the `geo-connectors` workspace member and **no HTTP-client or transport entry — client selection remains pending and is not covered there** |
 | F1-8 | **open** | `OA-0001` is documented in `docs/licence-acknowledgements.toml`; the generated register (`docs/third-party-licences.md`, header "nothing here has been approved") and the generator policy (`scripts/licences.py`, `APPROVED_COPYLEFT = {}`) are unchanged and remain a **separate authorised-code-task decision** |
 
-**F1-7 systematic-review note (state of `7242dcf`; "stale" = contradicts the current baseline; nothing below was edited by this pass except as listed above):**
+**F1-7 systematic-review note (state after the 2026-10-06 completion pass; the first pass at `7242dcf` found the "was" items):**
 
-| File | Result | Finding |
+| File | Result | Was → now |
 |---|---|---|
-| `docs/data-model.md` | reviewed — partially stale | §1 entities and §2 deletion are current (0004–0006, guard). Stale: status line "current for Phase 2.5"; the diagram still marks job↔project/AOI as "(planned)"; §3 item 1 "planned … migration 0004 or later" (implemented) |
-| `docs/job-lifecycle.md` | reviewed — partially stale | §5a and §6 current. Stale: line 3 "The only job type today is `noop`"; §2/§3 "Handler exceptions … are never retried" / "Not retried" conflict with the retryable-error path (`retryable=True`) added in Phase 3a |
-| `docs/dependency-strategy.md` | reviewed — current but incomplete | no row for the `geo-connectors` workspace member; **no HTTP client or transport entry — client selection is pending (ADR-0014 §9–§10) and is not covered**; licence column is "likely, unverified" as it states |
-| `docs/architecture.md` | reviewed (whole) — **missing coverage** | no `data_asset`, assets, `geo_connectors`, `assets_pg` or migrations 0004–0006; §5 is the original outline (`describe()`/`estimate_cost()`/`fetch(aoi, window)`, differing from the implemented `fetch(FetchContext)`); §2 "Cache" bullet is design intent (no cache exists); §8 runner row says "`noop` handler" only. **Open documentation follow-up** |
-| `README.md` (root) | status banner and index lines reviewed — stale | banner (line 5) and plan-index row (line 109) still say the Phase 3a first checkpoint is "in progress, not complete and not accepted"; Phase 3a is accepted as fixtures-only |
-| `apps/backend/README.md` | reviewed — stale | "Not implemented — Phase 1+" |
-| `apps/frontend/README.md` | reviewed — stale | "Not implemented — Phase 1+" |
-| `packages/pycommon/` | **README missing** | no `README.md` (confirmed) |
+| `docs/data-model.md` | reviewed — **corrected, current** | "current for Phase 2.5" / job relationships "(planned)" / §3 item 1 "planned … 0004 or later" → status line for Phase 3a (migrations 0001–0006), relationship block with `data_asset`, as-built migration 0004 description; engine-result items still marked planned |
+| `docs/job-lifecycle.md` | reviewed — **corrected, current** | "only job type is `noop`" and "never retried" → two job types (`noop`, fixtures-only `catalog_search`); retryable-exception path distinguished; no live retry/back-off claimed |
+| `docs/dependency-strategy.md` | reviewed — current, **incomplete (recorded, not edited)** | no `geo-connectors` row; no HTTP-client/transport entry (selection pending, ADR-0014 §9–§10); licence column "likely, unverified" as it states |
+| `docs/architecture.md` | reviewed (whole) — **corrected, current** | see F1-1 |
+| `README.md` (root) | status lines reviewed — **corrected** | Phase 3a "in progress, not accepted" → accepted as fixtures-only (2026-10-06), no live provider/HTTP client/cache/egress control; older statements kept and marked `[Historical …]`; layout and index rows updated |
+| `apps/backend/README.md` | reviewed — **corrected, current** | "Not implemented — Phase 1+" → implemented scope and boundaries |
+| `apps/frontend/README.md` | reviewed — **corrected, current** | "Not implemented — Phase 1+" → implemented workbench/status/disclaimer/generated types; no UI for jobs/assets/connectors; no 3D |
+| `packages/pycommon/README.md` | **added** | was missing |
 | `packages/schemas/README.md` | reviewed — current | |
-| `workers/README.md` | reviewed — current | connectors row: "3a, fixtures-only skeleton" (acceptable) |
-| `workers/connectors/README.md` | reviewed — partially stale | file list omits `handler.py`, `provenance.py`, `request_hash.py`, `errors.py` |
+| `workers/README.md` | reviewed — current | |
+| `workers/connectors/README.md` | reviewed — **corrected, current** | file list now covers `handler`, `provenance`, `request_hash`, `errors`, fixtures, registry and the no-live-network boundary |
 | `workers/{thermal,gold_prospectivity,void_evidence,insar,geophysics}/README.md` | reviewed — current | each "Not implemented — Phase N" |
-| `infrastructure/README.md` | reviewed — current | |
-| `tests/README.md`, `data/README.md` | reviewed — current | |
-| `docs/scientific-constraints.md` | **not reviewed in this pass** | stays under F1-7 |
+| `infrastructure/README.md`, `tests/README.md`, `data/README.md` | reviewed — current | |
+| `docs/scientific-constraints.md` | reviewed — **current**; dated annotation added | no factual inconsistency with the fixtures-only scope |
 
-**Remaining open under F-1:** F1-1 (architecture coverage), F1-7 (stale/missing items above, `scientific-constraints.md` review, `packages/pycommon` README), F1-8 (register/generator decision). Closure still needs the owner's confirmation (§9a closure criteria).
+**Remaining open under F-1:** **F1-8 only** (the generated register header and generator policy versus OA-0001 remain a separate authorised-code-task decision; `docs/third-party-licences.md`, `docs/licence-acknowledgements.toml` and `scripts/licences.py` were not touched). Closure of F-1 still needs the owner's confirmation (§9a closure criteria). **F-1 remains partially reconciled; not closed.** Nothing here approves Phase 3b or live readiness.
 
 ## 10. Verification of the code baseline
 

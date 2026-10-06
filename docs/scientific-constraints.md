@@ -2,6 +2,8 @@
 
 Normative. Applies to code, API, UI, reports, tests, documentation and commit messages. Violations are defects.
 
+> **Review annotation (2026-10-06, F-1 / F1-7):** reviewed against the accepted fixtures-only Phase 3a baseline. **Remains current; no change needed.** No result, envelope writer, engine, score or depth value exists; the staged `data_asset` rows of Phase 3a are catalogue-metadata *inputs*, not results, and do not fall under the result-envelope rules of §3–§5 (ADR-0014 §2). The rules above are unchanged and still bind any future engine.
+
 ## 1. Mandatory rules
 
 1. **No confirmed gold from satellite/remote data alone.** Remote sensing can indicate alteration minerals, structures, lithological context. These are *indirect* and non-unique.

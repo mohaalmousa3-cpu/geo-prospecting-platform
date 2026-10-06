@@ -2,9 +2,11 @@
 
 A scientific web platform for **prospectivity and anomaly screening** from remote-sensing, geological, terrain and thermal data — for gold-related targets, cavity/void-related targets and thermal anomalies — with explicit confidence and uncertainty.
 
-> **Update 2026-10-05:** the owner authorised the first checkpoint of Phase 3a (fixtures-only) on branch `claude/phase-3a-fixtures`; it is in progress, not complete and not accepted. The status below is otherwise as recorded before that instruction.
+> **Update 2026-10-06:** **Phase 3a (fixtures-only) is accepted by the owner** (accepted at `0c2406f`, CI run #21) and merged into this branch. It adds the offline `catalog_search` path, the `geo_connectors` package and migrations 0004–0006; **there is no live provider, HTTP client, cache or egress control, and no live slice is authorised** (Phase 3b not started; F-1 partially reconciled, not closed; D8 readiness pending). Authoritative status: [`MASTER_SPEC.md`](MASTER_SPEC.md) → Current Project Status.
 >
-> **Status (2026-10-05; authoritative source: [`MASTER_SPEC.md`](MASTER_SPEC.md) → Current Project Status).** Phases 0–2.5 are implemented, with the owner decisions of 2026-10-05 recorded: Phase 0 accepted within its historical scope; Phase 1 open checks accepted; Phase 2 upload/archive boundary-test gap closed and its CI box ticked with clarified wording; Phase 0's documentation-consistency item stays open as follow-up F-1; Phase 2.5 follow-ups (browser smoke test in CI, `none` basemap default) and the derived-CORS addition accepted. **Phase 3: Planned — not started; ADR-0014 Accepted 2026-10-05 (not implemented); the fixtures-only Phase 3a scope accepted 2026-10-05 (scope acceptance only, not a start instruction); blocked pending a separate, explicit, bounded start instruction; D8 strategy resolved (option D), live-verification readiness pending; Phase 0 follow-up F-1 open and non-blocking only for fixtures-only 3a; no live host or network control approved.** The platform can define, validate, store and display Areas of Interest inside projects. **No analysis, scoring, remote-sensing, Earth Engine or scientific output exists yet.**
+> *[Historical, 2026-10-05 — superseded by the update above]* "the owner authorised the first checkpoint of Phase 3a on `claude/phase-3a-fixtures`; it is in progress, not complete and not accepted."
+>
+> *[Historical status paragraph, as of 2026-10-05; superseded for Phase 3 by the 2026-10-06 update above]* **Status (2026-10-05; authoritative source: [`MASTER_SPEC.md`](MASTER_SPEC.md) → Current Project Status).** Phases 0–2.5 are implemented, with the owner decisions of 2026-10-05 recorded: Phase 0 accepted within its historical scope; Phase 1 open checks accepted; Phase 2 upload/archive boundary-test gap closed and its CI box ticked with clarified wording; Phase 0's documentation-consistency item stays open as follow-up F-1; Phase 2.5 follow-ups (browser smoke test in CI, `none` basemap default) and the derived-CORS addition accepted. **Phase 3: Planned — not started; ADR-0014 Accepted 2026-10-05 (not implemented); the fixtures-only Phase 3a scope accepted 2026-10-05 (scope acceptance only, not a start instruction); blocked pending a separate, explicit, bounded start instruction; D8 strategy resolved (option D), live-verification readiness pending; Phase 0 follow-up F-1 open and non-blocking only for fixtures-only 3a; no live host or network control approved.** The platform can define, validate, store and display Areas of Interest inside projects. **No analysis, scoring, remote-sensing, Earth Engine or scientific output exists yet.**
 
 > *Historical banner (superseded; as written during Phase 2.5 implementation):* "Phases 1–2 accepted (with follow-ups); Phase 2.5 (projects, basemap abstraction) implemented, awaiting acceptance; Phase 3 not started." CI run #7 on `02b6b05` is historical evidence for the follow-ups; run #10 on `da90ce2` succeeded (CI-level evidence only, not owner acceptance).
 
@@ -32,7 +34,8 @@ apps/
   frontend/        Next.js app (Phase 1+)
   backend/         FastAPI app (Phase 1+)
 workers/           Background engines, one isolated module/image each
-  runner/          Generic worker loop + noop handler
+  runner/          Generic worker loop; registers the noop and (fixtures-only) catalog_search handlers by import path
+  connectors/      geo_connectors: fixtures-only data-access package (Phase 3a; no live network)
   thermal/ gold_prospectivity/ void_evidence/ geophysics/ insar/   (placeholders; not implemented)
 packages/
   schemas/         Shared JSON Schema contracts (source of truth)
@@ -83,7 +86,7 @@ Local checks (all of CI): `make sync && make ci`. Integration tests need PostGIS
 | `make e2e` | browser smoke test (Playwright → Next.js → FastAPI → PostGIS); needs a database `$E2E_POSTGRES_DB` and Chromium (`npx playwright install chromium` or `E2E_CHROMIUM_PATH`) |
 | `make ci-full` | everything CI runs, including the browser smoke test |
 
-The app contains **no scientific engine and no scientific output**: health checks, a `noop` job, the queue/worker, shared contracts, AOI input/validation/storage with a 2D map, and guard tests. Data model: [`docs/data-model.md`](docs/data-model.md) (project ↔ AOI ↔ future jobs ↔ outputs). Evidence: [`phase-2.5.md`](docs/phase-reports/phase-2.5.md), [`phase-1.md`](docs/phase-reports/phase-1.md), [`phase-1-closeout.md`](docs/phase-reports/phase-1-closeout.md), [`phase-2.md`](docs/phase-reports/phase-2.md). Job states and queue capacity assumptions: [`docs/job-lifecycle.md`](docs/job-lifecycle.md).
+The app contains **no scientific engine and no scientific output**: health checks, a `noop` job, a fixtures-only `catalog_search` job over synthetic fixtures (catalogue metadata staged as inputs, never results), the queue/worker, shared contracts, AOI input/validation/storage with a 2D map, and guard tests. Data model: [`docs/data-model.md`](docs/data-model.md) (project ↔ AOI ↔ jobs ↔ staged assets; engine results planned). Architecture: [`docs/architecture.md`](docs/architecture.md) §5a. Evidence: [`phase-2.5.md`](docs/phase-reports/phase-2.5.md), [`phase-1.md`](docs/phase-reports/phase-1.md), [`phase-1-closeout.md`](docs/phase-reports/phase-1-closeout.md), [`phase-2.md`](docs/phase-reports/phase-2.md). Job states and queue capacity assumptions: [`docs/job-lifecycle.md`](docs/job-lifecycle.md).
 
 The map basemap is chosen with `NEXT_PUBLIC_BASEMAP_PROVIDER` = `none` (default; no basemap, no third-party requests) | `osm` (opt-in, local development only, refused in production builds) | `xyz` (explicit; your own https tile URL + attribution). Tile requests reveal the viewed map area to the provider (never the AOI geometry); `none` makes no third-party requests (ADR-0012/0013).
 
@@ -106,7 +109,7 @@ The map basemap is chosen with `NEXT_PUBLIC_BASEMAP_PROVIDER` = `none` (default;
 | [docs/phase-reports/phase-1-closeout.md](docs/phase-reports/phase-1-closeout.md) | Phase 1 closeout: accepted, open risks, deferred |
 | [docs/phase-2-plan.md](docs/phase-2-plan.md) / [phase-2.md](docs/phase-reports/phase-2.md) | Phase 2 plan and evidence |
 | [docs/job-lifecycle.md](docs/job-lifecycle.md) | Job states, guarantees, provisional capacity |
-| [docs/phase-3-plan.md](docs/phase-3-plan.md) | Final Phase 3 plan (approved with constraints; **Phase 3a first checkpoint in progress** on `claude/phase-3a-fixtures`; other slices not started; ADR-0014 Accepted 2026-10-05) |
+| [docs/phase-3-plan.md](docs/phase-3-plan.md) | Final Phase 3 plan (approved with constraints; **Phase 3a accepted as fixtures-only 2026-10-06**; Phase 3b onward not started and not authorised; ADR-0014 Accepted 2026-10-05) |
 | [docs/third-party-licences.md](docs/third-party-licences.md) | Dependency licence register |
 
 ## Licence

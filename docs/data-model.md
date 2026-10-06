@@ -1,14 +1,17 @@
 # Data Model: Project, AOI, Jobs, Outputs
 
-Status: **current for Phase 2.5**. Items marked *(planned)* do not exist yet and are listed so later phases fit without restructuring. Nothing here is scientific content: these entities are bookkeeping.
+Status: **current for Phase 3a (fixtures-only; accepted 2026-10-06; migrations 0001–0006)**. Items marked *(planned)* do not exist yet and are listed so later phases fit without restructuring. Nothing here is scientific content: these entities are bookkeeping.
 
 ```
 project 1 ──── * aoi                       (exists)
-project 1 ──── * job            (planned)  one job belongs to one project
-aoi     1 ──── * job            (planned)  a job analyses at most one AOI (nullable for AOI-less jobs such as noop)
-job     1 ──── * result         (table exists; unused until an engine runs)
-job     1 ──── 1 provenance     (table exists; unused until an engine runs)
-result  → files under project/aoi/job path in StorageBackend      (planned layout below)
+project 1 ──── * job            (exists, migration 0004)  the job's project is derived from its AOI
+aoi     1 ──── * job            (exists, migration 0004)  NULL only for AOI-free `noop` jobs; every other type needs an AOI
+aoi     1 ──── * data_asset     (exists, migration 0005)  staged inputs (fixtures-only catalogue metadata), never results
+job     0..1 ─── * data_asset   (exists)                  an asset may be linked to the job that published it, or to none
+data_asset 1 ── 1 provenance    (exists)                  provenance.job_id is nullable since 0005
+job     1 ──── * result         (table exists; no writer yet; RESTRICT since 0006)
+job     1 ──── * provenance     (table exists; RESTRICT since 0006)
+data_asset → file under projects/<project>/aois/<aoi>/jobs/<job>/<asset>.json in StorageBackend (as built for catalogue assets)
 ```
 
 ## 1. Entities (as built)
@@ -27,8 +30,8 @@ result  → files under project/aoi/job path in StorageBackend      (planned lay
 - **Jobs (implemented, Phase 3a CP2, ADR-0014 §7.5 r5, `apps/backend/src/app/deletion.py`):** queued or running jobs always block deletion of their AOI/project (409 `has_active_jobs`, also with the cascade flag). Finished jobs need the explicit flag (`delete_aois=true` for a project, `delete_dependents=true` for an AOI; otherwise 409 `needs_cascade`/`project_not_empty`) and are then deleted with the AOI by their exact locked id set. Every deletion is one transaction in the global lock order, restarted as a whole within one attempt budget (3), and answers 503 `retry_later` / 409 `still_referenced` / 500 `integrity_error` as documented in ADR-0014 §7.6.
 - **Staged assets (implemented, CP3):** the same transaction deletes the AOI's assets and their provenance, writing tombstones for their files; files are removed after the commit and a failed cleanup never fails the deletion (the routes keep 204). **Results are scientific records:** if any `result` row, or any `provenance` row **not owned by an asset of the AOI(s) selected for deletion**, references the jobs being deleted, the deletion is refused with 409 `has_results`, whatever the cascade flag says (each row counted once; provenance of a selected asset is deleted explicitly with it and is not counted). Order of refusals: `has_active_jobs` → `has_results` → `needs_cascade`/`project_not_empty`. Since migration 0006 (owner option B, 2026-10-06) `result.job_id` and `provenance.job_id` are `ON DELETE RESTRICT`, so raw SQL cannot silently remove those records with a job; this is a second line behind the guard, not a replacement (`docs/phase-reports/migration-0006-design-note.md`; `TRUNCATE … CASCADE` is outside it).
 
-## 3. How future jobs and outputs attach *(planned, to be fixed by the phase that adds the first engine job)*
-1. Add `job.project_id uuid NOT NULL REFERENCES project(id) ON DELETE RESTRICT` and `job.aoi_id uuid NULL REFERENCES aoi(id) ON DELETE RESTRICT` (migration `0004` or later). `noop` jobs may keep `aoi_id` null.
+## 3. How jobs and outputs attach *(item 1 is implemented by migrations 0004–0006 and the storage-key layout of item 3 by the Phase 3a staged assets; the rest — engine results — remains planned)*
+1. **Implemented (migration 0004, as built — differs from the original plan):** `job.aoi_id` and `job.project_id` are both set or both NULL; every non-`noop` job needs an AOI; a composite foreign key `(aoi_id, project_id) → aoi(id, project_id)` (RESTRICT) forces the job's project to equal its AOI's project; `noop` jobs keep NULLs (see §1 `job`).
 2. A job's payload references an AOI **by id** and stores a snapshot hash of the AOI geometry in provenance (`aoi_hash`), so a result remains interpretable if the AOI is later removed or replaced.
 3. Output files use logical storage keys (ADR-0006): `projects/<project_id>/aois/<aoi_id>/jobs/<job_id>/<artifact>` (COG rasters, vector exports). Keys are derived from ids only, never from user text.
 4. Each engine output is a `result` row whose `envelope` satisfies the mandatory result envelope (confidence, uncertainty, explanation, sources, provenance, `validation_status = unvalidated`, …). The API must refuse to serve results without it.

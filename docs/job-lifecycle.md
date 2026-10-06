@@ -1,6 +1,6 @@
 # Job Lifecycle and Queue Capacity
 
-Applies to the PostgreSQL-backed queue (ADR-0007). **No analysis, scoring, AOI science or Earth Engine logic exists.** The only job type today is `noop`; this document describes the mechanism that later engines will run on.
+Applies to the PostgreSQL-backed queue (ADR-0007). **No analysis, scoring, AOI science or Earth Engine logic exists.** Two job types exist: `noop` (Phase 1) and the fixtures-only `catalog_search` (Phase 3a, served from committed synthetic fixtures; there is **no** live provider path — `CONNECTOR_MODE=live` is refused). This document describes the mechanism that later engines will run on.
 
 ## 1. States
 
@@ -35,8 +35,8 @@ Before enqueue (synchronously in the API): request received → payload validate
 | `queued` → `running` | worker `claim` | `UPDATE … WHERE id = (SELECT … FOR UPDATE SKIP LOCKED LIMIT 1)`; order: higher `priority` first, then oldest. Increments `attempts`, sets `locked_by`, `lease_expires_at`. |
 | `running` → `running` | `heartbeat` | Worker extends the lease every `lease/3` seconds. Fails (`owned=false`) if the job no longer belongs to this worker; the worker then kills its child and **writes nothing**. |
 | `running` → `succeeded` / `insufficient_data` | `complete` | Only the current lock owner can complete. |
-| `running` → `failed` | `fail` | Handler exception, timeout (`JOB_TIMEOUT_SECONDS`), unknown job type. Not retried. |
-| `running` → `queued` | retryable `fail`, or `requeue_expired` | Handler process died (crash / OOM kill), worker shut down mid-job, or the lease expired. Only while `attempts < max_attempts`; otherwise → `failed` (`lease expired; max attempts exhausted`). |
+| `running` → `failed` | `fail` | Handler exception, timeout (`JOB_TIMEOUT_SECONDS`), unknown job type. Not retried — **except** an exception that carries `retryable = True` (implemented: the fixtures-only publication-busy error), which is requeued like a crash while attempts remain. |
+| `running` → `queued` | retryable `fail`, or `requeue_expired` | Handler process died (crash / OOM kill), worker shut down mid-job, a handler raised a `retryable` exception, or the lease expired. Only while `attempts < max_attempts`; otherwise → `failed` (`lease expired; max attempts exhausted`). |
 | `queued` → `cancelled` | `POST …/cancel` | Immediate. |
 | `running` → `cancelled` | `POST …/cancel` then worker heartbeat | `cancel_requested` is set; the worker sees it on its next heartbeat (≤ `lease/3`), kills the handler, records `cancelled`. If the worker crashed instead, recovery turns it into `cancelled` rather than re-queueing it. |
 | terminal → anything | — | Never. `cancel` on a terminal job is a no-op. |
@@ -44,7 +44,7 @@ Before enqueue (synchronously in the API): request received → payload validate
 ## 3. Guarantees and non-guarantees
 - **Exactly one active owner** at a time (tested with 12 concurrent claimers over 50 jobs).
 - **At-least-once execution, not exactly-once.** After a crash or lease expiry the same job may run again (attempt 2). **Handlers must be idempotent** and must write results atomically/keyed by job id. A stale worker can no longer complete, fail or heartbeat a job it lost (tested), but its side effects, if any, are not rolled back.
-- Retries: `max_attempts` counts *all* attempts including the first (default `JOB_MAX_ATTEMPTS=2`). Handler exceptions and timeouts are never retried.
+- Retries: `max_attempts` counts *all* attempts including the first (default `JOB_MAX_ATTEMPTS=2`). Timeouts and ordinary handler exceptions are not retried; handler-process death, worker shutdown, lease expiry and exceptions marked `retryable` are requeued while attempts remain. For `catalog_search`, a retried or re-run job is idempotent under `request_hash` (§5a); nothing in this paragraph describes any live-provider retry or back-off, which does not exist.
 - Ordering is best-effort priority-then-age; no fairness across job types.
 - Cancellation of a running job is cooperative-by-kill: the handler process is killed, not asked to stop. Handlers must tolerate being killed.
 - No result or job retention policy exists yet: `job` rows accumulate (see closeout, deferred items).
